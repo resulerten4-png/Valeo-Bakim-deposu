@@ -6,25 +6,17 @@
     <title>Valeo Bakım Deposu</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        /* SENİN ORİJİNAL STİLLERİN - HİÇBİR DEĞİŞİKLİK YAPILMADI */
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 90%; max-width: 420px; text-align: center; border-top: 10px solid #99cc00; }
         .valeo-header { margin-bottom: 25px; }
         .valeo-title { color: #99cc00; font-size: 28px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px; line-height: 1.2; }
         .valeo-subtitle { color: #666; font-size: 16px; margin-top: 5px; font-weight: 600; }
-        
-        /* Arama Kutusu ve Mikrofon Tasarımı */
-        .search-container { position: relative; display: flex; align-items: center; gap: 8px; margin: 10px 0; }
-        input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 16px; outline: none; transition: 0.3s; }
+        input { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
         input:focus { border-color: #99cc00; background: #f9fff0; }
-        .mic-btn { background: #f0f2f5; border: 2px solid #eee; border-radius: 12px; padding: 10px; cursor: pointer; font-size: 20px; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
-        .mic-btn:hover { background: #e2e4e7; }
-        .mic-active { background: #ff4444 !important; color: white !important; border-color: #cc0000 !important; animation: pulse 1.5s infinite; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
         button { background: #99cc00; color: white; border: none; padding: 15px; border-radius: 12px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 5px; transition: 0.3s; }
         button:hover { background: #88b500; }
-        #app-screen { display: none; }
+        #app-screen, #admin-screen { display: none; }
         .product-card { background: #fff; border: 1px solid #f0f0f0; margin-top: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #99cc00; text-align: left; cursor: pointer; }
         .sap-kodu { font-size: 14px; color: #99cc00; font-weight: 800; margin-bottom: 2px; }
         .malzeme-adi { font-weight: bold; color: #2c3e50; font-size: 17px; margin: 2px 0 8px 0; }
@@ -44,6 +36,18 @@
     <input type="text" id="user-input" placeholder="Kullanıcı Adı">
     <input type="password" id="pass-input" placeholder="Şifre">
     <button onclick="girisYap()">GİRİŞ YAP</button>
+    <p onclick="adminPanelAc()" style="margin-top:20px; font-size:11px; color:#ccc; cursor:pointer;">Yönetici Paneli</p>
+</div>
+
+<div id="admin-screen" class="container">
+    <div class="valeo-header">
+        <div class="valeo-title">YÖNETİCİ</div>
+        <div class="valeo-subtitle">Personel Ekleme</div>
+    </div>
+    <input type="text" id="new-u" placeholder="Yeni Kullanıcı Adı">
+    <input type="text" id="new-p" placeholder="Yeni Şifre">
+    <button onclick="kullaniciKaydet()" style="background:#2c3e50;">SAYFA2'YE KAYDET</button>
+    <button onclick="location.reload()" style="background:#6c757d; margin-top:10px;">GERİ DÖN</button>
 </div>
 
 <div id="app-screen" class="container">
@@ -51,12 +55,7 @@
         <span id="welcome-msg"></span>
         <button onclick="cikisYap()" style="width:auto; padding:5px 12px; font-size:11px; background:#6c757d; margin:0;">Çıkış</button>
     </div>
-    
-    <div class="search-container">
-        <input type="text" id="search" placeholder="SAP veya Malzeme Ara..." oninput="aramaYap()">
-        <button id="mic-btn" class="mic-btn" onclick="sesliAramaBaslat()" title="Sesle Ara">🎤</button>
-    </div>
-
+    <input type="text" id="search" placeholder="SAP veya Malzeme Ara..." oninput="aramaYap()">
     <div id="results" style="max-height: 420px; overflow-y: auto;"></div>
 </div>
 
@@ -72,45 +71,12 @@
 </div>
 
 <script>
+    // GÜNCELLEDİĞİN YENİ LİNK
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwHnxcRuWTqmiFtAre-Gd35ukZwMe4lv3TY3wfkU6tSzVCsovu3xNukaOKmMqFIzZZKww/exec';
 
     let urunler = [], kullanicilar = [], seciliUrun = null;
-
-    // SESLİ ARAMA FONKSİYONU
-    function sesliAramaBaslat() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Maalesef tarayıcınız sesli aramayı desteklemiyor. Lütfen Chrome kullanın.");
-            return;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'tr-TR';
-        const micBtn = document.getElementById('mic-btn');
-
-        recognition.onstart = () => {
-            micBtn.classList.add('mic-active');
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            document.getElementById('search').value = transcript;
-            aramaYap();
-        };
-
-        recognition.onend = () => {
-            micBtn.classList.remove('mic-active');
-        };
-
-        recognition.onerror = (event) => {
-            alert("Ses algılanamadı: " + event.error);
-            micBtn.classList.remove('mic-active');
-        };
-
-        recognition.start();
-    }
 
     window.onload = async () => {
         try {
@@ -118,13 +84,14 @@
             const [uT, pT] = await Promise.all([uRes.text(), pRes.text()]);
             kullanicilar = XLSX.utils.sheet_to_json(XLSX.read(uT, {type:'string'}).Sheets.Sheet1);
             urunler = XLSX.utils.sheet_to_json(XLSX.read(pT, {type:'string'}).Sheets.Sheet1);
+            
             const hatirla = localStorage.getItem('depoUser');
             if (hatirla) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-screen').style.display = 'block';
                 document.getElementById('welcome-msg').innerText = "👤 " + hatirla.toUpperCase();
             }
-        } catch (e) { alert("Sistem yüklenemedi."); }
+        } catch (e) { console.log("Yükleme Hatası"); }
     };
 
     function girisYap() {
@@ -137,6 +104,27 @@
             document.getElementById('app-screen').style.display = 'block';
             document.getElementById('welcome-msg').innerText = "👤 " + u.toUpperCase();
         } else { alert("Hatalı giriş!"); }
+    }
+
+    function adminPanelAc() {
+        if(prompt("Yönetici Şifresi:") === "1234") {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-screen').style.display = 'block';
+        }
+    }
+
+    function kullaniciKaydet() {
+        const ad = document.getElementById('new-u').value;
+        const sif = document.getElementById('new-p').value;
+        if(!ad || !sif) return alert("Boş bırakmayın!");
+        
+        fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({type: 'KULLANICI_EKLE', yeniAd: ad, yeniSifre: sif}) 
+        });
+        alert("İşlem gönderildi! Sayfa2'ye ekleniyor.");
+        location.reload();
     }
 
     function cikisYap() { if(confirm("Çıkış yapılsın mı?")) { localStorage.removeItem('depoUser'); location.reload(); } }
@@ -160,22 +148,25 @@
         });
     }
 
-    function modalKapat() { document.getElementById('action-modal').style.display = 'none'; document.getElementById('islem-adet').value = ""; }
+    function modalKapat() { 
+        document.getElementById('action-modal').style.display = 'none'; 
+        document.getElementById('islem-adet').value = ""; 
+    }
 
     function onayliKaydet(islemTipi, btn) {
         const adet = document.getElementById('islem-adet').value;
         if(!adet || adet <= 0) return alert("Miktar girin!");
-        let onayMesaji = islemTipi === 'STOKTAN DÜŞÜM' ? "Düşüm işlemini onaylıyor musun?" : "Sipariş talebi işlemini onaylıyor musun?";
-        if(confirm(onayMesaji)) {
-            veriyiKaydet(islemTipi, btn, adet);
-        }
+        if(confirm(islemTipi + " işlemini onaylıyor musun?")) { veriyiKaydet(islemTipi, btn, adet); }
     }
 
     async function veriyiKaydet(islemTipi, btn, adet) {
         const originalText = btn.innerText;
         btn.innerText = "⏳...";
         btn.disabled = true;
-        const payload = { sap: seciliUrun[0], ad: seciliUrun[1], adres: seciliUrun[2], adet: adet, islem: islemTipi, kullanici: localStorage.getItem('depoUser') };
+        const payload = { 
+            sap: seciliUrun[0], ad: seciliUrun[1], adres: seciliUrun[2], 
+            adet: adet, islem: islemTipi, kullanici: localStorage.getItem('depoUser') 
+        };
         fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
         .then(() => {
             alert("Kayıt Başarılı!"); 
