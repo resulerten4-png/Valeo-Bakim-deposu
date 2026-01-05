@@ -53,6 +53,7 @@
         .user-list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; background: var(--card-bg); }
         .user-info-box { display: flex; align-items: center; gap: 10px; }
         .user-avatar { width: 35px; height: 35px; background: var(--valeo-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+        .online-status-badge { font-size: 10px; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
 
         .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: var(--card-bg); padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; max-height: 90vh; overflow-y: auto;}
@@ -73,7 +74,7 @@
             <div id="user-display">👤 YÜKLENİYOR...</div>
             <div id="connection-indicator" class="status-info">
                 <span id="status-dot" class="status-dot online-dot"></span>
-                <span id="status-text" style="color: var(--valeo-green);">Bağlantı Aktif</span>
+                <span id="status-text" style="color: var(--valeo-green);">Çevrimiçi</span>
             </div>
         </div>
         <div id="top-right-section">
@@ -203,7 +204,7 @@
 
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], kullanicilar = [], seciliUrun = null;
@@ -215,9 +216,10 @@
         const text = document.getElementById('status-text');
         if (navigator.onLine) {
             dot.className = "status-dot online-dot";
-            text.innerText = "Bağlantı Aktif";
+            text.innerText = "Çevrimiçi";
             text.style.color = "var(--valeo-green)";
             syncData();
+            sendHeartbeat();
         } else {
             dot.className = "status-dot offline-dot";
             text.innerText = "Çevrimdışı";
@@ -226,6 +228,14 @@
     }
     window.addEventListener('online', updateStatusIndicator);
     window.addEventListener('offline', updateStatusIndicator);
+
+    async function sendHeartbeat() {
+        const user = localStorage.getItem('depoUser');
+        if (!user || !navigator.onLine) return;
+        const veri = { islem: 'HEARTBEAT', kullanici: user };
+        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
+    }
+    setInterval(sendHeartbeat, 180000);
 
     let isSyncing = false;
     let syncQueue = JSON.parse(localStorage.getItem('valeo_queue') || '[]');
@@ -296,19 +306,39 @@
         return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}.${date.getFullYear().toString().substring(2)} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
     }
 
-    function kullaniciSayfasiGoster() {
+    async function kullaniciSayfasiGoster() {
         document.getElementById('dropdown').style.display = 'none';
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('history-screen').style.display = 'none';
         document.getElementById('users-screen').style.display = 'flex';
         
         const container = document.getElementById('users-list-container');
+        container.innerHTML = "<div style='text-align:center; padding:20px;'>Durumlar güncelleniyor...</div>";
+        
         const currentUser = localStorage.getItem('depoUser');
+        let activeUsers = [];
+
+        try {
+            const res = await fetch(GECMIS_URL);
+            const data = XLSX.utils.sheet_to_json(XLSX.read(await res.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
+            const now = new Date();
+            
+            data.slice(1).forEach(row => {
+                const rowUser = row[5] ? row[5].toString().toLowerCase() : "";
+                const rowTime = new Date(Math.round((row[6] - 25569) * 86400 * 1000));
+                const diff = (now - rowTime) / 1000 / 60;
+                if (diff < 5) activeUsers.push(rowUser);
+            });
+        } catch (e) { console.log("Aktiflik verisi çekilemedi."); }
 
         container.innerHTML = kullanicilar.map(u => {
             const userData = Object.values(u);
             const userName = userData[0].toString().toLowerCase();
             const isMe = userName === currentUser.toLowerCase();
+            
+            const isActive = (isMe && navigator.onLine) || activeUsers.includes(userName);
+            const statusText = isActive ? "ÇEVRİMİÇİ" : "ÇEVRİMDIŞI";
+            const statusColor = isActive ? "var(--valeo-green)" : "var(--danger)";
             
             return `
                 <div class="user-list-item">
@@ -317,6 +347,9 @@
                         <div>
                             <div style="font-weight:bold; font-size:14px;">${userName.toUpperCase()} ${isMe ? '(SİZ)' : ''}</div>
                         </div>
+                    </div>
+                    <div class="online-status-badge" style="background:${statusColor}22; color:${statusColor}; border: 1px solid ${statusColor}">
+                        ${statusText}
                     </div>
                 </div>
             `;
@@ -420,9 +453,29 @@
     }
 
     function girisYap() {
-        const u = document.getElementById('user-input').value.trim().toLowerCase(), p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => { const v = Object.values(row); return v[0] && v[0].toString().toLowerCase() === u && v[1] && v[1].toString() === p; });
-        if (found) { localStorage.setItem('depoUser', u); playSound('login'); loginSuccess(u); } else { playSound('error'); alert("Hatalı Giriş!"); }
+        const u = document.getElementById('user-input').value.trim().toLowerCase();
+        const p = document.getElementById('pass-input').value.trim();
+        
+        if (kullanicilar.length === 0) {
+            alert("Veriler yükleniyor, lütfen bekleyin...");
+            return;
+        }
+
+        const found = kullanicilar.find(row => { 
+            const v = Object.values(row); 
+            const dbUser = v[0] ? v[0].toString().trim().toLowerCase() : "";
+            const dbPass = v[1] ? v[1].toString().trim() : "";
+            return dbUser === u && dbPass === p; 
+        });
+
+        if (found) { 
+            localStorage.setItem('depoUser', u); 
+            playSound('login'); 
+            loginSuccess(u); 
+        } else { 
+            playSound('error'); 
+            alert("Hatalı Giriş!"); 
+        }
     }
 
     function loginSuccess(user) { 
