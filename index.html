@@ -49,6 +49,9 @@
         .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
         .stepper button { width: 50px; height: 50px; padding: 0; font-size: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--valeo-dark); color: white; }
         #islem-adet { width: 80px; text-align: center; font-size: 28px; font-weight: 800; border: none; background: transparent; pointer-events: none; margin: 0; color: var(--text-color); }
+        /* Kullanıcı listesi için yeni stil ekledim */
+        .user-card { background: var(--card-bg); border-bottom: 1px solid #eee; padding: 12px; display: flex; align-items: center; gap: 15px; }
+        .user-avatar { background: var(--valeo-green); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -243,6 +246,7 @@
     async function gecmisGoster(isNew) {
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('history-screen').style.display = 'flex';
+        document.getElementById('users-screen').style.display = 'none'; // Kullanıcılar açıksa kapat
         if (isNew) {
             const res = await fetch(GECMIS_URL);
             const data = XLSX.utils.sheet_to_json(XLSX.read(await res.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
@@ -275,6 +279,34 @@
         document.getElementById('login-screen').style.display = 'none'; document.getElementById('app-screen').style.display = 'flex';
         document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
         document.getElementById('app-menu-wrap').style.display = 'block'; updateStatusIndicator();
+    }
+
+    // KULLANICI LİSTELEME ÖZELLİĞİ (BAŞKA HİÇBİR ŞEYİ DEĞİŞTİRMEDEN EKLENDİ)
+    function kullaniciSayfasiGoster() {
+        document.getElementById('app-screen').style.display = 'none';
+        document.getElementById('history-screen').style.display = 'none';
+        document.getElementById('users-screen').style.display = 'flex';
+        toggleMenu(); // Menüyü kapat
+        
+        const container = document.getElementById('users-list-container');
+        if (kullanicilar.length === 0) {
+            container.innerHTML = "<p style='text-align:center; padding:20px;'>Kullanıcı verisi yüklenemedi.</p>";
+            return;
+        }
+
+        container.innerHTML = kullanicilar.map(user => {
+            const v = Object.values(user);
+            const ad = v[0] || "Bilinmiyor";
+            return `
+                <div class="user-card">
+                    <div class="user-avatar">${ad.charAt(0).toUpperCase()}</div>
+                    <div>
+                        <div style="font-weight:bold; font-size:16px;">${ad.toUpperCase()}</div>
+                        <div style="font-size:12px; color:#888;">Sistem Kayıtlı Kullanıcı</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     window.onload = async () => {
