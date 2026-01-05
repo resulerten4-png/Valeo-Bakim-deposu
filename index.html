@@ -149,7 +149,7 @@
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=1584268931&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], kullanicilar = [], seciliUrun = null;
@@ -185,15 +185,37 @@
 
     function trNormalize(text) { return text ? text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g') : ""; }
 
-    // GÜVENLİ RENKLENDİRME (FIX: Class= hatasını önler)
+    // TARİH FORMATLAMA (Fix: Saçma değerleri düzeltir)
+    function formatTarih(tarihInput) {
+        if (!tarihInput) return "-";
+        
+        // Eğer tarih zaten düzgün bir metinse (örn: 05.01.2026 13:20) aynen döndür
+        if (tarihInput.toString().includes('.')) return tarihInput;
+
+        let d = new Date(tarihInput);
+        
+        // Eğer Excel seri numarası olarak gelmişse (45234.5 gibi)
+        if (typeof tarihInput === 'number' || !isNaN(tarihInput)) {
+            d = new Date((tarihInput - 25569) * 86400 * 1000);
+        }
+
+        if (isNaN(d.getTime())) return tarihInput; // Yine de çözülemiyorsa ham halini bas
+
+        const gun = d.getDate().toString().padStart(2, '0');
+        const ay = (d.getMonth() + 1).toString().padStart(2, '0');
+        const yil = d.getFullYear();
+        const saat = d.getHours().toString().padStart(2, '0');
+        const dk = d.getMinutes().toString().padStart(2, '0');
+
+        return `${gun}.${ay}.${yil} ${saat}:${dk}`;
+    }
+
     function highlightText(text, keywords) {
         if (!keywords || keywords.length === 0 || !text) return text;
         let originalText = text.toString();
         let lowerText = trNormalize(originalText);
         let result = "";
         let lastIdx = 0;
-
-        // Metindeki tüm anahtar kelimelerin konumlarını bul
         let matches = [];
         keywords.forEach(key => {
             let startPos = 0;
@@ -202,24 +224,16 @@
                 startPos += key.length;
             }
         });
-
-        // Çakışan konumları birleştir
         matches.sort((a, b) => a.start - b.start);
         let merged = [];
         if (matches.length > 0) {
             let current = matches[0];
             for (let i = 1; i < matches.length; i++) {
-                if (matches[i].start < current.end) {
-                    current.end = Math.max(current.end, matches[i].end);
-                } else {
-                    merged.push(current);
-                    current = matches[i];
-                }
+                if (matches[i].start < current.end) current.end = Math.max(current.end, matches[i].end);
+                else { merged.push(current); current = matches[i]; }
             }
             merged.push(current);
         }
-
-        // HTML oluştur
         merged.forEach(m => {
             result += originalText.substring(lastIdx, m.start);
             result += `<span class="highlight">${originalText.substring(m.start, m.end)}</span>`;
@@ -233,15 +247,12 @@
         const queryRaw = document.getElementById('search').value;
         const queryNorm = trNormalize(queryRaw).trim();
         const keywords = queryNorm.split(/\s+/).filter(k => k.length > 0);
-        
         document.getElementById('central-watermark').style.display = queryNorm ? 'none' : 'block';
         if(!queryNorm) { document.getElementById('results').innerHTML = ""; return; }
-
         filteredUrunler = urunler.filter(u => {
             const rowText = trNormalize(Object.values(u).join(" "));
             return keywords.every(key => rowText.includes(key));
         });
-        
         renderSearchItems(keywords);
     }
 
@@ -249,10 +260,8 @@
         const chunk = filteredUrunler.slice(0, 30);
         document.getElementById('results').innerHTML = chunk.map(i => {
             const v = Object.values(i);
-            const sapDisplay = highlightText(v[0], keywords);
-            const adDisplay = highlightText(v[1], keywords);
             return `<div class="product-card" onclick="openModal('${v[0]}','${v[1].replace(/'/g, "\\'")}','${v[2]}','${v[3]}')">
-                <div style="font-weight:900;">SAP: ${sapDisplay}</div><div style="font-weight:700;">${adDisplay}</div>
+                <div style="font-weight:900;">SAP: ${highlightText(v[0], keywords)}</div><div style="font-weight:700;">${highlightText(v[1], keywords)}</div>
                 <div style="font-size:12px; color:#888;">📍 ${v[2]} | 📦 ${v[3]} ADET</div>
             </div>`;
         }).join('');
@@ -299,7 +308,10 @@
     }
 
     function renderHistory() {
-        document.getElementById('history-body').innerHTML = filteredHistory.slice(0, 30).map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[5]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[6]}</td><td>${row[7]||'-'}</td></tr>`).join('');
+        document.getElementById('history-body').innerHTML = filteredHistory.slice(0, 30).map(row => {
+            const temizTarih = formatTarih(row[6]); // Tarih sütunu (6. indeks) formatlanır
+            return `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[5]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${temizTarih}</td><td>${row[7]||'-'}</td></tr>`;
+        }).join('');
     }
 
     function gecmisFiltrele(tip) { activeFilter = (activeFilter === tip) ? null : tip; applyHistoryLogic(); }
