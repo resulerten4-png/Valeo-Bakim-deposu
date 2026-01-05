@@ -253,6 +253,8 @@
         document.getElementById('modal-subtitle').innerText = ad;
         document.getElementById('islem-adet').value = '0';
         document.getElementById('action-modal').style.display = 'flex';
+        document.getElementById('btn-dusum').disabled = true;
+        document.getElementById('btn-talep').disabled = true;
     }
 
     function adetDegistir(d) {
@@ -265,8 +267,23 @@
     async function onayliKaydet(islem, btn) {
         const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: document.getElementById('islem-adet').value, islem: islem, kullanici: localStorage.getItem('depoUser') };
         if (!navigator.onLine) { syncQueue.push(veri); localStorage.setItem('valeo_queue', JSON.stringify(syncQueue)); updateQueueUI(); modalKapat(); return; }
+        
+        // Butonu kilitle ve yazıyı değiştir
+        const originalText = btn.innerText;
         btn.innerText = "İŞLENİYOR...";
-        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) }).then(() => { alert("BAŞARILI!"); modalKapat(); }).catch(() => { alert("Hata!"); });
+        btn.disabled = true;
+
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
+            alert("BAŞARILI!");
+            modalKapat();
+        } catch (e) {
+            alert("Bir hata oluştu!");
+        } finally {
+            // İşlem bitince butonu eski haline getir
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
     }
 
     async function gecmisGoster(isNew) {
@@ -288,20 +305,20 @@
         filteredHistory = processed; renderHistory();
     }
 
-    // TARİH DÜZELTİLMİŞ FONKSİYON
     function renderHistory() {
         document.getElementById('history-body').innerHTML = filteredHistory.slice(0, 30).map(row => {
-            let tarihGorunumu = row[6];
-            if (tarihGorunumu && !isNaN(tarihGorunumu)) {
-                const jsTarihi = new Date((tarihGorunumu - 25569) * 86400 * 1000);
-                const gun = String(jsTarihi.getDate()).padStart(2, '0');
-                const ay = String(jsTarihi.getMonth() + 1).padStart(2, '0');
-                const yil = jsTarihi.getFullYear();
-                const saat = String(jsTarihi.getHours()).padStart(2, '0');
-                const dakika = String(jsTarihi.getMinutes()).padStart(2, '0');
-                tarihGorunumu = `${gun}.${ay}.${yil} ${saat}:${dakika}`;
+            // TARİH FORMATI DÜZELTME
+            let tarihMetni = row[6];
+            if (tarihMetni && !isNaN(tarihMetni)) {
+                const dateObj = new Date((tarihMetni - 25569) * 86400 * 1000);
+                const gg = String(dateObj.getDate()).padStart(2, '0');
+                const aa = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const yyyy = dateObj.getFullYear();
+                const ss = String(dateObj.getHours()).padStart(2, '0');
+                const dk = String(dateObj.getMinutes()).padStart(2, '0');
+                tarihMetni = `${gg}.${aa}.${yyyy} ${ss}:${dk}`;
             }
-            return `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[5]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${tarihGorunumu}</td><td>${row[7]||'-'}</td></tr>`;
+            return `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[5]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${tarihMetni}</td><td>${row[7]||'-'}</td></tr>`;
         }).join('');
     }
 
