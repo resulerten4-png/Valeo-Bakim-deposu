@@ -53,7 +53,7 @@
         .user-avatar { background: var(--valeo-green); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     </style>
 </head>
-<body>
+<body onclick="closeMenuOutside(event)">
 
 <div class="container">
     <div id="offline-banner">📡 Çevrimdışı: <span id="queue-count">0</span> işlem bekliyor.</div>
@@ -156,6 +156,22 @@
     let showAllUsers = false, activeFilter = null;
     let syncQueue = JSON.parse(localStorage.getItem('valeo_queue') || '[]');
 
+    // MENÜ YÖNETİMİ
+    function toggleMenu(e) {
+        if(e) e.stopPropagation();
+        const d = document.getElementById('dropdown');
+        d.style.display = d.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function closeMenuOutside(e) {
+        const d = document.getElementById('dropdown');
+        const menuBtn = document.querySelector('.menu-btn');
+        // Eğer menü açıksa ve tıklanan yer menü butonu veya menünün kendisi değilse kapat
+        if (d.style.display === 'block' && !d.contains(e.target) && e.target !== menuBtn) {
+            d.style.display = 'none';
+        }
+    }
+
     function updateStatusIndicator() {
         const dot = document.getElementById('status-dot');
         const text = document.getElementById('status-text');
@@ -164,15 +180,6 @@
     }
     window.addEventListener('online', updateStatusIndicator);
     window.addEventListener('offline', updateStatusIndicator);
-
-    // MENÜ DIŞINA TIKLAYINCA KAPATMA
-    window.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('dropdown');
-        const menuBtn = document.querySelector('.menu-btn');
-        if (dropdown.style.display === 'block' && !dropdown.contains(e.target) && e.target !== menuBtn) {
-            dropdown.style.display = 'none';
-        }
-    });
 
     async function syncData() {
         if (syncQueue.length === 0 || !navigator.onLine) return;
@@ -344,7 +351,7 @@
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('history-screen').style.display = 'none';
         document.getElementById('users-screen').style.display = 'flex';
-        const d = document.getElementById('dropdown'); d.style.display = 'none';
+        document.getElementById('dropdown').style.display = 'none';
         const container = document.getElementById('users-list-container');
         if (kullanicilar.length === 0) { container.innerHTML = "<p>Yükleniyor...</p>"; return; }
         container.innerHTML = kullanicilar.map(user => {
@@ -367,11 +374,6 @@
         } catch (e) {}
     };
 
-    function toggleMenu(e) { 
-        if(e) e.stopPropagation(); // Butona tıklayınca window event'ini tetiklemesin
-        const d = document.getElementById('dropdown'); 
-        d.style.display = d.style.display === 'block' ? 'none' : 'block'; 
-    }
     function toggleDarkMode() { const d = document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', d); }
     function anaSayfayaDon() { document.getElementById('history-screen').style.display='none'; document.getElementById('users-screen').style.display='none'; document.getElementById('app-screen').style.display='flex'; }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
