@@ -27,7 +27,7 @@
         button { background: var(--valeo-green); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #ccc !important; cursor: not-allowed; opacity: 0.6; }
         .product-card { background: var(--card-bg); border: 1px solid #eee; margin-top: 10px; padding: 15px; border-radius: 10px; border-left: 6px solid var(--valeo-green); cursor: pointer; position: relative; z-index: 2; }
-        .highlight { background-color: #ffeb3b; color: #000; font-weight: bold; border-radius: 2px; }
+        .highlight { background-color: #ffeb3b; color: #000; font-weight: bold; border-radius: 2px; padding: 0 2px; }
         .menu-container { position: relative; }
         .menu-btn { cursor: pointer; font-size: 24px; padding: 5px; }
         .dropdown-menu { display: none; position: absolute; right: 0; top: 45px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 190px; z-index: 5000; overflow: hidden; border: 1px solid #eee; }
@@ -147,41 +147,24 @@
 </div>
 
 <script>
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(type) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        if(type === 'success') { osc.frequency.setValueAtTime(880, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
-        else if(type === 'login') { osc.frequency.setValueAtTime(523, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
-        else if(type === 'error') { osc.type = 'square'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
-    }
-
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], kullanicilar = [], seciliUrun = null;
-    let filteredUrunler = [], rawHistory = [], filteredHistory = [], displayedUrunCount = 30, displayedHistoryCount = 30;
+    let filteredUrunler = [], rawHistory = [], filteredHistory = [];
     let showAllUsers = false, activeFilter = null;
     let syncQueue = JSON.parse(localStorage.getItem('valeo_queue') || '[]');
 
     function updateStatusIndicator() {
         const dot = document.getElementById('status-dot');
         const text = document.getElementById('status-text');
-        if (navigator.onLine) { dot.className = "status-dot online-dot"; text.innerText = "Çevrimiçi"; syncData(); sendHeartbeat(); } 
+        if (navigator.onLine) { dot.className = "status-dot online-dot"; text.innerText = "Çevrimiçi"; syncData(); } 
         else { dot.className = "status-dot offline-dot"; text.innerText = "Çevrimdışı"; }
     }
     window.addEventListener('online', updateStatusIndicator);
     window.addEventListener('offline', updateStatusIndicator);
-
-    async function sendHeartbeat() {
-        const user = localStorage.getItem('depoUser');
-        if (!user || !navigator.onLine) return;
-        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ islem: 'HEARTBEAT', kullanici: user }) });
-    }
-    setInterval(sendHeartbeat, 180000);
 
     async function syncData() {
         if (syncQueue.length === 0 || !navigator.onLine) return;
@@ -202,7 +185,50 @@
 
     function trNormalize(text) { return text ? text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g') : ""; }
 
-    // AKILLI ARAMA VE RENKLENDİRME FONKSİYONU
+    // GÜVENLİ RENKLENDİRME (FIX: Class= hatasını önler)
+    function highlightText(text, keywords) {
+        if (!keywords || keywords.length === 0 || !text) return text;
+        let originalText = text.toString();
+        let lowerText = trNormalize(originalText);
+        let result = "";
+        let lastIdx = 0;
+
+        // Metindeki tüm anahtar kelimelerin konumlarını bul
+        let matches = [];
+        keywords.forEach(key => {
+            let startPos = 0;
+            while ((startPos = lowerText.indexOf(key, startPos)) !== -1) {
+                matches.push({ start: startPos, end: startPos + key.length });
+                startPos += key.length;
+            }
+        });
+
+        // Çakışan konumları birleştir
+        matches.sort((a, b) => a.start - b.start);
+        let merged = [];
+        if (matches.length > 0) {
+            let current = matches[0];
+            for (let i = 1; i < matches.length; i++) {
+                if (matches[i].start < current.end) {
+                    current.end = Math.max(current.end, matches[i].end);
+                } else {
+                    merged.push(current);
+                    current = matches[i];
+                }
+            }
+            merged.push(current);
+        }
+
+        // HTML oluştur
+        merged.forEach(m => {
+            result += originalText.substring(lastIdx, m.start);
+            result += `<span class="highlight">${originalText.substring(m.start, m.end)}</span>`;
+            lastIdx = m.end;
+        });
+        result += originalText.substring(lastIdx);
+        return result;
+    }
+
     function aramaYap(isNew) {
         const queryRaw = document.getElementById('search').value;
         const queryNorm = trNormalize(queryRaw).trim();
@@ -217,16 +243,6 @@
         });
         
         renderSearchItems(keywords);
-    }
-
-    function highlightText(text, keywords) {
-        if (!keywords || keywords.length === 0) return text;
-        let highlighted = text.toString();
-        keywords.forEach(key => {
-            const regex = new RegExp(`(${key})`, 'gi');
-            highlighted = highlighted.replace(regex, '<span class="highlight">$1</span>');
-        });
-        return highlighted;
     }
 
     function renderSearchItems(keywords = []) {
@@ -258,9 +274,9 @@
 
     async function onayliKaydet(islem, btn) {
         const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: document.getElementById('islem-adet').value, islem: islem, kullanici: localStorage.getItem('depoUser') };
-        if (!navigator.onLine) { syncQueue.push(veri); localStorage.setItem('valeo_queue', JSON.stringify(syncQueue)); updateQueueUI(); playSound('success'); modalKapat(); return; }
+        if (!navigator.onLine) { syncQueue.push(veri); localStorage.setItem('valeo_queue', JSON.stringify(syncQueue)); updateQueueUI(); modalKapat(); return; }
         btn.innerText = "İŞLENİYOR...";
-        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) }).then(() => { playSound('success'); alert("BAŞARILI!"); modalKapat(); }).catch(() => { alert("Hata!"); });
+        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) }).then(() => { alert("BAŞARILI!"); modalKapat(); }).catch(() => { alert("Hata!"); });
     }
 
     async function gecmisGoster(isNew) {
@@ -292,7 +308,7 @@
     function girisYap() {
         const u = document.getElementById('user-input').value.trim().toLowerCase(), p = document.getElementById('pass-input').value.trim();
         const found = kullanicilar.find(row => { const v = Object.values(row); return v[0] && v[0].toString().toLowerCase() === u && v[1] && v[1].toString() === p; });
-        if (found) { localStorage.setItem('depoUser', u); playSound('login'); loginSuccess(u); } else { alert("Hatalı!"); }
+        if (found) { localStorage.setItem('depoUser', u); loginSuccess(u); } else { alert("Hatalı!"); }
     }
 
     function loginSuccess(user) {
