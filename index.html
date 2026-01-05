@@ -203,7 +203,7 @@
     }
 
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
-    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
+    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBk2/pub?gid=1489941403&single=true&output=csv';
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
@@ -331,7 +331,7 @@
             });
         } catch (e) { console.log("Aktiflik verisi çekilemedi."); }
 
-        container.innerHTML = kullanicilar.map(u => {
+        container.innerHTML = kullanicilar.slice(1).map(u => {
             const userData = Object.values(u);
             const userName = userData[0].toString().toLowerCase();
             const isMe = userName === currentUser.toLowerCase();
@@ -399,7 +399,7 @@
         if(isNew) { displayedUrunCount = 30; document.getElementById('search-scroll-area').scrollTop = 0; }
         if(!norm) { document.getElementById('results').innerHTML = ""; return; }
         const kelimeler = norm.split(/\s+/);
-        filteredUrunler = urunler.filter(u => kelimeler.every(k => trNormalize(Object.values(u).join(" ")).includes(k)));
+        filteredUrunler = urunler.slice(1).filter(u => kelimeler.every(k => trNormalize(Object.values(u).join(" ")).includes(k)));
         document.getElementById('count-info').innerText = filteredUrunler.length + " ürün.";
         renderSearchItems(kelimeler);
     }
@@ -461,7 +461,8 @@
             return;
         }
 
-        const found = kullanicilar.find(row => { 
+        // Başlık satırını atlamak için slice(1) ile kontrol et
+        const found = kullanicilar.slice(1).find(row => { 
             const v = Object.values(row); 
             const dbUser = v[0] ? v[0].toString().trim().toLowerCase() : "";
             const dbPass = v[1] ? v[1].toString().trim() : "";
@@ -501,8 +502,10 @@
 
         try {
             const [uRes, pRes] = await Promise.all([fetch(USER_URL), fetch(URUN_URL)]);
-            kullanicilar = XLSX.utils.sheet_to_json(XLSX.read(await uRes.text(), {type:'string'}).Sheets.Sheet1);
-            urunler = XLSX.utils.sheet_to_json(XLSX.read(await pRes.text(), {type:'string'}).Sheets.Sheet1).filter(row => Object.values(row).length > 0 && !String(Object.values(row)[0]).includes(':'));
+            // header:1 kullanarak başlıkları da dizi içine alıyoruz, sonra slice(1) ile temizleyeceğiz
+            kullanicilar = XLSX.utils.sheet_to_json(XLSX.read(await uRes.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
+            urunler = XLSX.utils.sheet_to_json(XLSX.read(await pRes.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
+            
             localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler));
             localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
         } catch (e) { console.log("Çevrimdışı modda çalışıyor."); }
@@ -517,7 +520,7 @@
     }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
     function modalKapat() { document.getElementById('action-modal').style.display = 'none'; document.getElementById('gorsel-panel').style.display = 'none'; document.getElementById('gorsel-frame').src = ""; }
-    function checkSearchScroll(el) { if(el.scrollTop + el.clientHeight >= el.scrollHeight - 50 && displayedUrunCount < filteredUrunler.length) { displayedUrunCount += 30; aramaYap(false); } }
+    function checkSearchScroll(el) { if(el.scrollTop + el.clientHeight >= el.scrollHeight - 50 && displayedUrunCount < (filteredUrunler.length - 1)) { displayedUrunCount += 30; aramaYap(false); } }
     function checkHistoryScroll(el) { if(el.scrollTop + el.clientHeight >= el.scrollHeight - 50 && displayedHistoryCount < filteredHistory.length) { displayedHistoryCount += 30; renderHistory(); } }
     function toggleHistoryView() { showAllUsers = !showAllUsers; document.getElementById('history-toggle').classList.toggle('all-active', showAllUsers); applyHistoryLogic(); }
     function gecmisFiltrele(tip) { activeFilter = (activeFilter === tip) ? null : tip; applyHistoryLogic(); }
