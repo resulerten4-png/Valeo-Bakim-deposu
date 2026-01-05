@@ -53,7 +53,6 @@
         .user-list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; background: var(--card-bg); }
         .user-info-box { display: flex; align-items: center; gap: 10px; }
         .user-avatar { width: 35px; height: 35px; background: var(--valeo-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
-        .online-status-badge { font-size: 10px; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
 
         .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: var(--card-bg); padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; max-height: 90vh; overflow-y: auto;}
@@ -306,39 +305,19 @@
         return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}.${date.getFullYear().toString().substring(2)} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
     }
 
-    async function kullaniciSayfasiGoster() {
+    function kullaniciSayfasiGoster() {
         document.getElementById('dropdown').style.display = 'none';
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('history-screen').style.display = 'none';
         document.getElementById('users-screen').style.display = 'flex';
         
         const container = document.getElementById('users-list-container');
-        container.innerHTML = "<div style='text-align:center; padding:20px;'>Durumlar güncelleniyor...</div>";
-        
         const currentUser = localStorage.getItem('depoUser');
-        let activeUsers = [];
-
-        try {
-            const res = await fetch(GECMIS_URL);
-            const data = XLSX.utils.sheet_to_json(XLSX.read(await res.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
-            const now = new Date();
-            
-            data.slice(1).forEach(row => {
-                const rowUser = row[5] ? row[5].toString().toLowerCase() : "";
-                const rowTime = new Date(Math.round((row[6] - 25569) * 86400 * 1000));
-                const diff = (now - rowTime) / 1000 / 60;
-                if (diff < 5) activeUsers.push(rowUser);
-            });
-        } catch (e) { console.log("Aktiflik verisi çekilemedi."); }
 
         container.innerHTML = kullanicilar.slice(1).map(u => {
             const userData = Object.values(u);
             const userName = userData[0].toString().toLowerCase();
             const isMe = userName === currentUser.toLowerCase();
-            
-            const isActive = (isMe && navigator.onLine) || activeUsers.includes(userName);
-            const statusText = isActive ? "ÇEVRİMİÇİ" : "ÇEVRİMDIŞI";
-            const statusColor = isActive ? "var(--valeo-green)" : "var(--danger)";
             
             return `
                 <div class="user-list-item">
@@ -347,9 +326,6 @@
                         <div>
                             <div style="font-weight:bold; font-size:14px;">${userName.toUpperCase()} ${isMe ? '(SİZ)' : ''}</div>
                         </div>
-                    </div>
-                    <div class="online-status-badge" style="background:${statusColor}22; color:${statusColor}; border: 1px solid ${statusColor}">
-                        ${statusText}
                     </div>
                 </div>
             `;
@@ -461,7 +437,6 @@
             return;
         }
 
-        // Başlık satırını atlamak için slice(1) ile kontrol et
         const found = kullanicilar.slice(1).find(row => { 
             const v = Object.values(row); 
             const dbUser = v[0] ? v[0].toString().trim().toLowerCase() : "";
@@ -502,7 +477,6 @@
 
         try {
             const [uRes, pRes] = await Promise.all([fetch(USER_URL), fetch(URUN_URL)]);
-            // header:1 kullanarak başlıkları da dizi içine alıyoruz, sonra slice(1) ile temizleyeceğiz
             kullanicilar = XLSX.utils.sheet_to_json(XLSX.read(await uRes.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
             urunler = XLSX.utils.sheet_to_json(XLSX.read(await pRes.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
             
