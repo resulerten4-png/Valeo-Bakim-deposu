@@ -29,7 +29,7 @@
         .product-card { background: var(--card-bg); border: 1px solid #eee; margin-top: 10px; padding: 15px; border-radius: 10px; border-left: 6px solid var(--valeo-green); cursor: pointer; position: relative; z-index: 2; }
         .highlight { background-color: #ffeb3b; color: #000; font-weight: bold; border-radius: 2px; padding: 0 2px; }
         .menu-container { position: relative; }
-        .menu-btn { cursor: pointer; font-size: 24px; padding: 5px; }
+        .menu-btn { cursor: pointer; font-size: 24px; padding: 5px; user-select: none; }
         .dropdown-menu { display: none; position: absolute; right: 0; top: 45px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 190px; z-index: 5000; overflow: hidden; border: 1px solid #eee; }
         .dropdown-menu div { padding: 14px 18px; color: var(--text-color); cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 10px; font-weight: 500; }
         .history-bar { background: var(--valeo-green); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; position: relative; z-index: 500; }
@@ -66,9 +66,8 @@
             </div>
         </div>
         <div id="top-right-section">
-            <div id="login-dark-btn" class="dark-only-btn" onclick="toggleDarkMode()" style="cursor:pointer; font-size:20px;">🌓</div>
             <div id="app-menu-wrap" class="menu-container" style="display:none;">
-                <div class="menu-btn" onclick="toggleMenu()">☰</div>
+                <div class="menu-btn" onclick="toggleMenu(event)">☰</div>
                 <div id="dropdown" class="dropdown-menu">
                     <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
                     <div onclick="gecmisGoster(true)">📋 İşlemler</div>
@@ -96,7 +95,7 @@
             <div class="watermark-text">VALEO</div>
             <div class="watermark-subtext">BAKIM DEPO</div>
         </div>
-        <div class="content" id="search-scroll-area" onscroll="checkSearchScroll(this)">
+        <div class="content" id="search-scroll-area">
             <input type="text" id="search" placeholder="Malzeme veya SAP ara..." oninput="aramaYap(true)">
             <div id="count-info" style="font-size:11px; margin-bottom:10px; color:#888;"></div>
             <div id="results"></div>
@@ -116,7 +115,7 @@
             <div class="stat-item" id="btn-filter-dusum" onclick="gecmisFiltrele('STOKTAN DÜŞÜM')">📉 DÜŞÜM: <span id="stat-dusum" style="color:var(--danger); font-weight:bold;">0</span></div>
             <div class="stat-item" id="btn-filter-siparis" onclick="gecmisFiltrele('SİPARİŞ TALEBİ')">🛒 SİPARİŞ: <span id="stat-siparis" style="color:var(--valeo-blue); font-weight:bold;">0</span></div>
         </div>
-        <div class="content" id="history-scroll-area" onscroll="checkHistoryScroll(this)">
+        <div class="content" id="history-scroll-area">
             <table class="history-table">
                 <thead><tr><th>SAP</th><th>AD</th><th>PERS</th><th>ADET</th><th>TALEP</th><th>TARİH</th><th>SRMLU</th></tr></thead>
                 <tbody id="history-body"></tbody>
@@ -165,6 +164,15 @@
     }
     window.addEventListener('online', updateStatusIndicator);
     window.addEventListener('offline', updateStatusIndicator);
+
+    // MENÜ DIŞINA TIKLAYINCA KAPATMA
+    window.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('dropdown');
+        const menuBtn = document.querySelector('.menu-btn');
+        if (dropdown.style.display === 'block' && !dropdown.contains(e.target) && e.target !== menuBtn) {
+            dropdown.style.display = 'none';
+        }
+    });
 
     async function syncData() {
         if (syncQueue.length === 0 || !navigator.onLine) return;
@@ -267,12 +275,9 @@
     async function onayliKaydet(islem, btn) {
         const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: document.getElementById('islem-adet').value, islem: islem, kullanici: localStorage.getItem('depoUser') };
         if (!navigator.onLine) { syncQueue.push(veri); localStorage.setItem('valeo_queue', JSON.stringify(syncQueue)); updateQueueUI(); modalKapat(); return; }
-        
-        // Butonu kilitle ve yazıyı değiştir
         const originalText = btn.innerText;
         btn.innerText = "İŞLENİYOR...";
         btn.disabled = true;
-
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
             alert("BAŞARILI!");
@@ -280,7 +285,6 @@
         } catch (e) {
             alert("Bir hata oluştu!");
         } finally {
-            // İşlem bitince butonu eski haline getir
             btn.innerText = originalText;
             btn.disabled = false;
         }
@@ -307,7 +311,6 @@
 
     function renderHistory() {
         document.getElementById('history-body').innerHTML = filteredHistory.slice(0, 30).map(row => {
-            // TARİH FORMATI DÜZELTME
             let tarihMetni = row[6];
             if (tarihMetni && !isNaN(tarihMetni)) {
                 const dateObj = new Date((tarihMetni - 25569) * 86400 * 1000);
@@ -341,7 +344,7 @@
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('history-screen').style.display = 'none';
         document.getElementById('users-screen').style.display = 'flex';
-        toggleMenu();
+        const d = document.getElementById('dropdown'); d.style.display = 'none';
         const container = document.getElementById('users-list-container');
         if (kullanicilar.length === 0) { container.innerHTML = "<p>Yükleniyor...</p>"; return; }
         container.innerHTML = kullanicilar.map(user => {
@@ -364,7 +367,11 @@
         } catch (e) {}
     };
 
-    function toggleMenu() { const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
+    function toggleMenu(e) { 
+        if(e) e.stopPropagation(); // Butona tıklayınca window event'ini tetiklemesin
+        const d = document.getElementById('dropdown'); 
+        d.style.display = d.style.display === 'block' ? 'none' : 'block'; 
+    }
     function toggleDarkMode() { const d = document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', d); }
     function anaSayfayaDon() { document.getElementById('history-screen').style.display='none'; document.getElementById('users-screen').style.display='none'; document.getElementById('app-screen').style.display='flex'; }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
