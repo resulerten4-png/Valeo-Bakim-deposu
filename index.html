@@ -61,8 +61,8 @@
         .machine-selection-box { background: var(--valeo-blue); color: white; padding: 12px; border-radius: 10px; margin: 10px 0; font-weight: bold; font-size: 14px; }
         
         .history-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-        .history-table th { background: var(--valeo-dark); color: white; padding: 8px 4px; text-align: left; position: sticky; top: 0; white-space: nowrap; }
-        .history-table td { padding: 8px 4px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; white-space: nowrap; }
+        .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
         
         mark { background: #f1c40f; color: black; padding: 0 2px; border-radius: 3px; }
         body.dark-mode mark { background: #d4ac0d; }
@@ -121,7 +121,7 @@
 
     <div id="page-action" class="page">
         <div class="content">
-            <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">MAKİNA SEÇİMİ</label>
+            <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">MAKİNA SEÇİMİ (Sayfa4)</label>
             <input type="text" id="action-machine-search" placeholder="Makina ara..." oninput="makineAramaYap()">
             <div id="machine-results" style="max-height:150px; overflow-y:auto;"></div>
             <div id="selected-machine-box" class="machine-selection-box" style="display:none;"></div>
@@ -149,7 +149,7 @@
                             <th>SAP Kodu</th>
                             <th>Malzeme Adı</th>
                             <th>Adet</th>
-                            <th>Tür</th>
+                            <th>İşlem Türü</th>
                             <th>Makina No</th>
                             <th>Kullanıcı</th>
                             <th>Yetkili</th>
@@ -165,7 +165,7 @@
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
@@ -250,7 +250,7 @@
                         fTarih = `${gun}.${ay}.${yil}`;
                     } else { fTarih = tHam; }
                 }
-                // SIRALAMA: Tarih(fTarih), SAP(row[0]), Malzeme(row[1]), Adet(row[3]), Tür(row[4]), Makina(row[5]), Kullanıcı(row[2]), Yetkili(row[7])
+                // İSTENEN SIRALAMA: Tarih(fTarih), SAP(row[0]), Malzeme(row[1]), Adet(row[3]), Tür(row[4]), Makina(row[5]), Kullanıcı(row[2]), Yetkili(row[7])
                 return `<tr>
                     <td style="font-size:9px; opacity:0.7;">${fTarih}</td>
                     <td><b>${row[0] || '-'}</b></td>
@@ -304,7 +304,8 @@
     function makineAramaYap() {
         const query = trNormalize(document.getElementById('action-machine-search').value);
         if(!query) { document.getElementById('machine-results').innerHTML = ""; return; }
-        const filtered = makineler.filter(m => trNormalize(m.join(" ")).includes(query));
+        // Makineler Sayfa4'ten çekiliyor: m[0] No, m[1] İsim
+        const filtered = makineler.filter(m => trNormalize(m[0] + " " + m[1]).includes(query));
         document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => `
             <div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${m[0]}','${m[1]}')">
                 <div style="font-size:13px; color:var(--text-main);"><b>${m[0]}</b> - ${m[1]}</div>
@@ -313,7 +314,7 @@
 
     function selectMachine(no, ad) {
         seciliMakina = { no, ad };
-        document.getElementById('selected-machine-box').innerText = "✅ SEÇİLDİ: " + no;
+        document.getElementById('selected-machine-box').innerText = "✅ SEÇİLDİ: " + no + " - " + ad;
         document.getElementById('selected-machine-box').style.display = 'block';
         document.getElementById('machine-results').innerHTML = "";
         updateButtons();
@@ -337,9 +338,9 @@
     }
 
     async function kaydet(islem, adet) {
-        // Yetkili bilgisini Sayfa3 (kullanicilar) H sütunundan (indis 7) çekiyoruz
-        const userObj = kullanicilar.find(row => row[0]?.toString().toLowerCase() === localStorage.getItem('depoUser'));
-        const yetkili = userObj ? userObj[7] : "-";
+        // Sayfa3 (kullanicilar) H sütunundaki (index 7) yetkiliyi bul
+        const userRow = kullanicilar.find(row => row[0]?.toString().toLowerCase() === localStorage.getItem('depoUser'));
+        const yetkili = userRow ? userRow[7] : "-";
 
         const veri = { 
             sap: seciliUrun[0], 
@@ -350,6 +351,7 @@
             kullanici: localStorage.getItem('depoUser'),
             yetkili: yetkili
         };
+
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
             alert("İŞLEM BAŞARILI!"); showPage('page-search');
@@ -371,10 +373,9 @@
                 const wb = XLSX.read(data, {type:'string'});
                 return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
             };
-            // Kullanıcılar (Sayfa3), Ürünler (Sayfa1), Makineler (Sayfa4)
-            kullanicilar = parseCSVToArray(uRes).slice(1);
+            kullanicilar = parseCSVToArray(uRes).slice(1); // Sayfa3: Kullanıcı ve Yetkili (H sütunu)
             urunler = parseCSVToArray(pRes).slice(1).filter(r => r.length > 0);
-            makineler = parseCSVToArray(mRes).slice(1);
+            makineler = parseCSVToArray(mRes).slice(1); // Sayfa4: Makina No (A) ve Adı (B)
         } catch (e) { console.error(e); }
     };
 </script>
