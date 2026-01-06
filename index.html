@@ -10,21 +10,17 @@
         :root { 
             --valeo-green: #99cc00; --valeo-blue: #0091ff; --valeo-dark: #1a1a1b; 
             --bg-gray: #f8f9fa; --card-bg: #ffffff; --text-main: #2d3436; 
-            --text-sub: #636e72; --danger: #ff4757; --shadow: 0 10px 25px rgba(0,0,0,0.08); --border: #edf2f7;
+            --danger: #ff4757; --border: #edf2f7;
         }
-        body.dark-mode { 
-            --bg-gray: #121212; --card-bg: #1e1e1e; --text-main: #f5f6fa; 
-            --valeo-dark: #000000; --border: #2d3436;
-        }
+        body.dark-mode { --bg-gray: #121212; --card-bg: #1e1e1e; --text-main: #f5f6fa; --valeo-dark: #000000; --border: #2d3436; }
         body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: var(--card-bg); width: 100%; max-width: 1400px; height: 92vh; border-radius: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; margin: 10px; border: 1px solid var(--border); }
+        .container { background: var(--card-bg); width: 100%; max-width: 1400px; height: 92vh; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; margin: 10px; border: 1px solid var(--border); }
         .top-bar { background: var(--valeo-dark); color: white; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; }
         .content { padding: 30px; overflow-y: auto; flex-grow: 1; }
         input { width: 100%; padding: 16px; margin: 10px 0; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 15px; box-sizing: border-box; }
         button { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 14px; font-weight: 700; cursor: pointer; }
         button:disabled { background: #cbd5e0 !important; opacity: 0.6; }
-        #search-results, #machine-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
-        .product-card { background: var(--card-bg); border: 1px solid var(--border); padding: 20px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; }
+        .product-card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 12px; border-left: 5px solid var(--valeo-green); cursor: pointer; margin-bottom: 10px; }
         .page { display: none; height: 100%; flex-direction: column; }
         .active-page { display: flex; }
         .history-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 20px; }
@@ -35,9 +31,9 @@
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; display:flex; justify-content:center; align-items:center; z-index:9999; }
     </style>
 </head>
-<body onclick="closeMenuOutside(event)">
+<body onclick="closeMenuOutside()">
 
-<div id="loading-overlay">Veriler Yükleniyor...</div>
+<div id="loading-overlay">Veriler Kontrol Ediliyor...</div>
 
 <div class="container">
     <div id="main-top-bar" class="top-bar" style="display:none;">
@@ -55,11 +51,11 @@
 
     <div id="page-login" class="page active-page">
         <div class="content" style="text-align:center; margin-top:10vh;">
-            <h1 style="color:var(--valeo-green); font-size:64px; margin:0;">Valeo</h1>
+            <h1 style="color:var(--valeo-green); font-size:64px;">Valeo</h1>
             <div style="max-width: 400px; margin: 0 auto;">
                 <input type="text" id="user-input" placeholder="Kullanıcı Adı">
                 <input type="password" id="pass-input" placeholder="Şifre">
-                <button onclick="girisYap()" style="width:100%">GİRİŞ YAP</button>
+                <button onclick="girisYap()" style="width:100%">GİRİŞ</button>
             </div>
         </div>
     </div>
@@ -67,7 +63,7 @@
     <div id="page-search" class="page">
         <div class="content">
             <h2>Stok Arama</h2>
-            <input type="text" id="search-main" placeholder="SAP veya Malzeme Adı..." oninput="aramaYap()">
+            <input type="text" id="search-main" placeholder="SAP veya İsim..." oninput="aramaYap()">
             <div id="search-results"></div>
         </div>
     </div>
@@ -75,32 +71,24 @@
     <div id="page-detail" class="page">
         <div class="content">
             <h2 id="detay-ad"></h2>
-            <p id="detay-sap" style="color:var(--valeo-green); font-weight:bold; font-size:20px;"></p>
-            <div style="background:var(--bg-gray); padding:20px; border-radius:15px;">
-                <p>📍 Adres: <span id="detay-adres"></span></p>
-                <p>📦 Stok: <b id="detay-stok"></b> ADET</p>
-            </div>
-            <button onclick="goToAction()" style="width:100%; margin-top:20px; background:var(--valeo-blue)">BU ÜRÜNÜ SEÇ</button>
+            <p id="detay-sap" style="color:var(--valeo-green); font-weight:bold;"></p>
+            <p>📍 Adres: <span id="detay-adres"></span></p>
+            <p>📦 Stok: <b id="detay-stok"></b> ADET</p>
+            <button onclick="goToAction()" style="width:100%; margin-top:20px; background:var(--valeo-blue)">ÜRÜNÜ SEÇ</button>
         </div>
     </div>
 
     <div id="page-action" class="page">
         <div class="content">
-            <h3>İşlem Kaydı</h3>
             <input type="text" id="action-machine-search" placeholder="Makina No Ara..." oninput="makineAramaYap()">
             <div id="machine-results"></div>
             <div id="selected-machine-box" style="display:none; padding:15px; background:var(--valeo-blue); color:white; border-radius:10px; margin:10px 0; text-align:center;"></div>
-            
             <div style="text-align:center; margin:30px 0;">
                 <button onclick="adetDegistir(-1)" style="width:50px">-</button>
-                <input type="number" id="islem-adet" value="0" style="width:100px; text-align:center; font-size:24px; border:none;" readonly>
+                <input type="number" id="islem-adet" value="0" style="width:80px; text-align:center; font-size:20px; border:none;" readonly>
                 <button onclick="adetDegistir(1)" style="width:50px">+</button>
             </div>
-            
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <button id="btn-dusum" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled style="background:var(--danger)">📉 DÜŞÜM</button>
-                <button id="btn-talep" onclick="finalOnay('SİPARİŞ TALEBİ')" disabled style="background:var(--valeo-dark)">🛒 TALEP</button>
-            </div>
+            <button id="btn-dusum" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled style="width:100%; background:var(--danger)">📉 STOKTAN DÜŞÜM YAP</button>
         </div>
     </div>
 
@@ -126,21 +114,16 @@
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
 
-    // GÜN.AY.YIL SAAT:DAKİKA FORMATI
-    function getFormattedDate(date) {
-        const d = date ? new Date(date) : new Date();
-        return d.toLocaleString('tr-TR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        }).replace(',', '');
+    // TARİH FORMATI: GG.AA.YYYY SS:DD
+    function getNow() {
+        return new Date().toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }).replace(',', '');
     }
 
-    // Excel sayısal tarihini (46174...) GG.AA.YYYY SS:DD formatına çevirir
-    function formatExcelDate(serial) {
-        if (!serial || isNaN(serial)) return serial || "-";
-        const dateObj = XLSX.SSF.parse_date_code(serial);
-        const d = new Date(dateObj.y, dateObj.m - 1, dateObj.d, dateObj.H, dateObj.M);
-        return getFormattedDate(d);
+    // EXCEL TARİH SAYISINI DÜZELTME
+    function formatExcelDate(val) {
+        if (!val || isNaN(val)) return val || "-";
+        const date = new Date((val - 25569) * 86400 * 1000);
+        return date.toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }).replace(',', '');
     }
 
     async function fetchData() {
@@ -155,7 +138,7 @@
             urunler = parse(p).slice(1);
             makineler = parse(m).slice(1);
             document.getElementById('loading-overlay').style.display = 'none';
-        } catch (e) { alert("Veri yükleme hatası!"); }
+        } catch (e) { console.error("Veri hatası"); }
     }
 
     async function gecmisGoster() {
@@ -171,30 +154,34 @@
                 <td>${row[3]}</td>
                 <td>${row[4]}</td>
                 <td>${row[5]}</td>
-                <td>${row[2]}</td>
-                <td>${row[7] || '-'}</td>
-            </tr>`).join('');
+                <td>${row[2]}</td> <td>${row[7] || '-'}</td> </tr>`).join('');
     }
 
     async function kaydet(islem, adet) {
         const user = kullanicilar.find(r => r[0]?.toString().toLowerCase() === localStorage.getItem('depoUser'));
+        
+        // DÜZELTME: F sütunu index 5 (Kullanıcı), H sütunu index 7 (Yetkili)
         const veri = { 
-            tarih: getFormattedDate(), // Yeni kayıt anındaki tarih ve saat
-            sap: seciliUrun[0], ad: seciliUrun[1], 
-            kullanici: user ? user[5] : localStorage.getItem('depoUser'),
-            adet: adet, islem: islem, makina: seciliMakina.no, 
+            tarih: getNow(),
+            sap: seciliUrun[0], 
+            ad: seciliUrun[1], 
+            kullanici: user ? user[5] : localStorage.getItem('depoUser'), // Burası Adres geliyordu, F sütununa sabitlendi.
+            adet: adet, 
+            islem: islem, 
+            makina: seciliMakina.no, 
             yetkili: user ? user[7] : "-" 
         };
+        
         fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-        alert("KAYDEDİLDİ"); showPage('page-search');
+        alert("KAYIT BAŞARILI"); showPage('page-search');
     }
 
-    // Navigasyon ve Arama Fonksiyonları
+    // Standart Fonksiyonlar
     function aramaYap() {
         const q = document.getElementById('search-main').value.toLowerCase();
         const res = urunler.filter(u => u[0].toString().includes(q) || u[1].toLowerCase().includes(q));
-        document.getElementById('search-results').innerHTML = res.slice(0, 20).map(u => `
-            <div class="product-card" onclick="openDetail('${u[0]}')"><b>SAP: ${u[0]}</b><br>${u[1]}</div>`).join('');
+        document.getElementById('search-results').innerHTML = res.slice(0, 15).map(u => `
+            <div class="product-card" onclick="openDetail('${u[0]}')"><b>${u[0]}</b><br>${u[1]}</div>`).join('');
     }
     function openDetail(sap) {
         seciliUrun = urunler.find(u => u[0].toString() === sap.toString());
@@ -212,7 +199,7 @@
     }
     function selectMachine(no) {
         seciliMakina = { no };
-        document.getElementById('selected-machine-box').innerText = "SEÇİLDİ: " + no;
+        document.getElementById('selected-machine-box').innerText = "MAKİNA: " + no;
         document.getElementById('selected-machine-box').style.display = 'block';
         updateBtn();
     }
@@ -227,7 +214,7 @@
         const p = document.getElementById('pass-input').value;
         if (kullanicilar.find(r => r[0]?.toString().toLowerCase() === u && r[1]?.toString() === p)) {
             localStorage.setItem('depoUser', u); showPage('page-search');
-        } else alert("Hatalı Giriş!");
+        } else alert("Giriş Hatalı!");
     }
     function showPage(p) { 
         document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active-page'));
@@ -241,7 +228,7 @@
     function goToAction() { showPage('page-action'); }
     function guvenliCikis() { localStorage.clear(); location.reload(); }
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
-    function finalOnay(i) { if(confirm(i + " onaylıyor musunuz?")) kaydet(i, document.getElementById('islem-adet').value); }
+    function finalOnay(i) { if(confirm(i + " Yapılsın mı?")) kaydet(i, document.getElementById('islem-adet').value); }
 
     window.onload = () => { fetchData(); if (localStorage.getItem('depoUser')) showPage('page-search'); };
 </script>
