@@ -10,7 +10,6 @@
         body.dark-mode { --bg-gray: #1a1a1a; --card-bg: #2d2d2d; --text-color: #f4f7f6; --valeo-dark: #000000; }
         body { font-family: 'Inter', sans-serif; background: var(--bg-gray); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: var(--text-color); transition: 0.3s; }
         
-        /* BİLGİSAYAR DASHBOARD GÖRÜNÜMÜ */
         .container { background: var(--card-bg); width: 95%; max-width: 1300px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; height: 95vh; position: relative; }
         
         .top-bar { background: var(--valeo-dark); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 2000; position: relative; }
@@ -20,16 +19,13 @@
         button { background: var(--valeo-green); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #ccc !important; opacity: 0.6; }
 
-        /* ARAMA SONUÇLARI GRID */
         #results { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 10px; }
         .product-card { background: var(--card-bg); border: 1px solid #eee; padding: 15px; border-radius: 10px; border-left: 6px solid var(--valeo-green); cursor: pointer; transition: 0.2s; }
         .highlight { background-color: #ffeb3b; color: #000; font-weight: bold; border-radius: 2px; }
         
-        /* MENÜ */
         .dropdown-menu { display: none; position: absolute; right: 0; top: 45px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 190px; z-index: 5000; border: 1px solid #eee; overflow: hidden; }
         .dropdown-menu div { padding: 14px 18px; color: var(--text-color); cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 10px; }
 
-        /* MODAL VE GÖRSEL PANELİ */
         .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: var(--card-bg); padding: 20px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; max-height: 90vh; overflow-y: auto; }
         #gorsel-panel { display: none; margin-top: 15px; border: 2px solid var(--valeo-green); border-radius: 10px; overflow: hidden; height: 300px; background: white; }
@@ -43,11 +39,17 @@
         .history-table th { background: var(--valeo-dark); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
         .history-table td { padding: 12px; border-bottom: 1px solid #eee; }
 
-        .user-card { background: var(--card-bg); border-bottom: 1px solid #eee; padding: 12px; display: flex; align-items: center; gap: 15px; }
-        .user-avatar { background: var(--valeo-green); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        /* Müzik Kontrol Butonu Sol Alt */
+        #music-control { position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: var(--valeo-dark); color: white; padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; opacity: 0.6; }
+        #music-control:hover { opacity: 1; }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
+
+<audio id="bg-music" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg">
+</audio>
+<div id="music-control" onclick="toggleMusic()">🎵 Müziği Kapat</div>
 
 <div class="container">
     <div class="top-bar">
@@ -73,7 +75,7 @@
         <div class="content">
             <input type="text" id="user-input" placeholder="Kullanıcı Adı">
             <input type="password" id="pass-input" placeholder="Şifre" onkeyup="if(event.key === 'Enter') girisYap()">
-            <button onclick="girisYap()">SİSTEME GİRİŞ</button>
+            <button onclick="girisYap()">SİSTEME GİRİŞ VE MÜZİK BAŞLAT</button>
         </div>
     </div>
 
@@ -91,19 +93,10 @@
             <div onclick="anaSayfayaDon()" style="cursor:pointer; font-weight:bold;">🔙 GERİ</div>
             <div style="font-weight:bold;">İŞLEM GEÇMİŞİ</div>
         </div>
-        <div class="content">
-            <table class="history-table">
-                <thead><tr><th>SAP</th><th>AD</th><th>PERS</th><th>ADET</th><th>TİP</th><th>TARİH</th></tr></thead>
-                <tbody id="history-body"></tbody>
-            </table>
-        </div>
+        <div class="content"><table class="history-table"><thead><tr><th>SAP</th><th>AD</th><th>PERS</th><th>ADET</th><th>TİP</th><th>TARİH</th></tr></thead><tbody id="history-body"></tbody></table></div>
     </div>
-
     <div id="users-screen" style="display:none; height: 100%; flex-direction: column;">
-        <div style="background: var(--valeo-green); color: white; padding: 15px; display: flex; justify-content: space-between;">
-            <div onclick="anaSayfayaDon()" style="cursor:pointer; font-weight:bold;">🔙 GERİ</div>
-            <div style="font-weight:bold;">KULLANICI LİSTESİ</div>
-        </div>
+        <div style="background: var(--valeo-green); color: white; padding: 15px; display: flex; justify-content: space-between;"><div onclick="anaSayfayaDon()" style="cursor:pointer; font-weight:bold;">🔙 GERİ</div><div style="font-weight:bold;">KULLANICI LİSTESİ</div></div>
         <div class="content" id="users-list-container"></div>
     </div>
 </div>
@@ -113,7 +106,6 @@
         <h3 id="modal-subtitle" style="color: var(--valeo-green); margin-top:0;"></h3>
         <button onclick="toggleGorselPanel()" style="background:var(--valeo-dark); color:white; margin-bottom:15px; font-size:12px; padding:10px; width:100%;">🖼️ GÖRSELİ GÖSTER / GİZLE</button>
         <div id="gorsel-panel"><iframe id="gorsel-frame" src=""></iframe></div>
-        
         <div class="stepper">
             <button onclick="adetDegistir(-1)">-</button>
             <input type="number" id="islem-adet" value="0" readonly>
@@ -133,6 +125,38 @@
 
     let urunler = [], kullanicilar = [], seciliUrun = null;
 
+    // TÜRKİYE SAATİ VE MÜZİK FONKSİYONLARI
+    function getTurkeyTime() {
+        const now = new Date();
+        return now.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+    }
+
+    function toggleMusic() {
+        const m = document.getElementById('bg-music');
+        const btn = document.getElementById('music-control');
+        if (m.paused) { m.play(); btn.innerText = "🎵 Müziği Kapat"; } 
+        else { m.pause(); btn.innerText = "🎵 Müziği Aç"; }
+    }
+
+    // GİRİŞ YAPARKEN MÜZİĞİ BAŞLAT
+    async function girisYap() {
+        const u = document.getElementById('user-input').value.trim().toLowerCase(), p = document.getElementById('pass-input').value.trim();
+        const found = kullanicilar.find(row => Object.values(row)[0]?.toString().toLowerCase() === u && Object.values(row)[1]?.toString() === p);
+        if (found) { 
+            localStorage.setItem('depoUser', u); 
+            loginSuccess(u);
+            document.getElementById('bg-music').play().catch(() => console.log("Müzik için etkileşim bekleniyor"));
+        } else { alert("Hatalı Giriş!"); }
+    }
+
+    function loginSuccess(user) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'flex';
+        document.getElementById('app-menu-wrap').style.display = 'block';
+        document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
+    }
+
+    // ARİTMETİK VE ARAMA FONKSİYONLARI (KORUNANLAR)
     function trNormalize(t) { return t ? t.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g') : ""; }
 
     function highlightText(text, keywords) {
@@ -168,12 +192,10 @@
         const queryNorm = trNormalize(document.getElementById('search').value).trim();
         const keywords = queryNorm.split(/\s+/).filter(k => k.length > 0);
         if(!queryNorm) { document.getElementById('results').innerHTML = ""; return; }
-        
         const filtered = urunler.filter(u => {
             const rowText = trNormalize(Object.values(u).join(" "));
             return keywords.every(key => rowText.includes(key));
         });
-
         document.getElementById('results').innerHTML = filtered.slice(0, 40).map(i => {
             const v = Object.values(i);
             return `<div class="product-card" onclick="openModal('${v[0]}','${v[1].replace(/'/g, "\\'")}','${v[2]}','${v[3]}')">
@@ -207,7 +229,7 @@
     }
 
     async function onayliKaydet(islem, btn) {
-        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: document.getElementById('islem-adet').value, islem: islem, kullanici: localStorage.getItem('depoUser') };
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: document.getElementById('islem-adet').value, islem: islem, kullanici: localStorage.getItem('depoUser'), tarih: getTurkeyTime() };
         btn.innerText = "YÜKLENİYOR...";
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
@@ -215,7 +237,7 @@
         } catch (e) { alert("Hata!"); }
     }
 
-    async function gecmisGoster(isNew) {
+    async function gecmisGoster() {
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('users-screen').style.display = 'none';
         document.getElementById('history-screen').style.display = 'flex';
@@ -230,25 +252,11 @@
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('history-screen').style.display = 'none';
         document.getElementById('users-screen').style.display = 'flex';
-        document.getElementById('dropdown').style.display = 'none';
         const container = document.getElementById('users-list-container');
         container.innerHTML = kullanicilar.map(u => {
             const v = Object.values(u);
-            return `<div class="user-card"><div class="user-avatar">${v[0].charAt(0).toUpperCase()}</div><div><b>${v[0].toUpperCase()}</b><br><small>Depo Personeli</small></div></div>`;
+            return `<div class="user-card"><div class="user-avatar">${v[0].charAt(0).toUpperCase()}</div><div><b>${v[0].toUpperCase()}</b><br><small>Personel</small></div></div>`;
         }).join('');
-    }
-
-    async function girisYap() {
-        const u = document.getElementById('user-input').value.trim().toLowerCase(), p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => Object.values(row)[0]?.toString().toLowerCase() === u && Object.values(row)[1]?.toString() === p);
-        if (found) { localStorage.setItem('depoUser', u); loginSuccess(u); } else { alert("Hatalı Giriş!"); }
-    }
-
-    function loginSuccess(user) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app-screen').style.display = 'flex';
-        document.getElementById('app-menu-wrap').style.display = 'block';
-        document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
     }
 
     function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
