@@ -30,6 +30,12 @@
         .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; }
         .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
         .machine-selection-box { background: var(--valeo-blue); color: white; padding: 12px; border-radius: 10px; margin: 10px 0; font-weight: bold; font-size: 14px; }
+
+        /* YENİ GEÇMİŞ TABLOSU STİLLERİ */
+        .history-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; }
+        .history-table td { padding: 10px 5px; border-bottom: 1px solid #eee; color: var(--text-main); }
+        .history-row:nth-child(even) { background: rgba(0,0,0,0.02); }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
@@ -43,6 +49,7 @@
         <div style="cursor:pointer; font-size: 20px;" onclick="toggleMenu(event)">☰</div>
         <div id="dropdown" class="dropdown-menu">
             <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
+            <div onclick="gecmisGoster()">📋 İşlem Geçmişi</div>
             <div onclick="guvenliCikis()" style="color:var(--danger)">🚪 Çıkış Yap</div>
         </div>
     </div>
@@ -68,11 +75,9 @@
     <div id="page-detail" class="page">
         <div class="content">
             <div id="detail-image-panel"><iframe id="detail-frame" src=""></iframe></div>
-            
             <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px; height: auto; width: auto; display: inline-block;">
                 🖼️ GÖRSELİ GÖSTER
             </button>
-
             <h2 id="detay-ad" style="margin:5px 0; font-size:22px;"></h2>
             <div id="detay-sap" style="font-weight:900; color:var(--valeo-green); font-size:18px; margin-bottom:15px;"></div>
             <div style="background:var(--bg-gray); padding:15px; border-radius:12px; font-size:14px;">
@@ -89,7 +94,6 @@
             <input type="text" id="action-machine-search" placeholder="Makina ara..." oninput="makineAramaYap()">
             <div id="machine-results" style="max-height:150px; overflow-y:auto;"></div>
             <div id="selected-machine-box" class="machine-selection-box" style="display:none;"></div>
-            
             <div style="margin-top:20px; text-align:center;">
                 <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">İŞLEM ADEDİ</label>
                 <div class="stepper">
@@ -102,13 +106,34 @@
             <button id="btn-talep" style="background:var(--valeo-dark); margin-top:10px;" onclick="finalOnay('SİPARİŞ TALEBİ')" disabled>🛒 SİPARİŞ TALEBİ</button>
         </div>
     </div>
+
+    <div id="page-history" class="page">
+        <div class="content">
+            <h3 style="margin-top:0;">Son İşlemler</h3>
+            <div style="overflow-x: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>SAP</th>
+                            <th>ADET</th>
+                            <th>TİP</th>
+                            <th>PERS</th>
+                            <th>TARİH</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
-    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
+    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
+    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
 
@@ -117,45 +142,6 @@
         return text.toString().replace(/İ/g, 'i').replace(/I/g, 'i').toLowerCase()
             .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
             .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').trim();
-    }
-
-    function aramaYap() {
-        const rawInput = document.getElementById('search-main').value;
-        const resultsContainer = document.getElementById('search-results');
-        if (!rawInput || !rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
-
-        const queryNormalized = trNormalize(rawInput);
-        const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
-
-        const filtered = urunler.filter(u => {
-            const v = Object.values(u);
-            const targetText = trNormalize((v[0] || "") + " " + (v[1] || ""));
-            return searchTerms.every(term => targetText.includes(term));
-        });
-
-        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
-            const v = Object.values(u);
-            let displaySap = String(v[0]);
-            let displayAd = String(v[1]);
-
-            searchTerms.forEach(term => {
-                if (term.length < 1) return;
-                const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const regex = new RegExp(`(${safeTerm})`, 'gi');
-                displaySap = displaySap.replace(regex, '___M___$1___E___');
-                displayAd = displayAd.replace(regex, '___M___$1___E___');
-            });
-
-            const applyHighlight = (txt) => txt
-                .split('___M___').join('<mark style="background:#f1c40f; color:black; padding:0 2px; border-radius:3px;">')
-                .split('___E___').join('</mark>');
-
-            return `<div class="product-card" onclick="openDetail('${v[0]}')">
-                <div style="font-weight:900;">SAP: ${applyHighlight(displaySap)}</div>
-                <div style="font-weight:700; font-size:14px;">${applyHighlight(displayAd)}</div>
-                <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${v[2] || "-"} | 📦 ${v[3] || "0"} ADET</div>
-            </div>`;
-        }).join('');
     }
 
     function showPage(pageId) {
@@ -167,12 +153,63 @@
     function goBack() {
         if (document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
         else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail');
+        else if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search');
+    }
+
+    // GEÇMİŞİ ÇEKEN FONKSİYON
+    async function gecmisGoster() {
+        showPage('page-history');
+        document.getElementById('dropdown').style.display = 'none';
+        document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Yükleniyor...</td></tr>';
+        
+        try {
+            const res = await fetch(GECMIS_URL);
+            const csvText = await res.text();
+            const wb = XLSX.read(csvText, {type:'string'});
+            const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
+            
+            // İlk satır başlık olduğu için slice(1) yapıyoruz ve tersten sıralıyoruz
+            const rows = data.slice(1).reverse().slice(0, 40); 
+            
+            document.getElementById('history-body').innerHTML = rows.map(row => `
+                <tr class="history-row">
+                    <td><b>${row[0] || '-'}</b></td>
+                    <td>${row[3] || '0'}</td>
+                    <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
+                    <td>${row[5] || '-'}</td>
+                    <td style="font-size:9px; opacity:0.7;">${row[6] || '-'}</td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Veri çekilemedi.</td></tr>';
+        }
+    }
+
+    // --- MEVCUT DİĞER FONKSİYONLAR (Arama, Giriş, Kayıt vb.) ---
+    function aramaYap() {
+        const rawInput = document.getElementById('search-main').value;
+        const resultsContainer = document.getElementById('search-results');
+        if (!rawInput || !rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
+        const queryNormalized = trNormalize(rawInput);
+        const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
+        const filtered = urunler.filter(u => {
+            const v = Object.values(u);
+            const targetText = trNormalize((v[0] || "") + " " + (v[1] || ""));
+            return searchTerms.every(term => targetText.includes(term));
+        });
+        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
+            const v = Object.values(u);
+            return `<div class="product-card" onclick="openDetail('${v[0]}')">
+                <div style="font-weight:900;">SAP: ${v[0]}</div>
+                <div style="font-weight:700; font-size:14px;">${v[1]}</div>
+                <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${v[2] || "-"} | 📦 ${v[3] || "0"} ADET</div>
+            </div>`;
+        }).join('');
     }
 
     function girisYap() {
         const u = document.getElementById('user-input').value.trim().toLowerCase();
         const p = document.getElementById('pass-input').value.trim();
-        if(kullanicilar.length === 0) { alert("Veriler yükleniyor..."); return; }
         const found = kullanicilar.find(row => {
             const v = Object.values(row);
             return v[0] && v[0].toString().toLowerCase() === u && v[1] && v[1].toString() === p;
@@ -188,36 +225,25 @@
         document.getElementById('detay-sap').innerText = "SAP: " + v[0];
         document.getElementById('detay-adres').innerText = v[2];
         document.getElementById('detay-stok').innerText = v[3];
-        
-        // Panel ve butonu sıfırla
         document.getElementById('detail-image-panel').style.display = "none";
         document.getElementById('btn-toggle-img').innerText = "🖼️ GÖRSELİ GÖSTER";
-        
         document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(v[1])}`;
         showPage('page-detail');
     }
 
-    // Görsel açma-kapama fonksiyonu
     function toggleImage() {
         const panel = document.getElementById('detail-image-panel');
         const btn = document.getElementById('btn-toggle-img');
-        if (panel.style.display === "none" || panel.style.display === "") {
-            panel.style.display = "block";
-            btn.innerText = "✖ GÖRSELİ GİZLE";
-        } else {
-            panel.style.display = "none";
-            btn.innerText = "🖼️ GÖRSELİ GÖSTER";
-        }
+        if (panel.style.display === "none") { panel.style.display = "block"; btn.innerText = "✖ GÖRSELİ GİZLE"; }
+        else { panel.style.display = "none"; btn.innerText = "🖼️ GÖRSELİ GÖSTER"; }
     }
 
     function goToAction() {
-        seciliMakina = null;
-        document.getElementById('islem-adet').value = 0;
+        seciliMakina = null; document.getElementById('islem-adet').value = 0;
         document.getElementById('selected-machine-box').style.display = 'none';
         document.getElementById('machine-results').innerHTML = "";
         document.getElementById('action-machine-search').value = "";
-        updateButtons();
-        showPage('page-action');
+        updateButtons(); showPage('page-action');
     }
 
     function makineAramaYap() {
