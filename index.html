@@ -39,17 +39,16 @@
         .history-table th { background: var(--valeo-dark); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
         .history-table td { padding: 12px; border-bottom: 1px solid #eee; }
 
-        /* Müzik Kontrol Butonu Sol Alt */
-        #music-control { position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: var(--valeo-dark); color: white; padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; opacity: 0.6; }
-        #music-control:hover { opacity: 1; }
+        /* Müzik Kontrol Paneli */
+        #music-control { position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: var(--valeo-dark); color: white; padding: 10px 15px; border-radius: 25px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid var(--valeo-green); }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
 
 <audio id="bg-music" loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg">
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
 </audio>
-<div id="music-control" onclick="toggleMusic()">🎵 Müziği Kapat</div>
+<div id="music-control" onclick="toggleMusic()">🎵 <span id="music-text">Müziği Başlat</span></div>
 
 <div class="container">
     <div class="top-bar">
@@ -71,11 +70,12 @@
     <div id="login-screen" style="max-width: 400px; margin: auto;">
         <div style="text-align:center; padding:30px;">
             <div style="font-size: 45px; color: var(--valeo-green); font-weight: 900;">VALEO</div>
+            <p style="font-size: 12px; opacity: 0.7;">Ararım Seni...</p>
         </div>
         <div class="content">
             <input type="text" id="user-input" placeholder="Kullanıcı Adı">
             <input type="password" id="pass-input" placeholder="Şifre" onkeyup="if(event.key === 'Enter') girisYap()">
-            <button onclick="girisYap()">SİSTEME GİRİŞ VE MÜZİK BAŞLAT</button>
+            <button onclick="girisYap()">SİSTEME GİRİŞ</button>
         </div>
     </div>
 
@@ -95,8 +95,12 @@
         </div>
         <div class="content"><table class="history-table"><thead><tr><th>SAP</th><th>AD</th><th>PERS</th><th>ADET</th><th>TİP</th><th>TARİH</th></tr></thead><tbody id="history-body"></tbody></table></div>
     </div>
+
     <div id="users-screen" style="display:none; height: 100%; flex-direction: column;">
-        <div style="background: var(--valeo-green); color: white; padding: 15px; display: flex; justify-content: space-between;"><div onclick="anaSayfayaDon()" style="cursor:pointer; font-weight:bold;">🔙 GERİ</div><div style="font-weight:bold;">KULLANICI LİSTESİ</div></div>
+        <div style="background: var(--valeo-green); color: white; padding: 15px; display: flex; justify-content: space-between;">
+            <div onclick="anaSayfayaDon()" style="cursor:pointer; font-weight:bold;">🔙 GERİ</div>
+            <div style="font-weight:bold;">KULLANICI LİSTESİ</div>
+        </div>
         <div class="content" id="users-list-container"></div>
     </div>
 </div>
@@ -119,33 +123,31 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
-    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
-    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
+    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=1489941403&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=1584268931&single=true&output=csv';
+    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], kullanicilar = [], seciliUrun = null;
 
-    // TÜRKİYE SAATİ VE MÜZİK FONKSİYONLARI
     function getTurkeyTime() {
-        const now = new Date();
-        return now.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+        return new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
     }
 
     function toggleMusic() {
         const m = document.getElementById('bg-music');
-        const btn = document.getElementById('music-control');
-        if (m.paused) { m.play(); btn.innerText = "🎵 Müziği Kapat"; } 
-        else { m.pause(); btn.innerText = "🎵 Müziği Aç"; }
+        const txt = document.getElementById('music-text');
+        if (m.paused) { m.play(); txt.innerText = "Müziği Durdur"; } 
+        else { m.pause(); txt.innerText = "Müziği Başlat"; }
     }
 
-    // GİRİŞ YAPARKEN MÜZİĞİ BAŞLAT
     async function girisYap() {
         const u = document.getElementById('user-input').value.trim().toLowerCase(), p = document.getElementById('pass-input').value.trim();
         const found = kullanicilar.find(row => Object.values(row)[0]?.toString().toLowerCase() === u && Object.values(row)[1]?.toString() === p);
         if (found) { 
             localStorage.setItem('depoUser', u); 
             loginSuccess(u);
-            document.getElementById('bg-music').play().catch(() => console.log("Müzik için etkileşim bekleniyor"));
+            const m = document.getElementById('bg-music');
+            m.play().then(() => document.getElementById('music-text').innerText = "Müziği Durdur").catch(() => {});
         } else { alert("Hatalı Giriş!"); }
     }
 
@@ -156,14 +158,12 @@
         document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
     }
 
-    // ARİTMETİK VE ARAMA FONKSİYONLARI (KORUNANLAR)
+    // STANDART FONKSİYONLAR (ARAMA, MODAL, NORMALİZASYON...)
     function trNormalize(t) { return t ? t.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g') : ""; }
 
     function highlightText(text, keywords) {
         if (!keywords || keywords.length === 0 || !text) return text;
-        let originalText = text.toString();
-        let lowerText = trNormalize(originalText);
-        let result = "", lastIdx = 0, matches = [];
+        let originalText = text.toString(), lowerText = trNormalize(originalText), result = "", lastIdx = 0, matches = [];
         keywords.forEach(key => {
             let startPos = 0;
             while ((startPos = lowerText.indexOf(key, startPos)) !== -1) {
