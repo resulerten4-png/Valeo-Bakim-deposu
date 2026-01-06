@@ -8,377 +8,211 @@
     <style>
         :root { --valeo-green: #99cc00; --valeo-blue: #0091ff; --valeo-dark: #2d2d2d; --bg-gray: #f4f7f6; --card-bg: #ffffff; --text-color: #2d2d2d; --danger: #e74c3c; --warning: #f1c40f; }
         body.dark-mode { --bg-gray: #1a1a1a; --card-bg: #2d2d2d; --text-color: #f4f7f6; --valeo-dark: #000000; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-gray); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: var(--text-color); transition: 0.3s; }
-        .container { background: var(--card-bg); width: 95%; max-width: 450px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; height: 95vh; position: relative; }
-        .status-info { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
-        .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-        .online-dot { background-color: var(--valeo-green); box-shadow: 0 0 5px var(--valeo-green); }
-        .offline-dot { background-color: var(--danger); box-shadow: 0 0 5px var(--danger); }
-        #status-text { font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        #offline-banner { background: var(--warning); color: #000; padding: 5px; text-align: center; font-size: 11px; font-weight: bold; display: none; z-index: 5000; }
-        #offline-banner.active { display: block; }
-        .watermark-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; user-select: none; z-index: 0; width: 100%; }
-        .watermark-text { font-size: 90px; font-weight: 900; color: var(--valeo-green); opacity: 0.12; line-height: 0.85; letter-spacing: -2px; font-family: 'Roboto Mono', monospace; }
-        .watermark-subtext { font-size: 20px; font-weight: 700; color: var(--text-color); opacity: 0.08; letter-spacing: 10px; text-transform: uppercase; border-top: 2px solid var(--valeo-green); display: inline-block; margin-top: 5px; padding-top: 5px; }
-        .top-bar { background: var(--valeo-dark); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 2000; position: relative; }
-        .user-section { display: flex; flex-direction: column; }
-        .content { padding: 20px; overflow-y: auto; flex-grow: 1; position: relative; z-index: 1; }
-        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 2px solid #ddd; background: var(--card-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; position: relative; z-index: 2; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-gray); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            color: var(--text-color); 
+            transition: 0.3s;
+            overflow: hidden; 
+        }
+
+        /* Bilgisayar Modu İçin Konteyner Ayarı */
+        .container { 
+            background: var(--card-bg); 
+            width: 95%; 
+            max-width: 500px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            display: flex; 
+            flex-direction: column; 
+            height: 90vh; /* Masaüstünde ekranın dışına taşmaz */
+            position: relative; 
+            overflow: hidden;
+        }
+
+        .top-bar { background: var(--valeo-dark); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 2000; }
+        
+        .content { 
+            padding: 20px; 
+            overflow-y: auto; 
+            flex-grow: 1; 
+            position: relative; 
+            z-index: 1;
+        }
+
+        /* Kaydırma Çubuğu Estetiği */
+        .content::-webkit-scrollbar { width: 6px; }
+        .content::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 2px solid #ddd; background: var(--card-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; }
         button { background: var(--valeo-green); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:disabled { background: #ccc !important; cursor: not-allowed; opacity: 0.6; }
-        .product-card { background: var(--card-bg); border: 1px solid #eee; margin-top: 10px; padding: 15px; border-radius: 10px; border-left: 6px solid var(--valeo-green); cursor: pointer; position: relative; z-index: 2; }
-        .highlight { background-color: #ffeb3b; color: #000; font-weight: bold; border-radius: 2px; padding: 0 2px; }
-        .menu-container { position: relative; }
-        .menu-btn { cursor: pointer; font-size: 24px; padding: 5px; user-select: none; }
-        .dropdown-menu { display: none; position: absolute; right: 0; top: 45px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 190px; z-index: 5000; overflow: hidden; border: 1px solid #eee; }
-        .dropdown-menu div { padding: 14px 18px; color: var(--text-color); cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 10px; font-weight: 500; }
-        .history-bar { background: var(--valeo-green); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; position: relative; z-index: 500; }
-        .stats-container { display: flex; justify-content: space-around; background: var(--valeo-dark); color: white; padding: 5px; font-size: 10px; border-bottom: 2px solid var(--valeo-green); }
-        .stat-item { display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: 0.2s; }
-        .toggle-container { display: flex; align-items: center; background: rgba(0,0,0,0.2); border-radius: 20px; padding: 2px; cursor: pointer; position: relative; width: 100px; height: 26px; user-select: none; }
-        .toggle-option { flex: 1; text-align: center; font-size: 9px; z-index: 2; transition: 0.3s; color: white; }
-        .toggle-slider { position: absolute; width: 48px; height: 22px; background: var(--valeo-dark); border-radius: 18px; left: 2px; transition: 0.3s; z-index: 1; }
-        .all-active .toggle-slider { left: 50px; }
-        .history-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 8px; table-layout: fixed; }
-        .history-table th { background: var(--valeo-dark); color: white; padding: 8px 1px; text-align: left; position: sticky; top: 0; }
-        .history-table td { padding: 8px 1px; border-bottom: 1px solid #eee; color: var(--text-color); word-wrap: break-word; vertical-align: middle; }
-        .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: var(--card-bg); padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; max-height: 90vh; overflow-y: auto;}
-        #gorsel-panel { display: none; margin-top: 15px; border: 2px solid var(--valeo-green); border-radius: 10px; overflow: hidden; height: 250px; position: relative; background: white; }
-        #gorsel-frame { width: 100%; height: 100%; border: none; }
-        .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
-        .stepper button { width: 50px; height: 50px; padding: 0; font-size: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--valeo-dark); color: white; }
-        #islem-adet { width: 80px; text-align: center; font-size: 28px; font-weight: 800; border: none; background: transparent; pointer-events: none; margin: 0; color: var(--text-color); }
-        .user-card { background: var(--card-bg); border-bottom: 1px solid #eee; padding: 12px; display: flex; align-items: center; gap: 15px; }
-        .user-avatar { background: var(--valeo-green); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        button:disabled { background: #ccc !important; opacity: 0.6; }
+
+        .product-card { background: var(--card-bg); border: 1px solid #eee; margin-top: 10px; padding: 15px; border-radius: 10px; border-left: 6px solid var(--valeo-green); cursor: pointer; }
+        
+        .dropdown-menu { display: none; position: absolute; right: 20px; top: 60px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 190px; z-index: 5000; border: 1px solid #eee; }
+        .dropdown-menu div { padding: 14px 18px; color: var(--text-color); cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
+        .dropdown-menu div:hover { background: var(--valeo-green); color: white; }
+
+        .history-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; }
+        .history-table td { padding: 10px 5px; border-bottom: 1px solid #eee; }
+
+        .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        .modal-content { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
 
 <div class="container">
-    <div id="offline-banner">📡 Çevrimdışı: <span id="queue-count">0</span> işlem bekliyor.</div>
     <div class="top-bar">
         <div class="user-section">
-            <div id="user-display">👤 YÜKLENİYOR...</div>
-            <div id="connection-indicator" class="status-info">
-                <span id="status-dot" class="status-dot online-dot"></span>
-                <span id="status-text" style="color: var(--valeo-green);">Çevrimiçi</span>
-            </div>
+            <div id="user-display" style="font-weight: bold;">👤 GİRİŞ YAPIN</div>
+            <div id="status-text" style="font-size: 10px; color: var(--valeo-green);">● Çevrimiçi</div>
         </div>
-        <div id="top-right-section">
-            <div id="app-menu-wrap" class="menu-container" style="display:none;">
-                <div class="menu-btn" onclick="toggleMenu(event)">☰</div>
-                <div id="dropdown" class="dropdown-menu">
-                    <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
-                    <div onclick="gecmisGoster(true)">📋 İşlemler</div>
-                    <div onclick="kullaniciSayfasiGoster()">👥 Kullanıcılar</div>
-                    <div onclick="guvenliCikis()" style="color: var(--danger);">🚪 Güvenli Çıkış</div>
-                </div>
+        <div id="menu-btn-container" style="display:none;">
+            <div onclick="toggleMenu(event)" style="cursor:pointer; font-size:24px;">☰</div>
+            <div id="dropdown" class="dropdown-menu">
+                <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
+                <div onclick="gecmisGoster(true)">📋 İşlemler</div>
+                <div onclick="guvenliCikis()">🚪 Güvenli Çıkış</div>
             </div>
         </div>
     </div>
 
-    <div id="login-screen">
-        <div style="text-align:center; padding:25px 20px;">
-            <div style="font-size: 45px; color: var(--valeo-green); font-weight: 900; letter-spacing: -2px;">VALEO</div>
-            <div style="font-size: 11px; opacity: 0.6; letter-spacing: 2px;">BAKIM DEPO PORTALI</div>
+    <div id="login-screen" class="content">
+        <div style="text-align:center; margin-bottom: 30px;">
+            <h1 style="color: var(--valeo-green); margin:0; font-size: 40px;">VALEO</h1>
+            <p style="letter-spacing: 2px; font-size: 12px; opacity: 0.7;">BAKIM DEPO SİSTEMİ</p>
         </div>
+        <input type="text" id="user-input" placeholder="Kullanıcı Adı">
+        <input type="password" id="pass-input" placeholder="Şifre" onkeyup="checkEnter(event)">
+        <button onclick="girisYap()">SİSTEME GİRİŞ</button>
+    </div>
+
+    <div id="app-screen" style="display:none; height: 100%; flex-direction: column;">
         <div class="content">
-            <input type="text" id="user-input" placeholder="Kullanıcı Adı">
-            <input type="password" id="pass-input" placeholder="Şifre">
-            <button onclick="girisYap()">SİSTEME GİRİŞ</button>
-        </div>
-    </div>
-
-    <div id="app-screen" style="display:none; height: 100%; flex-direction: column; position: relative;">
-        <div id="central-watermark" class="watermark-bg">
-            <div class="watermark-text">VALEO</div>
-            <div class="watermark-subtext">BAKIM DEPO</div>
-        </div>
-        <div class="content" id="search-scroll-area">
-            <input type="text" id="search" placeholder="Malzeme veya SAP ara..." oninput="aramaYap(true)">
-            <div id="count-info" style="font-size:11px; margin-bottom:10px; color:#888;"></div>
+            <input type="text" id="search" placeholder="SAP veya Malzeme Adı ile ara..." oninput="aramaYap()">
             <div id="results"></div>
         </div>
     </div>
 
     <div id="history-screen" style="display:none; height: 100%; flex-direction: column;">
-        <div class="history-bar">
-            <div onclick="anaSayfayaDon()" style="cursor:pointer; font-size:12px;">🔙 GERİ</div>
-            <div class="toggle-container" id="history-toggle" onclick="toggleHistoryView()">
-                <div class="toggle-slider"></div>
-                <div class="toggle-option">KENDİ</div>
-                <div class="toggle-option">TÜMÜ</div>
-            </div>
+        <div style="background: var(--valeo-green); color: white; padding: 10px; display: flex; justify-content: space-between;">
+            <span onclick="anaSayfayaDon()" style="cursor:pointer;">🔙 GERİ</span>
+            <span>İŞLEM GEÇMİŞİ</span>
         </div>
-        <div class="stats-container">
-            <div class="stat-item" id="btn-filter-dusum" onclick="gecmisFiltrele('STOKTAN DÜŞÜM')">📉 DÜŞÜM: <span id="stat-dusum" style="color:var(--danger); font-weight:bold;">0</span></div>
-            <div class="stat-item" id="btn-filter-siparis" onclick="gecmisFiltrele('SİPARİŞ TALEBİ')">🛒 SİPARİŞ: <span id="stat-siparis" style="color:var(--valeo-blue); font-weight:bold;">0</span></div>
-        </div>
-        <div class="content" id="history-scroll-area">
+        <div class="content">
             <table class="history-table">
-                <thead><tr><th>SAP</th><th>AD</th><th>PERS</th><th>ADET</th><th>TALEP</th><th>TARİH</th><th>SRMLU</th></tr></thead>
+                <thead><tr><th>SAP</th><th>AD</th><th>ADET</th><th>TARİH</th></tr></thead>
                 <tbody id="history-body"></tbody>
             </table>
         </div>
-    </div>
-
-    <div id="users-screen" style="display:none; height: 100%; flex-direction: column;">
-        <div class="history-bar"><div onclick="anaSayfayaDon()" style="cursor:pointer; font-size:12px;">🔙 GERİ</div><div style="font-size:14px;">KULLANICI LİSTESİ</div></div>
-        <div class="content" id="users-list-container"></div>
     </div>
 </div>
 
 <div id="action-modal" class="modal">
     <div class="modal-content">
-        <h3 id="modal-subtitle"></h3>
-        <button onclick="toggleGorselPanel()" style="background:var(--valeo-dark); color:white; margin-bottom:15px; font-size:12px; padding:10px; width:100%;">🖼️ GÖRSELİ GÖSTER / GİZLE</button>
-        <div id="gorsel-panel"><iframe id="gorsel-frame" src=""></iframe></div>
-        <div class="stepper">
-            <button onclick="adetDegistir(-1)">-</button>
-            <input type="number" id="islem-adet" value="0" readonly>
-            <button onclick="adetDegistir(1)">+</button>
+        <h3 id="modal-title">Ürün İşlemi</h3>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin: 20px 0;">
+            <button onclick="adetDegistir(-1)" style="width:50px;">-</button>
+            <input type="number" id="islem-adet" value="0" readonly style="width: 60px; text-align: center; border:none; font-size: 20px; font-weight: bold;">
+            <button onclick="adetDegistir(1)" style="width:50px;">+</button>
         </div>
-        <button id="btn-dusum" style="background:var(--danger);" onclick="onayliKaydet('STOKTAN DÜŞÜM', this)" disabled>📉 STOKTAN DÜŞÜM</button>
-        <button id="btn-talep" style="background:var(--valeo-blue); color:white; margin-top:10px;" onclick="onayliKaydet('SİPARİŞ TALEBİ', this)" disabled>🛒 SİPARİŞ OLUŞTUR</button>
-        <button onclick="modalKapat()" style="background:#eee; color:#333; margin-top:15px;">VAZGEÇ</button>
+        <button id="btn-onay" onclick="onayliKaydet()">İŞLEMİ ONAYLA</button>
+        <button onclick="modalKapat()" style="background:#eee; color:#333; margin-top: 10px;">İPTAL</button>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
+    // URL ve Veri Değişkenleri
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
-    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
-
+    
     let urunler = [], kullanicilar = [], seciliUrun = null;
-    let filteredUrunler = [], rawHistory = [], filteredHistory = [];
-    let showAllUsers = false, activeFilter = null;
-    let syncQueue = JSON.parse(localStorage.getItem('valeo_queue') || '[]');
 
-    // MENÜ YÖNETİMİ
-    function toggleMenu(e) {
-        if(e) e.stopPropagation();
-        const d = document.getElementById('dropdown');
-        d.style.display = d.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function closeMenuOutside(e) {
-        const d = document.getElementById('dropdown');
-        const menuBtn = document.querySelector('.menu-btn');
-        // Eğer menü açıksa ve tıklanan yer menü butonu veya menünün kendisi değilse kapat
-        if (d.style.display === 'block' && !d.contains(e.target) && e.target !== menuBtn) {
-            d.style.display = 'none';
+    // ENTER TUŞU KONTROLÜ
+    function checkEnter(event) {
+        if (event.key === "Enter") {
+            girisYap();
         }
     }
 
-    function updateStatusIndicator() {
-        const dot = document.getElementById('status-dot');
-        const text = document.getElementById('status-text');
-        if (navigator.onLine) { dot.className = "status-dot online-dot"; text.innerText = "Çevrimiçi"; syncData(); } 
-        else { dot.className = "status-dot offline-dot"; text.innerText = "Çevrimdışı"; }
-    }
-    window.addEventListener('online', updateStatusIndicator);
-    window.addEventListener('offline', updateStatusIndicator);
-
-    async function syncData() {
-        if (syncQueue.length === 0 || !navigator.onLine) return;
-        const item = syncQueue[0];
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(item) });
-            syncQueue.shift();
-            localStorage.setItem('valeo_queue', JSON.stringify(syncQueue));
-            updateQueueUI(); syncData();
-        } catch (e) {}
-    }
-
-    function updateQueueUI() {
-        const banner = document.getElementById('offline-banner');
-        if (syncQueue.length > 0) { banner.classList.add('active'); document.getElementById('queue-count').innerText = syncQueue.length; } 
-        else { banner.classList.remove('active'); }
-    }
-
-    function trNormalize(text) { return text ? text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g') : ""; }
-
-    function highlightText(text, keywords) {
-        if (!keywords || keywords.length === 0 || !text) return text;
-        let originalText = text.toString();
-        let lowerText = trNormalize(originalText);
-        let result = "";
-        let lastIdx = 0;
-        let matches = [];
-        keywords.forEach(key => {
-            let startPos = 0;
-            while ((startPos = lowerText.indexOf(key, startPos)) !== -1) {
-                matches.push({ start: startPos, end: startPos + key.length });
-                startPos += key.length;
-            }
+    async function girisYap() {
+        const u = document.getElementById('user-input').value.trim().toLowerCase();
+        const p = document.getElementById('pass-input').value.trim();
+        
+        const found = kullanicilar.find(row => {
+            const v = Object.values(row);
+            return v[0] && v[0].toString().toLowerCase() === u && v[1] && v[1].toString() === p;
         });
-        matches.sort((a, b) => a.start - b.start);
-        let merged = [];
-        if (matches.length > 0) {
-            let current = matches[0];
-            for (let i = 1; i < matches.length; i++) {
-                if (matches[i].start < current.end) {
-                    current.end = Math.max(current.end, matches[i].end);
-                } else {
-                    merged.push(current);
-                    current = matches[i];
-                }
-            }
-            merged.push(current);
+
+        if (found) {
+            localStorage.setItem('depoUser', u);
+            loginSuccess(u);
+        } else {
+            alert("Kullanıcı adı veya şifre hatalı!");
         }
-        merged.forEach(m => {
-            result += originalText.substring(lastIdx, m.start);
-            result += `<span class="highlight">${originalText.substring(m.start, m.end)}</span>`;
-            lastIdx = m.end;
-        });
-        result += originalText.substring(lastIdx);
-        return result;
     }
 
-    function aramaYap(isNew) {
-        const queryRaw = document.getElementById('search').value;
-        const queryNorm = trNormalize(queryRaw).trim();
-        const keywords = queryNorm.split(/\s+/).filter(k => k.length > 0);
-        document.getElementById('central-watermark').style.display = queryNorm ? 'none' : 'block';
-        if(!queryNorm) { document.getElementById('results').innerHTML = ""; return; }
-        filteredUrunler = urunler.filter(u => {
-            const rowText = trNormalize(Object.values(u).join(" "));
-            return keywords.every(key => rowText.includes(key));
-        });
-        renderSearchItems(keywords);
+    function loginSuccess(user) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'flex';
+        document.getElementById('menu-btn-container').style.display = 'block';
+        document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
     }
 
-    function renderSearchItems(keywords = []) {
-        const chunk = filteredUrunler.slice(0, 30);
-        document.getElementById('results').innerHTML = chunk.map(i => {
-            const v = Object.values(i);
-            const sapDisplay = highlightText(v[0], keywords);
-            const adDisplay = highlightText(v[1], keywords);
-            return `<div class="product-card" onclick="openModal('${v[0]}','${v[1].replace(/'/g, "\\'")}','${v[2]}','${v[3]}')">
-                <div style="font-weight:900;">SAP: ${sapDisplay}</div><div style="font-weight:700;">${adDisplay}</div>
-                <div style="font-size:12px; color:#888;">📍 ${v[2]} | 📦 ${v[3]} ADET</div>
+    function aramaYap() {
+        const q = document.getElementById('search').value.toLowerCase();
+        const results = document.getElementById('results');
+        if(!q) { results.innerHTML = ""; return; }
+
+        const filtered = urunler.filter(u => Object.values(u).join(" ").toLowerCase().includes(q));
+        results.innerHTML = filtered.slice(0, 20).map(u => {
+            const v = Object.values(u);
+            return `<div class="product-card" onclick="openModal('${v[0]}','${v[1]}')">
+                <b>SAP: ${v[0]}</b><br>${v[1]}<br>
+                <small>📍 Konum: ${v[2]} | Stok: ${v[3]}</small>
             </div>`;
         }).join('');
     }
 
-    function openModal(sap, ad, adres, stok) {
-        seciliUrun = [sap, ad, adres, stok];
-        document.getElementById('modal-subtitle').innerText = ad;
-        document.getElementById('islem-adet').value = '0';
+    function openModal(sap, ad) {
+        seciliUrun = {sap, ad};
+        document.getElementById('modal-title').innerText = ad;
+        document.getElementById('islem-adet').value = 0;
         document.getElementById('action-modal').style.display = 'flex';
-        document.getElementById('btn-dusum').disabled = true;
-        document.getElementById('btn-talep').disabled = true;
     }
 
     function adetDegistir(d) {
-        let v = parseInt(document.getElementById('islem-adet').value) + d;
-        if(v < 0) v = 0; document.getElementById('islem-adet').value = v;
-        document.getElementById('btn-dusum').disabled = v <= 0;
-        document.getElementById('btn-talep').disabled = v <= 0;
+        let val = parseInt(document.getElementById('islem-adet').value) + d;
+        document.getElementById('islem-adet').value = val < 0 ? 0 : val;
     }
 
-    async function onayliKaydet(islem, btn) {
-        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: document.getElementById('islem-adet').value, islem: islem, kullanici: localStorage.getItem('depoUser') };
-        if (!navigator.onLine) { syncQueue.push(veri); localStorage.setItem('valeo_queue', JSON.stringify(syncQueue)); updateQueueUI(); modalKapat(); return; }
-        const originalText = btn.innerText;
-        btn.innerText = "İŞLENİYOR...";
-        btn.disabled = true;
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-            alert("BAŞARILI!");
-            modalKapat();
-        } catch (e) {
-            alert("Bir hata oluştu!");
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-    }
+    function modalKapat() { document.getElementById('action-modal').style.display = 'none'; }
+    function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
+    function closeMenuOutside(e) { document.getElementById('dropdown').style.display = 'none'; }
+    function anaSayfayaDon() { document.getElementById('history-screen').style.display='none'; document.getElementById('app-screen').style.display='flex'; }
+    function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
+    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
-    async function gecmisGoster(isNew) {
-        document.getElementById('app-screen').style.display = 'none';
-        document.getElementById('history-screen').style.display = 'flex';
-        document.getElementById('users-screen').style.display = 'none';
-        if (isNew) {
-            const res = await fetch(GECMIS_URL);
-            const data = XLSX.utils.sheet_to_json(XLSX.read(await res.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
-            rawHistory = data.slice(1).filter(row => row[4] !== 'HEARTBEAT').reverse();
-            applyHistoryLogic();
-        }
-    }
-
-    function applyHistoryLogic() {
-        const user = localStorage.getItem('depoUser');
-        let processed = showAllUsers ? rawHistory : rawHistory.filter(row => row[5] && row[5].toString().toLowerCase() === user.toLowerCase());
-        if (activeFilter) processed = processed.filter(row => row[4] === activeFilter);
-        filteredHistory = processed; renderHistory();
-    }
-
-    function renderHistory() {
-        document.getElementById('history-body').innerHTML = filteredHistory.slice(0, 30).map(row => {
-            let tarihMetni = row[6];
-            if (tarihMetni && !isNaN(tarihMetni)) {
-                const dateObj = new Date((tarihMetni - 25569) * 86400 * 1000);
-                const gg = String(dateObj.getDate()).padStart(2, '0');
-                const aa = String(dateObj.getMonth() + 1).padStart(2, '0');
-                const yyyy = dateObj.getFullYear();
-                const ss = String(dateObj.getHours()).padStart(2, '0');
-                const dk = String(dateObj.getMinutes()).padStart(2, '0');
-                tarihMetni = `${gg}.${aa}.${yyyy} ${ss}:${dk}`;
-            }
-            return `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[5]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${tarihMetni}</td><td>${row[7]||'-'}</td></tr>`;
-        }).join('');
-    }
-
-    function gecmisFiltrele(tip) { activeFilter = (activeFilter === tip) ? null : tip; applyHistoryLogic(); }
-    function toggleHistoryView() { showAllUsers = !showAllUsers; applyHistoryLogic(); }
-
-    function girisYap() {
-        const u = document.getElementById('user-input').value.trim().toLowerCase(), p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => { const v = Object.values(row); return v[0] && v[0].toString().toLowerCase() === u && v[1] && v[1].toString() === p; });
-        if (found) { localStorage.setItem('depoUser', u); loginSuccess(u); } else { alert("Hatalı!"); }
-    }
-
-    function loginSuccess(user) {
-        document.getElementById('login-screen').style.display = 'none'; document.getElementById('app-screen').style.display = 'flex';
-        document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
-        document.getElementById('app-menu-wrap').style.display = 'block'; updateStatusIndicator();
-    }
-
-    function kullaniciSayfasiGoster() {
-        document.getElementById('app-screen').style.display = 'none';
-        document.getElementById('history-screen').style.display = 'none';
-        document.getElementById('users-screen').style.display = 'flex';
-        document.getElementById('dropdown').style.display = 'none';
-        const container = document.getElementById('users-list-container');
-        if (kullanicilar.length === 0) { container.innerHTML = "<p>Yükleniyor...</p>"; return; }
-        container.innerHTML = kullanicilar.map(user => {
-            const v = Object.values(user);
-            const ad = v[0] || "Bilinmiyor";
-            return `<div class="user-card"><div class="user-avatar">${ad.charAt(0).toUpperCase()}</div><div><div style="font-weight:bold;">${ad.toUpperCase()}</div><div style="font-size:12px; color:#888;">Depo Personeli</div></div></div>`;
-        }).join('');
-    }
-
+    // Sayfa Yüklendiğinde Verileri Al
     window.onload = async () => {
-        if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
-        const cUrun = localStorage.getItem('valeo_cache_urun'), cUser = localStorage.getItem('valeo_cache_user');
-        if (cUrun) urunler = JSON.parse(cUrun); if (cUser) kullanicilar = JSON.parse(cUser);
-        if (localStorage.getItem('depoUser')) loginSuccess(localStorage.getItem('depoUser'));
         try {
             const [uRes, pRes] = await Promise.all([fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text())]);
             kullanicilar = XLSX.utils.sheet_to_json(XLSX.read(uRes, {type:'string'}).Sheets.Sheet1);
-            urunler = XLSX.utils.sheet_to_json(XLSX.read(pRes, {type:'string'}).Sheets.Sheet1).filter(r => Object.values(r).length > 0 && !String(Object.values(r)[0]).includes(':'));
-            localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler)); localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
-        } catch (e) {}
+            urunler = XLSX.utils.sheet_to_json(XLSX.read(pRes, {type:'string'}).Sheets.Sheet1);
+            
+            if (localStorage.getItem('depoUser')) loginSuccess(localStorage.getItem('depoUser'));
+        } catch (e) { console.error("Veri yükleme hatası"); }
     };
-
-    function toggleDarkMode() { const d = document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', d); }
-    function anaSayfayaDon() { document.getElementById('history-screen').style.display='none'; document.getElementById('users-screen').style.display='none'; document.getElementById('app-screen').style.display='flex'; }
-    function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
-    function modalKapat() { document.getElementById('action-modal').style.display = 'none'; document.getElementById('gorsel-panel').style.display = 'none'; }
-    function toggleGorselPanel() { const p = document.getElementById('gorsel-panel'), f = document.getElementById('gorsel-frame'); if (p.style.display === 'block') p.style.display = 'none'; else { p.style.display = 'block'; f.src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`; } }
 </script>
+
 </body>
 </html>
