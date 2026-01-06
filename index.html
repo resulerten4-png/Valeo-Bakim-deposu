@@ -7,33 +7,67 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --valeo-green: #99cc00; --valeo-blue: #0091ff; --valeo-dark: #1a1a1b; --bg-gray: #f8f9fa; --card-bg: #ffffff; --text-main: #2d3436; --text-sub: #636e72; --danger: #ff4757; --shadow: 0 10px 25px rgba(0,0,0,0.08); }
-        body.dark-mode { --bg-gray: #121212; --card-bg: #1e1e1e; --text-main: #f5f6fa; --text-sub: #a4b0be; --valeo-dark: #000000; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: 0.3s; }
-        .container { background: var(--card-bg); width: 100%; max-width: 450px; height: 92vh; border-radius: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; position: relative; margin: 10px; }
+        /* Renk Değişkenleri - Okunabilirlik Odaklı */
+        :root { 
+            --valeo-green: #99cc00; 
+            --valeo-blue: #0091ff; 
+            --valeo-dark: #1a1a1b; 
+            --bg-gray: #f4f7f6; 
+            --card-bg: #ffffff; 
+            --text-main: #2d3436; 
+            --text-sub: #57606f; /* Daha koyu gri */
+            --danger: #ff4757; 
+            --shadow: 0 10px 25px rgba(0,0,0,0.05);
+            --border: #edf2f7;
+        }
+
+        body.dark-mode { 
+            --bg-gray: #0f0f0f; 
+            --card-bg: #1e1e1e; 
+            --text-main: #ffffff; 
+            --text-sub: #ced6e0; /* Karanlıkta daha açık, okunur gri */
+            --valeo-dark: #000000;
+            --border: #333333;
+            --shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
+        
+        .container { background: var(--card-bg); width: 100%; max-width: 450px; height: 92vh; border-radius: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; position: relative; margin: 10px; border: 1px solid var(--border); }
+        
         .top-bar { background: var(--valeo-dark); color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .content { padding: 20px; overflow-y: auto; flex-grow: 1; position: relative; }
-        input { width: 100%; padding: 16px; margin: 10px 0; border-radius: 12px; border: 2px solid #edf2f7; background: var(--card-bg); color: var(--text-main); font-size: 15px; box-sizing: border-box; transition: 0.2s; }
+        .content { padding: 20px; overflow-y: auto; flex-grow: 1; }
+
+        input { width: 100%; padding: 16px; margin: 10px 0; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 15px; box-sizing: border-box; transition: 0.2s; }
         input:focus { border-color: var(--valeo-green); outline: none; }
+        
         button { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:disabled { background: #cbd5e0 !important; opacity: 0.6; cursor: not-allowed; }
-        .product-card { background: var(--card-bg); border: 1px solid #eee; margin-bottom: 12px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; transition: 0.2s; }
-        .product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        button:disabled { background: #95a5a6 !important; opacity: 0.5; cursor: not-allowed; }
+
+        .product-card { background: var(--card-bg); border: 1px solid var(--border); margin-bottom: 12px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; transition: 0.2s; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--valeo-green); }
+        
+        /* Önemli: Karanlık modda SAP ve Adres yazılarının rengi */
+        .product-card .sap-text { font-weight: 900; color: var(--text-main); }
+        .product-card .info-text { font-size: 12px; color: var(--text-sub); margin-top: 5px; }
+
         .page { display: none; height: 100%; flex-direction: column; animation: fadeIn 0.3s; }
         .active-page { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        #detail-image-panel { width: 100%; height: 200px; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 1px solid #ddd; display: none; }
-        #detail-frame { width: 100%; height: 100%; border: none; }
+
+        mark { background: #f1c40f; color: #000; padding: 0 2px; border-radius: 3px; font-weight: bold; }
+        body.dark-mode mark { background: #ffdd59; }
+
+        /* Stepper ve Diğerleri */
         .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; background: var(--bg-gray); padding: 10px; border-radius: 15px; }
-        .stepper button { width: 50px; height: 50px; border-radius: 50%; background: var(--valeo-dark); font-size: 20px; padding: 0; }
         #islem-adet { width: 70px; text-align: center; font-size: 24px; font-weight: 800; border: none; background: transparent; color: var(--text-main); }
-        .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; }
-        .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
-        .machine-selection-box { background: var(--valeo-blue); color: white; padding: 12px; border-radius: 10px; margin: 10px 0; font-weight: bold; font-size: 14px; }
+        
         .history-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; }
-        .history-table td { padding: 10px 5px; border-bottom: 1px solid #eee; color: var(--text-main); }
-        mark { background: #f1c40f; color: black; padding: 0 2px; border-radius: 3px; }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; }
+        .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+
+        .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
+        .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
@@ -42,7 +76,7 @@
     <div id="main-top-bar" class="top-bar" style="display:none;">
         <div style="display: flex; align-items: center; gap: 10px;">
             <div id="btn-back" onclick="goBack()" style="display:none; cursor:pointer; font-size:18px;">⬅️</div>
-            <div id="user-info" style="font-size: 12px; font-weight: 800; letter-spacing: 1px;">VALEO PORTAL</div>
+            <div style="font-size: 12px; font-weight: 800; letter-spacing: 1px;">VALEO PORTAL</div>
         </div>
         <div style="cursor:pointer; font-size: 20px;" onclick="toggleMenu(event)">☰</div>
         <div id="dropdown" class="dropdown-menu">
@@ -53,11 +87,10 @@
     </div>
 
     <div id="page-login" class="page active-page">
-        <div onclick="toggleDarkMode()" style="position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; z-index: 100;">🌓</div>
-        
+        <div onclick="toggleDarkMode()" style="position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer;">🌓</div>
         <div class="content" style="text-align:center; justify-content: center; display: flex; flex-direction: column;">
             <h1 style="color:var(--valeo-green); font-size:48px; margin:0; font-weight:800;">Valeo</h1>
-            <p style="letter-spacing:3px; font-size:10px; opacity:0.6; margin-bottom:40px; font-weight:600;">BAKIM DEPO SİSTEMİ</p>
+            <p style="letter-spacing:3px; font-size:10px; opacity:0.6; margin-bottom:40px; font-weight:600; color:var(--text-main);">BAKIM DEPO SİSTEMİ</p>
             <input type="text" id="user-input" placeholder="Kullanıcı Adı">
             <input type="password" id="pass-input" placeholder="Şifre">
             <button onclick="girisYap()">SİSTEME GİRİŞ</button>
@@ -66,7 +99,7 @@
 
     <div id="page-search" class="page">
         <div class="content">
-            <h3 style="margin-top:0;">Stok Ara</h3>
+            <h3 style="margin-top:0; color:var(--text-main);">Stok Ara</h3>
             <input type="text" id="search-main" placeholder="Malzeme adı veya SAP..." oninput="aramaYap()">
             <div id="search-results"></div>
         </div>
@@ -74,13 +107,13 @@
 
     <div id="page-detail" class="page">
         <div class="content">
-            <div id="detail-image-panel"><iframe id="detail-frame" src=""></iframe></div>
-            <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px; height: auto; width: auto; display: inline-block;">
-                🖼️ GÖRSELİ GÖSTER
-            </button>
-            <h2 id="detay-ad" style="margin:5px 0; font-size:22px;"></h2>
+            <div id="detail-image-panel" style="display:none; width:100%; height:200px; margin-bottom:15px; border-radius:15px; overflow:hidden; border:1px solid var(--border);">
+                <iframe id="detail-frame" style="width:100%; height:100%; border:none;" src=""></iframe>
+            </div>
+            <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px;">🖼️ GÖRSELİ GÖSTER</button>
+            <h2 id="detay-ad" style="margin:5px 0; font-size:22px; color:var(--text-main);"></h2>
             <div id="detay-sap" style="font-weight:900; color:var(--valeo-green); font-size:18px; margin-bottom:15px;"></div>
-            <div style="background:var(--bg-gray); padding:15px; border-radius:12px; font-size:14px;">
+            <div style="background:var(--bg-gray); padding:15px; border-radius:12px; font-size:14px; color:var(--text-main);">
                 <div style="margin-bottom:8px;">📍 <b>Adres:</b> <span id="detay-adres"></span></div>
                 <div>📦 <b>Stok:</b> <span id="detay-stok"></span> ADET</div>
             </div>
@@ -92,14 +125,14 @@
         <div class="content">
             <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">MAKİNA SEÇİMİ</label>
             <input type="text" id="action-machine-search" placeholder="Makina ara..." oninput="makineAramaYap()">
-            <div id="machine-results" style="max-height:150px; overflow-y:auto;"></div>
-            <div id="selected-machine-box" class="machine-selection-box" style="display:none;"></div>
+            <div id="machine-results"></div>
+            <div id="selected-machine-box" style="display:none; background:var(--valeo-blue); color:white; padding:12px; border-radius:10px; margin:10px 0; font-weight:bold;"></div>
             <div style="margin-top:20px; text-align:center;">
                 <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">İŞLEM ADEDİ</label>
                 <div class="stepper">
-                    <button onclick="adetDegistir(-1)">-</button>
+                    <button style="width:50px; height:50px; border-radius:50%; padding:0;" onclick="adetDegistir(-1)">-</button>
                     <input type="number" id="islem-adet" value="0" readonly>
-                    <button onclick="adetDegistir(1)">+</button>
+                    <button style="width:50px; height:50px; border-radius:50%; padding:0;" onclick="adetDegistir(1)">+</button>
                 </div>
             </div>
             <button id="btn-dusum" style="background:var(--danger); margin-top:10px;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 STOKTAN DÜŞÜM</button>
@@ -109,12 +142,10 @@
 
     <div id="page-history" class="page">
         <div class="content">
-            <h3 style="margin-top:0;">Son İşlemler</h3>
+            <h3 style="margin-top:0; color:var(--text-main);">Son İşlemler</h3>
             <div style="overflow-x: auto;">
                 <table class="history-table">
-                    <thead>
-                        <tr><th>SAP</th><th>ADET</th><th>TİP</th><th>PERS</th><th>TARİH</th></tr>
-                    </thead>
+                    <thead><tr><th>SAP</th><th>ADET</th><th>TİP</th><th>PERS</th><th>TARİH</th></tr></thead>
                     <tbody id="history-body"></tbody>
                 </table>
             </div>
@@ -138,7 +169,6 @@
             .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').trim();
     }
 
-    // Kod kelimelerini bozmadan renklendiren temiz fonksiyon
     function highlight(text, terms) {
         if (!terms || terms.length === 0) return text;
         let highlighted = text;
@@ -152,7 +182,7 @@
     function aramaYap() {
         const rawInput = document.getElementById('search-main').value;
         const resultsContainer = document.getElementById('search-results');
-        if (!rawInput || !rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
+        if (!rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
         const queryNormalized = trNormalize(rawInput);
         const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
         
@@ -162,13 +192,13 @@
         });
 
         resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
-            const displaySap = highlight(String(u[0]), searchTerms);
-            const displayAd = highlight(String(u[1]), searchTerms);
+            const dSap = highlight(String(u[0]), searchTerms);
+            const dAd = highlight(String(u[1]), searchTerms);
             return `
                 <div class="product-card" onclick="openDetail('${u[0]}')">
-                    <div style="font-weight:900;">SAP: ${displaySap}</div>
-                    <div style="font-weight:700; font-size:14px;">${displayAd}</div>
-                    <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${u[2] || "-"} | 📦 ${u[3] || "0"} ADET</div>
+                    <div class="sap-text">SAP: ${dSap}</div>
+                    <div style="font-weight:700; font-size:14px; color:var(--text-main);">${dAd}</div>
+                    <div class="info-text">📍 ${u[2] || "-"} | 📦 ${u[3] || "0"} ADET</div>
                 </div>`;
         }).join('');
     }
@@ -181,7 +211,6 @@
         document.getElementById('detay-adres').innerText = seciliUrun[2];
         document.getElementById('detay-stok').innerText = seciliUrun[3];
         document.getElementById('detail-image-panel').style.display = "none";
-        document.getElementById('btn-toggle-img').innerText = "🖼️ GÖRSELİ GÖSTER";
         document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`;
         showPage('page-detail');
     }
@@ -194,29 +223,15 @@
             const res = await fetch(GECMIS_URL);
             const csvText = await res.text();
             const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
-            const rows = data.slice(1).reverse().slice(0, 40); 
+            const rows = data.slice(1).reverse().slice(0, 30); 
             document.getElementById('history-body').innerHTML = rows.map(row => {
-                let tHam = row[6], fTarih = "-";
-                if (tHam) {
-                    let d;
-                    if (!isNaN(tHam) && tHam > 40000) {
-                        const dObj = XLSX.SSF.parse_date_code(tHam);
-                        d = new Date(dObj.y, dObj.m - 1, dObj.d, dObj.H, dObj.M);
-                    } else { d = new Date(tHam); }
-
-                    if (!isNaN(d.getTime())) {
-                        const gun = String(d.getDate()).padStart(2, '0');
-                        const ay = String(d.getMonth() + 1).padStart(2, '0');
-                        const yil = d.getFullYear();
-                        fTarih = `${gun}.${ay}.${yil}`;
-                    } else { fTarih = tHam; }
-                }
+                let fTarih = row[6] ? (isNaN(row[6]) ? row[6] : XLSX.SSF.format('dd.mm.yyyy', row[6])) : "-";
                 return `<tr>
                     <td><b>${row[0] || '-'}</b></td>
                     <td>${row[3] || '0'}</td>
                     <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
                     <td>${row[5] || '-'}</td>
-                    <td style="font-size:9px; opacity:0.7;">${fTarih}</td>
+                    <td style="opacity:0.7;">${fTarih}</td>
                 </tr>`;
             }).join('');
         } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata oluştu.</td></tr>'; }
@@ -225,8 +240,7 @@
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
         document.getElementById(pageId).classList.add('active-page');
-        const topBar = document.getElementById('main-top-bar');
-        topBar.style.display = (pageId === 'page-login') ? 'none' : 'flex';
+        document.getElementById('main-top-bar').style.display = (pageId === 'page-login') ? 'none' : 'flex';
         document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
     }
 
@@ -245,9 +259,8 @@
 
     function toggleImage() {
         const panel = document.getElementById('detail-image-panel');
-        const btn = document.getElementById('btn-toggle-img');
-        if (panel.style.display === "none") { panel.style.display = "block"; btn.innerText = "✖ GÖRSELİ GİZLE"; }
-        else { panel.style.display = "none"; btn.innerText = "🖼️ GÖRSELİ GÖSTER"; }
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+        document.getElementById('btn-toggle-img').innerText = panel.style.display === "none" ? "🖼️ GÖRSELİ GÖSTER" : "✖ GİZLE";
     }
 
     function goToAction() {
@@ -264,7 +277,7 @@
         const filtered = makineler.filter(m => trNormalize(m.join(" ")).includes(query));
         document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => `
             <div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${m[0]}','${m[1]}')">
-                <div style="font-size:13px;"><b>${m[0]}</b> - ${m[1]}</div>
+                <div style="font-size:13px; color:var(--text-main);"><b>${m[0]}</b> - ${m[1]}</div>
             </div>`).join('');
     }
 
@@ -312,13 +325,10 @@
             const [uRes, pRes, mRes] = await Promise.all([
                 fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
             ]);
-            const parseCSVToArray = (data) => {
-                const wb = XLSX.read(data, {type:'string'});
-                return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
-            };
-            kullanicilar = parseCSVToArray(uRes).slice(1);
-            urunler = parseCSVToArray(pRes).slice(1).filter(r => r.length > 0);
-            makineler = parseCSVToArray(mRes).slice(1);
+            const parse = (data) => XLSX.utils.sheet_to_json(XLSX.read(data, {type:'string'}).Sheets[XLSX.read(data, {type:'string'}).SheetNames[0]], {header: 1});
+            kullanicilar = parse(uRes).slice(1);
+            urunler = parse(pRes).slice(1).filter(r => r.length > 0);
+            makineler = parse(mRes).slice(1);
         } catch (e) { console.error(e); }
     };
 </script>
