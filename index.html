@@ -154,9 +154,10 @@
 </div>
 
 <script>
+    // URL Düzeltmesi Yapıldı (PSBzW)
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBk/pub?gid=1584268931&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
@@ -226,7 +227,7 @@
             const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
             const rows = data.slice(1).reverse().slice(0, 40); 
             document.getElementById('history-body').innerHTML = rows.map(row => {
-                let tHam = row[0], fTarih = "-"; // Sheet3 1. Sütun Tarih
+                let tHam = row[0], fTarih = "-"; 
                 if (tHam) {
                     let d;
                     if (!isNaN(tHam) && tHam > 40000) {
@@ -242,8 +243,11 @@
                     } else { fTarih = tHam; }
                 }
                 return `<tr>
-                    <td><b>${row[1] || '-'}</b></td> <td>${row[3] || '0'}</td> <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
-                    <td>${row[7] || '-'}</td> <td style="font-size:9px; opacity:0.7;">${fTarih}</td>
+                    <td><b>${row[1] || '-'}</b></td>
+                    <td>${row[3] || '0'}</td>
+                    <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
+                    <td>${row[7] || '-'}</td>
+                    <td style="font-size:9px; opacity:0.7;">${fTarih}</td>
                 </tr>`;
             }).join('');
         } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata oluştu.</td></tr>'; }
@@ -320,13 +324,14 @@
         if(confirm(`${islem} onaylıyor musunuz?`)) kaydet(islem);
     }
 
-    // İSTEDİĞİN 10 SÜTUNLUK KAYIT FONKSİYONU
+    // 10 Sütunluk Kesin Kayıt Fonksiyonu
     async function kaydet(islem) {
+        const miktar = document.getElementById('islem-adet').value;
         const veri = {
             s1: seciliUrun[6],   // 1. Sütun: Tarih (Sayfa3 G)
             s2: seciliUrun[0],   // 2. Sütun: SAP Kodu (Sayfa3 A)
             s3: seciliUrun[1],   // 3. Sütun: Malzeme Adı (Sayfa3 B)
-            s4: seciliUrun[3],   // 4. Sütun: Adet (Sayfa3 D)
+            s4: miktar,           // 4. Sütun: İşlem Adedi
             s5: islem,           // 5. Sütun: İşlem Tipi
             s6: seciliMakina.no, // 6. Sütun: Makina No (Sayfa4 A)
             s7: seciliMakina.ad, // 7. Sütun: Makina Adı (Sayfa4 B)
@@ -357,7 +362,9 @@
         if (localStorage.getItem('depoUser')) showPage('page-search');
         try {
             const [uRes, pRes, mRes] = await Promise.all([
-                fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
+                fetch(USER_URL).then(r => r.text()), 
+                fetch(URUN_URL).then(r => r.text()), 
+                fetch(MAKINA_URL).then(r => r.text())
             ]);
             const parseCSVToArray = (data) => {
                 const wb = XLSX.read(data, {type:'string'});
@@ -366,7 +373,7 @@
             kullanicilar = parseCSVToArray(uRes).slice(1);
             urunler = parseCSVToArray(pRes).slice(1).filter(r => r.length > 0);
             makineler = parseCSVToArray(mRes).slice(1);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Veri yükleme hatası:", e); }
     };
 </script>
 </body>
