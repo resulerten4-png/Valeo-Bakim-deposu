@@ -167,7 +167,7 @@
     let showAllUsers = false, activeFilter = null;
     let syncQueue = JSON.parse(localStorage.getItem('valeo_queue') || '[]');
 
-    /* --- Müzik Sistemi Fonksiyonları --- */
+    /* --- YouTube API Müzik Sistemi --- */
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -179,25 +179,32 @@
     function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
             height: '1', width: '1',
-            videoId: 'KzT02C_G9_4', // Ararım Seni - Selda Bağcan ID
+            videoId: 'KzT02C_G9_4', // Ararım Seni - Selda Bağcan YouTube ID
             playerVars: { 'autoplay': 0, 'controls': 0, 'loop': 1, 'playlist': 'KzT02C_G9_4' },
-            events: { 'onReady': function() { document.getElementById('music-status').innerText = "Müziği Başlat"; } }
+            events: { 
+                'onReady': function() { 
+                    document.getElementById('music-status').innerText = "Müziği Başlat";
+                    // Eğer kullanıcı daha önceden giriş yapmışsa müziği otomatik başlatmayı dene
+                    if(localStorage.getItem('depoUser')) { 
+                        setTimeout(() => { toggleMusic(); }, 2000); 
+                    }
+                } 
+            }
         });
     }
 
     function toggleMusic() {
-        if (!isPlaying) {
+        if (!isPlaying && player && player.playVideo) {
             player.playVideo();
             document.getElementById('music-status').innerText = "Ararım Seni (Çalıyor)";
             isPlaying = true;
-        } else {
+        } else if (player && player.pauseVideo) {
             player.pauseVideo();
             document.getElementById('music-status').innerText = "Durduruldu";
             isPlaying = false;
         }
     }
 
-    // MENÜ YÖNETİMİ
     function toggleMenu(e) { if(e) e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
     function closeMenuOutside(e) { const d = document.getElementById('dropdown'); const menuBtn = document.querySelector('.menu-btn'); if (d.style.display === 'block' && !d.contains(e.target) && e.target !== menuBtn) { d.style.display = 'none'; } }
     function updateStatusIndicator() { const dot = document.getElementById('status-dot'); const text = document.getElementById('status-text'); if (navigator.onLine) { dot.className = "status-dot online-dot"; text.innerText = "Çevrimiçi"; syncData(); } else { dot.className = "status-dot offline-dot"; text.innerText = "Çevrimdışı"; } }
@@ -280,7 +287,7 @@
         const found = kullanicilar.find(row => { const v = Object.values(row); return v[0] && v[0].toString().toLowerCase() === u && v[1] && v[1].toString() === p; });
         if (found) { 
             localStorage.setItem('depoUser', u); loginSuccess(u); 
-            // Girişte müziği başlat
+            // Sisteme giriş anında müziği başlat
             if(player && player.playVideo) { player.playVideo(); isPlaying = true; document.getElementById('music-status').innerText = "Ararım Seni (Çalıyor)"; }
         } else { alert("Hatalı!"); }
     }
