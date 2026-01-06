@@ -140,15 +140,12 @@
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
         document.getElementById(pageId).classList.add('active-page');
-        
-        // Giriş sayfasında üst barı gizle, diğerlerinde göster
         const topBar = document.getElementById('main-top-bar');
         if (pageId === 'page-login') {
             topBar.style.display = 'none';
         } else {
             topBar.style.display = 'flex';
         }
-        
         document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
     }
 
@@ -170,12 +167,20 @@
             return searchTerms.every(term => targetText.includes(term));
         });
 
-        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => `
-            <div class="product-card" onclick="openDetail('${u[0]}')">
-                <div style="font-weight:900;">SAP: ${u[0]}</div>
-                <div style="font-weight:700; font-size:14px;">${u[1]}</div>
-                <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${u[2] || "-"} | 📦 ${u[3] || "0"} ADET</div>
-            </div>`).join('');
+        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
+            let dSap = String(u[0]), dAd = String(u[1]);
+            searchTerms.forEach(t => {
+                const regex = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                dSap = dSap.replace(regex, '<mark style="background:#f1c40f; color:black; padding:0 2px; border-radius:3px;">$1</mark>');
+                dAd = dAd.replace(regex, '<mark style="background:#f1c40f; color:black; padding:0 2px; border-radius:3px;">$1</mark>');
+            });
+            return `
+                <div class="product-card" onclick="openDetail('${u[0]}')">
+                    <div style="font-weight:900;">SAP: ${dSap}</div>
+                    <div style="font-weight:700; font-size:14px;">${dAd}</div>
+                    <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${u[2] || "-"} | 📦 ${u[3] || "0"} ADET</div>
+                </div>`;
+        }).join('');
     }
 
     function openDetail(sap) {
