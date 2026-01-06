@@ -3,88 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valeo Bakım Portalı - Pro Dashboard</title>
+    <title>Valeo Bakım Portalı</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --valeo-green: #99cc00; --valeo-blue: #0091ff; --valeo-dark: #2d2d2d; --bg-gray: #f4f7f6; --card-bg: #ffffff; --text-color: #2d2d2d; --danger: #e74c3c; --warning: #f1c40f; }
         body.dark-mode { --bg-gray: #1a1a1a; --card-bg: #2d2d2d; --text-color: #f4f7f6; --valeo-dark: #000000; }
         body { font-family: 'Inter', sans-serif; background: var(--bg-gray); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: var(--text-color); transition: 0.3s; }
         
-        /* BİLGİSAYAR İÇİN GENİŞLETİLMİŞ KONTEYNER */
-        .container { 
-            background: var(--card-bg); 
-            width: 98%; 
-            max-width: 1400px; /* Bilgisayarda geniş yayılım */
-            border-radius: 16px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-            overflow: hidden; 
-            display: flex; 
-            flex-direction: column; 
-            height: 95vh; 
-            position: relative; 
-        }
-
-        /* GİRİŞ EKRANI ÖZEL BOYUT */
-        #login-screen { max-width: 450px; margin: auto; width: 100%; }
-
+        /* BİLGİSAYARDA GENİŞ, MOBİLDE TAM EKRAN */
+        .container { background: var(--card-bg); width: 95%; max-width: 1200px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; height: 95vh; position: relative; }
+        
         .status-info { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
         .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
         .online-dot { background-color: var(--valeo-green); box-shadow: 0 0 5px var(--valeo-green); }
         .offline-dot { background-color: var(--danger); box-shadow: 0 0 5px var(--danger); }
         #status-text { font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        
+        #offline-banner { background: var(--warning); color: #000; padding: 5px; text-align: center; font-size: 11px; font-weight: bold; display: none; z-index: 5000; }
+        #offline-banner.active { display: block; }
+
         .watermark-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; user-select: none; z-index: 0; width: 100%; }
-        .watermark-text { font-size: clamp(60px, 15vw, 200px); font-weight: 900; color: var(--valeo-green); opacity: 0.08; letter-spacing: -5px; }
+        .watermark-text { font-size: 150px; font-weight: 900; color: var(--valeo-green); opacity: 0.12; line-height: 0.85; letter-spacing: -2px; }
         
-        .top-bar { background: var(--valeo-dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 2000; position: relative; }
-        .content { padding: 30px; overflow-y: auto; flex-grow: 1; position: relative; z-index: 1; }
+        .top-bar { background: var(--valeo-dark); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 2000; position: relative; }
+        .content { padding: 20px; overflow-y: auto; flex-grow: 1; position: relative; z-index: 1; }
         
         input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 2px solid #ddd; background: var(--card-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; position: relative; z-index: 2; }
         button { background: var(--valeo-green); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
         
-        /* BİLGİSAYARDA SONUÇLARI YAN YANA DİZ */
-        #results { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
-            gap: 15px; 
-            margin-top: 20px;
-        }
+        /* ARAMA SONUÇLARI GRID (BİLGİSAYARDA YAN YANA) */
+        #results { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 10px; }
         
-        .product-card { background: var(--card-bg); border: 1px solid #eee; padding: 15px; border-radius: 10px; border-left: 6px solid var(--valeo-green); cursor: pointer; transition: 0.2s; }
-        .product-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .product-card { background: var(--card-bg); border: 1px solid #eee; padding: 15px; border-radius: 10px; border-left: 6px solid var(--valeo-green); cursor: pointer; position: relative; z-index: 2; }
+        .highlight { background-color: #ffeb3b; color: #000; font-weight: bold; border-radius: 2px; padding: 0 2px; }
         
-        .highlight { background-color: #ffeb3b; color: #000; font-weight: bold; }
-        .dropdown-menu { display: none; position: absolute; right: 0; top: 45px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 200px; z-index: 5000; border: 1px solid #eee; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 45px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 190px; z-index: 5000; overflow: hidden; border: 1px solid #eee; }
         .dropdown-menu div { padding: 14px 18px; color: var(--text-color); cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 10px; }
-        
-        /* TABLO MODERNİZE */
-        .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .history-table th { background: var(--valeo-dark); color: white; padding: 15px; text-align: left; position: sticky; top: 0; }
-        .history-table td { padding: 12px 15px; border-bottom: 1px solid #eee; }
 
         .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
+        .modal-content { background: var(--card-bg); padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
         
-        .stepper { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 25px 0; }
-        .stepper button { width: 55px; height: 55px; font-size: 24px; border-radius: 50%; background: var(--valeo-dark); }
-        #islem-adet { width: 90px; text-align: center; font-size: 32px; font-weight: 800; border: none; background: transparent; color: var(--text-color); }
+        .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
+        .stepper button { width: 50px; height: 50px; border-radius: 50%; background: var(--valeo-dark); }
+        #islem-adet { width: 80px; text-align: center; font-size: 28px; font-weight: 800; border: none; background: transparent; color: var(--text-color); }
+        
+        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
+        .history-table td { padding: 12px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
 
 <div class="container">
-    <div id="offline-banner" style="display:none; background: var(--warning); text-align: center; padding: 5px; font-size: 12px; font-weight: bold;">📡 Çevrimdışı işlem bekleniyor...</div>
-    
+    <div id="offline-banner">📡 İşlem bekliyor...</div>
     <div class="top-bar">
         <div class="user-section">
-            <div id="user-display">👤 SİSTEM YÜKLENİYOR...</div>
+            <div id="user-display">👤 YÜKLENİYOR...</div>
             <div class="status-info">
                 <span id="status-dot" class="status-dot online-dot"></span>
                 <span id="status-text" style="color: var(--valeo-green);">Çevrimiçi</span>
             </div>
         </div>
-        <div id="app-menu-wrap" style="display:none; position:relative;">
-            <div class="menu-btn" onclick="toggleMenu(event)" style="cursor:pointer; font-size:24px;">☰</div>
+        <div id="app-menu-wrap" style="display:none; position: relative;">
+            <div class="menu-btn" onclick="toggleMenu(event)" style="cursor:pointer; font-size: 24px;">☰</div>
             <div id="dropdown" class="dropdown-menu">
                 <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
                 <div onclick="gecmisGoster(true)">📋 İşlemler</div>
@@ -94,52 +74,44 @@
         </div>
     </div>
 
-    <div id="login-screen">
-        <div style="text-align:center; padding:40px 20px;">
-            <div style="font-size: 50px; color: var(--valeo-green); font-weight: 900;">VALEO</div>
-            <div style="font-size: 12px; opacity: 0.6; letter-spacing: 3px;">BAKIM DEPO PORTALI</div>
+    <div id="login-screen" style="max-width: 400px; margin: auto;">
+        <div style="text-align:center; padding:20px;">
+            <div style="font-size: 45px; color: var(--valeo-green); font-weight: 900;">VALEO</div>
         </div>
         <div class="content">
             <input type="text" id="user-input" placeholder="Kullanıcı Adı">
-            <input type="password" id="pass-input" placeholder="Şifre" onkeyup="if(event.key==='Enter') girisYap()">
+            <input type="password" id="pass-input" placeholder="Şifre" onkeyup="if(event.key === 'Enter') girisYap()">
             <button onclick="girisYap()">SİSTEME GİRİŞ</button>
         </div>
     </div>
 
     <div id="app-screen" style="display:none; height: 100%; flex-direction: column;">
-        <div id="central-watermark" class="watermark-bg">
-            <div class="watermark-text">VALEO</div>
-        </div>
+        <div id="central-watermark" class="watermark-bg"><div class="watermark-text">VALEO</div></div>
         <div class="content">
-            <div style="max-width: 800px; margin: 0 auto;">
-                <input type="text" id="search" placeholder="Malzeme adı veya SAP kodu ile hızlı arama..." oninput="aramaYap(true)">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <input type="text" id="search" placeholder="Malzeme veya SAP ara..." oninput="aramaYap()">
             </div>
             <div id="results"></div>
         </div>
     </div>
 
     <div id="history-screen" style="display:none; height: 100%; flex-direction: column;">
-        <div style="background: var(--valeo-green); color:white; padding: 15px 30px; display:flex; justify-content: space-between;">
-            <div onclick="anaSayfayaDon()" style="cursor:pointer; font-weight: bold;">🔙 ANA SAYFA</div>
-            <div style="font-weight: bold;">İŞLEM GEÇMİŞİ</div>
+        <div style="background: var(--valeo-green); color: white; padding: 15px; display: flex; justify-content: space-between;">
+            <div onclick="anaSayfayaDon()" style="cursor:pointer;">🔙 GERİ</div>
+            <div>İŞLEM GEÇMİŞİ</div>
         </div>
         <div class="content">
             <table class="history-table">
-                <thead><tr><th>SAP</th><th>MALZEME</th><th>PERSONEL</th><th>ADET</th><th>TİP</th><th>TARİH</th></tr></thead>
+                <thead><tr><th>SAP</th><th>AD</th><th>PERSONEL</th><th>ADET</th><th>TİP</th><th>TARİH</th></tr></thead>
                 <tbody id="history-body"></tbody>
             </table>
         </div>
-    </div>
-
-    <div id="users-screen" style="display:none; height: 100%; flex-direction: column;">
-        <div style="background: var(--valeo-green); color:white; padding: 15px 30px;"><div onclick="anaSayfayaDon()" style="cursor:pointer; font-weight: bold;">🔙 GERİ</div></div>
-        <div class="content" id="users-list-container"></div>
     </div>
 </div>
 
 <div id="action-modal" class="modal">
     <div class="modal-content">
-        <h3 id="modal-subtitle" style="margin-top:0; color:var(--valeo-green);"></h3>
+        <h3 id="modal-subtitle"></h3>
         <div class="stepper">
             <button onclick="adetDegistir(-1)">-</button>
             <input type="number" id="islem-adet" value="0" readonly>
@@ -147,12 +119,11 @@
         </div>
         <button id="btn-dusum" style="background:var(--danger);" onclick="onayliKaydet('STOKTAN DÜŞÜM', this)" disabled>📉 STOKTAN DÜŞÜM</button>
         <button id="btn-talep" style="background:var(--valeo-blue); margin-top:10px;" onclick="onayliKaydet('SİPARİŞ TALEBİ', this)" disabled>🛒 SİPARİŞ OLUŞTUR</button>
-        <button onclick="modalKapat()" style="background:#eee; color:#333; margin-top:15px;">İPTAL</button>
+        <button onclick="modalKapat()" style="background:#eee; color:#333; margin-top:15px;">VAZGEÇ</button>
     </div>
 </div>
 
 <script>
-    // URL'LER (DOSYADAN ALINDI)
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
@@ -160,80 +131,97 @@
 
     let urunler = [], kullanicilar = [], seciliUrun = null;
 
-    function trNormalize(t) { return t ? t.toString().toLowerCase('tr').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ç/g,'c').replace(/ğ/g,'g') : ""; }
+    function trNormalize(text) { return text ? text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g') : ""; }
 
-    function toggleMenu(e) { if(e) e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
-    function closeMenuOutside(e) { const d = document.getElementById('dropdown'); if(d.style.display==='block' && !d.contains(e.target)) d.style.display='none'; }
-
-    async function girisYap() {
-        const u = document.getElementById('user-input').value.trim().toLowerCase();
-        const p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => { 
-            const v = Object.values(row); 
-            return v[0] && v[0].toString().toLowerCase() === u && v[1] && v[1].toString() === p; 
+    // ORİJİNAL VURGULAMA FONKSİYONU
+    function highlightText(text, keywords) {
+        if (!keywords || keywords.length === 0 || !text) return text;
+        let originalText = text.toString();
+        let lowerText = trNormalize(originalText);
+        let result = "", lastIdx = 0, matches = [];
+        keywords.forEach(key => {
+            let startPos = 0;
+            while ((startPos = lowerText.indexOf(key, startPos)) !== -1) {
+                matches.push({ start: startPos, end: startPos + key.length });
+                startPos += key.length;
+            }
         });
-        if (found) { localStorage.setItem('depoUser', u); loginSuccess(u); } else { alert("Hatalı Giriş!"); }
+        matches.sort((a, b) => a.start - b.start);
+        let merged = [];
+        if (matches.length > 0) {
+            let current = matches[0];
+            for (let i = 1; i < matches.length; i++) {
+                if (matches[i].start < current.end) current.end = Math.max(current.end, matches[i].end);
+                else { merged.push(current); current = matches[i]; }
+            }
+            merged.push(current);
+        }
+        merged.forEach(m => {
+            result += originalText.substring(lastIdx, m.start) + `<span class="highlight">${originalText.substring(m.start, m.end)}</span>`;
+            lastIdx = m.end;
+        });
+        return result + originalText.substring(lastIdx);
     }
 
-    function loginSuccess(user) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app-screen').style.display = 'flex';
-        document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
-        document.getElementById('app-menu-wrap').style.display = 'block';
-    }
-
+    // TAM FONKSİYONEL ARAMA
     function aramaYap() {
-        const q = trNormalize(document.getElementById('search').value).trim();
-        const resDiv = document.getElementById('results');
-        document.getElementById('central-watermark').style.display = q ? 'none' : 'block';
-        if(!q) { resDiv.innerHTML = ""; return; }
+        const queryRaw = document.getElementById('search').value;
+        const queryNorm = trNormalize(queryRaw).trim();
+        const keywords = queryNorm.split(/\s+/).filter(k => k.length > 0);
+        document.getElementById('central-watermark').style.display = queryNorm ? 'none' : 'block';
+        if(!queryNorm) { document.getElementById('results').innerHTML = ""; return; }
         
-        const filtered = urunler.filter(u => trNormalize(Object.values(u).join(" ")).includes(q));
-        resDiv.innerHTML = filtered.slice(0, 40).map(i => {
+        const filtered = urunler.filter(u => {
+            const rowText = trNormalize(Object.values(u).join(" "));
+            return keywords.every(key => rowText.includes(key));
+        });
+
+        document.getElementById('results').innerHTML = filtered.slice(0, 50).map(i => {
             const v = Object.values(i);
-            return `<div class="product-card" onclick="openModal('${v[0]}','${v[1]}','${v[2]}','${v[3]}')">
-                <div style="font-weight:900; color:var(--valeo-green);">SAP: ${v[0]}</div>
-                <div style="font-weight:700; margin:5px 0;">${v[1]}</div>
-                <div style="font-size:12px; opacity:0.7;">📍 Konum: ${v[2]} | 📦 Stok: ${v[3]}</div>
+            return `<div class="product-card" onclick="openModal('${v[0]}','${v[1].replace(/'/g, "\\'")}','${v[2]}','${v[3]}')">
+                <div style="font-weight:900;">SAP: ${highlightText(v[0], keywords)}</div>
+                <div style="font-weight:700;">${highlightText(v[1], keywords)}</div>
+                <div style="font-size:12px; color:#888;">📍 ${v[2]} | 📦 ${v[3]} ADET</div>
             </div>`;
         }).join('');
     }
 
+    function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
+    function closeMenuOutside(e) { const d = document.getElementById('dropdown'); if(d.style.display === 'block' && !d.contains(e.target)) d.style.display = 'none'; }
     function openModal(sap, ad, adres, stok) {
         seciliUrun = [sap, ad, adres, stok];
         document.getElementById('modal-subtitle').innerText = ad;
         document.getElementById('islem-adet').value = '0';
         document.getElementById('action-modal').style.display = 'flex';
     }
-
     function adetDegistir(d) {
         let v = parseInt(document.getElementById('islem-adet').value) + d;
-        if(v < 0) v = 0; document.getElementById('islem-adet').value = v;
+        v = v < 0 ? 0 : v;
+        document.getElementById('islem-adet').value = v;
         document.getElementById('btn-dusum').disabled = v <= 0;
         document.getElementById('btn-talep').disabled = v <= 0;
     }
-
     async function onayliKaydet(islem, btn) {
         const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: document.getElementById('islem-adet').value, islem: islem, kullanici: localStorage.getItem('depoUser') };
-        btn.innerText = "İŞLENİYOR...";
+        btn.innerText = "YÜKLENİYOR...";
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-            alert("İşlem Başarılı!"); modalKapat();
-        } catch (e) { alert("Hata oluştu!"); }
+            alert("BAŞARILI!"); modalKapat();
+        } catch (e) { alert("Hata!"); }
     }
-
-    async function gecmisGoster() {
-        document.getElementById('app-screen').style.display = 'none';
-        document.getElementById('history-screen').style.display = 'flex';
-        const res = await fetch(GECMIS_URL);
-        const data = XLSX.utils.sheet_to_json(XLSX.read(await res.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
-        document.getElementById('history-body').innerHTML = data.slice(1).reverse().slice(0,50).map(row => 
-            `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[5]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[6] || '-'}</td></tr>`
-        ).join('');
+    async function girisYap() {
+        const u = document.getElementById('user-input').value.trim().toLowerCase(), p = document.getElementById('pass-input').value.trim();
+        const found = kullanicilar.find(row => Object.values(row)[0]?.toString().toLowerCase() === u && Object.values(row)[1]?.toString() === p);
+        if (found) { localStorage.setItem('depoUser', u); loginSuccess(u); } else { alert("Hatalı!"); }
     }
-
-    function anaSayfayaDon() { document.getElementById('history-screen').style.display='none'; document.getElementById('users-screen').style.display='none'; document.getElementById('app-screen').style.display='flex'; }
+    function loginSuccess(user) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'flex';
+        document.getElementById('app-menu-wrap').style.display = 'block';
+        document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
+    }
     function modalKapat() { document.getElementById('action-modal').style.display = 'none'; }
+    function anaSayfayaDon() { document.getElementById('history-screen').style.display='none'; document.getElementById('app-screen').style.display='flex'; }
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
@@ -243,9 +231,8 @@
             kullanicilar = XLSX.utils.sheet_to_json(XLSX.read(uRes, {type:'string'}).Sheets.Sheet1);
             urunler = XLSX.utils.sheet_to_json(XLSX.read(pRes, {type:'string'}).Sheets.Sheet1).filter(r => Object.values(r).length > 0);
             if (localStorage.getItem('depoUser')) loginSuccess(localStorage.getItem('depoUser'));
-        } catch (e) { console.log("Yükleme hatası"); }
+        } catch (e) {}
     };
 </script>
-
 </body>
 </html>
