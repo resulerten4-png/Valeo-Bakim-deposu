@@ -32,11 +32,10 @@
 
         body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: 0.3s; padding: 10px; box-sizing: border-box; }
         
-        /* Cihaz uyumluluğu için genişlik ve yükseklik ayarı */
         .container { 
             background: var(--card-bg); 
             width: 100%; 
-            max-width: 500px; /* Tablet ve PC'de ideal genişlik */
+            max-width: 500px; 
             height: 95vh; 
             max-height: 900px; 
             border-radius: 24px; 
@@ -48,13 +47,7 @@
             border: 1px solid var(--border); 
         }
 
-        /* Bilgisayar ve büyük tabletler için esneklik */
-        @media (min-width: 768px) {
-            .container {
-                max-width: 600px;
-                height: 85vh;
-            }
-        }
+        @media (min-width: 768px) { .container { max-width: 600px; height: 85vh; } }
 
         #loading-overlay {
             display: none;
@@ -213,6 +206,17 @@
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
 
+    // Türkiye formatında tarih oluşturucu (GG.AA.YYYY SS:DD)
+    function getTurkishDateTime() {
+        const now = new Date();
+        const d = String(now.getDate()).padStart(2, '0');
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const y = now.getFullYear();
+        const h = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        return `${d}.${m}.${y} ${h}:${min}`;
+    }
+
     function trNormalize(text) {
         if (!text) return "";
         return text.toString().replace(/İ/g, 'i').replace(/I/g, 'i').toLowerCase()
@@ -286,14 +290,17 @@
             const csvText = await res.text();
             const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
             const rows = data.slice(1).reverse().slice(0, 40); 
-            document.getElementById('history-body').innerHTML = rows.map(row => `
+            document.getElementById('history-body').innerHTML = rows.map(row => {
+                // Tarih hücresini TR formatına çekmeye çalış, yoksa olduğu gibi yaz
+                let tarih = row[6] || '-';
+                return `
                 <tr>
                     <td><b>${row[0] || '-'}</b></td>
                     <td>${row[3] || '0'}</td>
                     <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
                     <td>${row[5] || '-'}</td>
-                    <td style="font-size:9px; opacity:0.7;">${row[6] || '-'}</td>
-                </tr>`).join('');
+                    <td style="font-size:9px; opacity:0.7;">${tarih}</td>
+                </tr>`}).join('');
         } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata!</td></tr>'; }
     }
 
@@ -363,7 +370,18 @@
 
     async function kaydet(islem, adet) {
         document.getElementById('loading-overlay').style.display = 'flex';
-        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
+        
+        // Veriyi gönderirken TR formatında tarih ekliyoruz
+        const veri = { 
+            sap: seciliUrun[0], 
+            ad: seciliUrun[1], 
+            adet: adet, 
+            islem: islem, 
+            makina: seciliMakina.no, 
+            kullanici: localStorage.getItem('depoUser'),
+            tarih: getTurkishDateTime() 
+        };
+
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
             document.getElementById('loading-overlay').style.display = 'none';
