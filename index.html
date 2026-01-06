@@ -49,10 +49,10 @@
 
         @media (min-width: 768px) { .container { max-width: 600px; height: 85vh; } }
 
-        /* Custom Modal Tasarımı */
+        /* Yeni Modern Modal Tasarımı */
         .modal-overlay {
             display: none;
-            position: absolute; /* Container içinde kalması için */
+            position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(5px);
@@ -85,7 +85,6 @@
         .btn-confirm { background: var(--valeo-green); color: white; }
         .btn-cancel { background: var(--bg-gray); color: var(--text-main); }
 
-        /* Loading Overlay */
         #loading-overlay {
             display: none;
             position: absolute;
@@ -255,23 +254,42 @@
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
 
-    // MODAL FONKSIYONLARI
-    function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
+    // --- MODAL VE UYARI FONKSİYONLARI ---
+    function closeModal() { 
+        document.getElementById('custom-modal').style.display = 'none'; 
+    }
+
+    // İlk Giriş Bing Bilgilendirmesi
+    function checkBingPermission() {
+        if (!localStorage.getItem('bingApproved')) {
+            const modal = document.getElementById('custom-modal');
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            document.getElementById('modal-cancel-btn').style.display = 'none';
+            document.getElementById('modal-icon').innerText = 'ℹ️';
+            document.getElementById('modal-title').innerText = 'Görsel Erişimi';
+            document.getElementById('modal-text').innerHTML = 'Görseller Microsoft Bing üzerinden sağlanmaktadır. <br><br>Lütfen açılacak sayfada <b>"Kabul Et"</b> butonuna basarak çerezleri onaylayın. Bu işlem bir kez yapılacaktır.';
+            confirmBtn.innerText = 'ANLADIM';
+            confirmBtn.style.background = 'var(--valeo-blue)';
+            confirmBtn.onclick = function() {
+                localStorage.setItem('bingApproved', 'true');
+                closeModal();
+                window.open('https://www.bing.com', '_blank');
+            };
+            modal.style.display = 'flex';
+        }
+    }
 
     function finalOnay(islem) {
         const modal = document.getElementById('custom-modal');
         const confirmBtn = document.getElementById('modal-confirm-btn');
         const cancelBtn = document.getElementById('modal-cancel-btn');
         const adet = document.getElementById('islem-adet').value;
-        
         cancelBtn.style.display = 'block';
         confirmBtn.innerText = 'ONAYLA';
         document.getElementById('modal-icon').innerText = islem === 'STOKTAN DÜŞÜM' ? '📉' : '🛒';
         document.getElementById('modal-title').innerText = islem;
         document.getElementById('modal-text').innerHTML = `<b>${seciliUrun[1]}</b> ürününden <b>${adet} adet</b> için işlem yapılacaktır.<br><br>Onaylıyor musunuz?`;
-        
         confirmBtn.style.background = islem === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)';
-        
         confirmBtn.onclick = function() {
             closeModal();
             kaydet(islem, adet);
@@ -295,7 +313,7 @@
         modal.style.display = 'flex';
     }
 
-    // MEVCUT SISTEM FONKSIYONLARI
+    // --- TEMEL FONKSİYONLAR ---
     function trNormalize(text) {
         if (!text) return "";
         return text.toString().replace(/İ/g, 'i').replace(/I/g, 'i').toLowerCase()
@@ -449,7 +467,7 @@
             showSuccessModal();
         } catch (e) { 
             document.getElementById('loading-overlay').style.display = 'none';
-            alert("Hata!"); 
+            alert("Sistem Hatası!"); 
         }
     }
 
@@ -460,6 +478,7 @@
 
     window.onload = async () => {
         if (localStorage.getItem('depoUser')) showPage('page-search');
+        checkBingPermission(); // Bilgilendirme uyarısını kontrol et
         try {
             const [uRes, pRes, mRes] = await Promise.all([
                 fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
