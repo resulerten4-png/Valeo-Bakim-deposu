@@ -178,6 +178,49 @@
             .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').trim();
     }
 
+    async function gecmisGoster() {
+        showPage('page-history');
+        document.getElementById('dropdown').style.display = 'none';
+        const res = await fetch(GECMIS_URL);
+        const csvText = await res.text();
+        const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
+        const rows = data.slice(1).reverse().slice(0, 40);
+        
+        // Google Script'ten veri gelirken sıralama genelde: SAP(0), AD(1), USER(2), ADET(3), TUR(4), MAKINA(5), TARIH(6), YETKILI(7)
+        // Senin istediğin UI sıralaması: Tarih, SAP, Malzeme, Adet, Tür, Makina No, Kullanıcı, Yetkili
+        document.getElementById('history-body').innerHTML = rows.map(row => `
+            <tr>
+                <td>${row[6] || '-'}</td>
+                <td>${row[0] || '-'}</td>
+                <td>${row[1] || '-'}</td>
+                <td>${row[3] || '0'}</td>
+                <td>${row[4] || '-'}</td>
+                <td>${row[5] || '-'}</td>
+                <td>${row[2] || '-'}</td>
+                <td>${row[7] || '-'}</td>
+            </tr>`).join('');
+    }
+
+    async function kaydet(islem, adet) {
+        const userRow = kullanicilar.find(r => r[0]?.toString().toLowerCase() === localStorage.getItem('depoUser'));
+        const yetkili = userRow ? userRow[7] : "-"; 
+
+        const veri = { 
+            sap: seciliUrun[0], 
+            ad: seciliUrun[1], 
+            kullanici: localStorage.getItem('depoUser'),
+            adet: adet, 
+            islem: islem, 
+            makina: seciliMakina.no, 
+            yetkili: yetkili
+        };
+
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
+            alert("İŞLEM BAŞARILI!"); showPage('page-search');
+        } catch (e) { alert("Hata!"); }
+    }
+
     function aramaYap() {
         const query = trNormalize(document.getElementById('search-main').value);
         const resultsContainer = document.getElementById('search-results');
@@ -201,18 +244,6 @@
         showPage('page-detail');
     }
 
-    async function gecmisGoster() {
-        showPage('page-history');
-        document.getElementById('dropdown').style.display = 'none';
-        const res = await fetch(GECMIS_URL);
-        const csvText = await res.text();
-        const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
-        const rows = data.slice(1).reverse().slice(0, 40);
-        document.getElementById('history-body').innerHTML = rows.map(row => `
-            <tr>
-                <td>${row[0] || '-'}</td> <td>${row[1] || '-'}</td> <td>${row[2] || '-'}</td> <td>${row[3] || '0'}</td> <td>${row[4] || '-'}</td> <td>${row[5] || '-'}</td> <td>${row[6] || '-'}</td> <td>${row[7] || '-'}</td> </tr>`).join('');
-    }
-
     function makineAramaYap() {
         const query = trNormalize(document.getElementById('action-machine-search').value);
         if(!query) { document.getElementById('machine-results').innerHTML = ""; return; }
@@ -229,27 +260,6 @@
         document.getElementById('selected-machine-box').style.display = 'block';
         document.getElementById('machine-results').innerHTML = "";
         updateButtons();
-    }
-
-    async function kaydet(islem, adet) {
-        const userRow = kullanicilar.find(r => r[0]?.toString().toLowerCase() === localStorage.getItem('depoUser'));
-        const yetkili = userRow ? userRow[7] : "-"; 
-
-        const veri = { 
-            tarih: new Date().toLocaleString('tr-TR'),
-            sap: seciliUrun[0], 
-            ad: seciliUrun[1], 
-            adet: adet, 
-            islem: islem, 
-            makina: seciliMakina.no, 
-            kullanici: localStorage.getItem('depoUser'),
-            yetkili: yetkili
-        };
-
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-            alert("İŞLEM BAŞARILI!"); showPage('page-search');
-        } catch (e) { alert("Hata!"); }
     }
 
     function showPage(p) { 
@@ -309,10 +319,13 @@
             const [uRes, pRes, mRes] = await Promise.all([
                 fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
             ]);
-            const parseCSV = (data) => XLSX.utils.sheet_to_json(XLSX.read(data, {type:'string'}).Sheets.Sheet1, {header: 1});
-            kullanicilar = parseCSV(uRes).slice(1);
-            urunler = parseCSV(pRes).slice(1);
-            makineler = parseCSV(mRes).slice(1);
+            const parseCSVToArray = (data) => {
+                const wb = XLSX.read(data, {type:'string'});
+                return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
+            };
+            kullanicilar = parseCSVToArray(uRes).slice(1);
+            urunler = parseCSVToArray(pRes).slice(1);
+            makineler = parseCSVToArray(mRes).slice(1);
         } catch (e) { console.error(e); }
     };
 </script>
