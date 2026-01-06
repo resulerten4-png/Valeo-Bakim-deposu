@@ -121,10 +121,10 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
-    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=1584268931&single=true&output=csv';
-    const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=1658888580&single=true&output=csv';
-    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=185766952&single=true&output=csv';
+    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
+    const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
+    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
 
@@ -155,35 +155,38 @@
         const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
         
         const filtered = urunler.filter(u => {
-            const targetText = trNormalize((u[0] || "") + " " + (u[1] || ""));
+            const vals = Object.values(u);
+            const targetText = trNormalize((vals[0] || "") + " " + (vals[1] || ""));
             return searchTerms.every(term => targetText.includes(term));
         });
 
         resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
-            let dSap = String(u[0]), dAd = String(u[1]);
+            const v = Object.values(u);
+            let dSap = String(v[0]), dAd = String(v[1]);
             searchTerms.forEach(t => {
                 const regex = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
                 dSap = dSap.replace(regex, '<mark style="background:#f1c40f; color:black; padding:0 2px; border-radius:3px;">$1</mark>');
                 dAd = dAd.replace(regex, '<mark style="background:#f1c40f; color:black; padding:0 2px; border-radius:3px;">$1</mark>');
             });
-            return `<div class="product-card" onclick="openDetail('${u[0]}')">
+            return `<div class="product-card" onclick="openDetail('${v[0]}')">
                 <div style="font-weight:900;">SAP: ${dSap}</div>
                 <div style="font-weight:700; font-size:14px;">${dAd}</div>
-                <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${u[2] || "-"} | 📦 ${u[3] || "0"} ADET</div>
+                <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${v[2] || "-"} | 📦 ${v[3] || "0"} ADET</div>
             </div>`;
         }).join('');
     }
 
     function openDetail(sap) {
-        seciliUrun = urunler.find(u => u[0].toString() === sap.toString());
+        seciliUrun = urunler.find(u => Object.values(u)[0].toString() === sap.toString());
         if(!seciliUrun) return;
-        document.getElementById('detay-ad').innerText = seciliUrun[1];
-        document.getElementById('detay-sap').innerText = "SAP: " + seciliUrun[0];
-        document.getElementById('detay-adres').innerText = seciliUrun[2];
-        document.getElementById('detay-stok').innerText = seciliUrun[3];
+        const v = Object.values(seciliUrun);
+        document.getElementById('detay-ad').innerText = v[1];
+        document.getElementById('detay-sap').innerText = "SAP: " + v[0];
+        document.getElementById('detay-adres').innerText = v[2];
+        document.getElementById('detay-stok').innerText = v[3];
         document.getElementById('detail-image-panel').style.display = "none";
         document.getElementById('btn-toggle-img').innerText = "🖼️ GÖRSELİ GÖSTER";
-        document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`;
+        document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(v[1])}`;
         showPage('page-detail');
     }
 
@@ -201,13 +204,13 @@
                 if (tHam) {
                     if (!isNaN(tHam) && tHam > 40000) {
                         const dObj = XLSX.SSF.parse_date_code(tHam);
-                        fTarih = new Date(dObj.y, dObj.m-1, dObj.d, dObj.H, dObj.M).toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                        fTarih = new Date(dObj.y, dObj.m-1, dObj.d, dObj.H, dObj.M).toLocaleString('tr-TR');
                     } else {
                         const d = new Date(tHam);
-                        fTarih = isNaN(d.getTime()) ? tHam : d.toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                        fTarih = isNaN(d.getTime()) ? tHam : d.toLocaleString('tr-TR');
                     }
                 }
-                return `<tr><td><b>${row[0] || '-'}</b></td><td>${row[3] || '0'}</td><td style="color:${row[4]==='STOKTAN DÜŞÜM'?'var(--danger)':'var(--valeo-blue)'}">${row[4]==='STOKTAN DÜŞÜM'?'Düşüm':'Talep'}</td><td>${row[5] || '-'}</td><td style="font-size:9px; white-space:nowrap;">${fTarih}</td></tr>`;
+                return `<tr><td><b>${row[0] || '-'}</b></td><td>${row[3] || '0'}</td><td style="color:${row[4]==='STOKTAN DÜŞÜM'?'var(--danger)':'var(--valeo-blue)'}">${row[4]==='STOKTAN DÜŞÜM'?'Düşüm':'Talep'}</td><td>${row[5] || '-'}</td><td style="font-size:9px;">${fTarih}</td></tr>`;
             }).join('');
         } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata oluştu.</td></tr>'; }
     }
@@ -215,8 +218,13 @@
     function girisYap() {
         const u = document.getElementById('user-input').value.trim().toLowerCase();
         const p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => row[0]?.toString().toLowerCase() === u && row[1]?.toString() === p);
-        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } else { alert("Hatalı giriş!"); }
+        // Hem başlık içeren hem içermeyen veriler için esnek giriş
+        const found = kullanicilar.find(row => {
+            const v = Object.values(row);
+            return (v[0]?.toString().toLowerCase() === u && v[1]?.toString() === p);
+        });
+        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } 
+        else { alert("Hatalı kullanıcı adı veya şifre!"); }
     }
 
     function toggleImage() {
@@ -237,11 +245,13 @@
     function makineAramaYap() {
         const query = trNormalize(document.getElementById('action-machine-search').value);
         if(!query) { document.getElementById('machine-results').innerHTML = ""; return; }
-        const filtered = makineler.filter(m => trNormalize(m.join(" ")).includes(query));
-        document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => `
-            <div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${m[0]}','${m[1]}')">
-                <div style="font-size:13px;"><b>${m[0]}</b> - ${m[1]}</div>
-            </div>`).join('');
+        const filtered = makineler.filter(m => trNormalize(Object.values(m).join(" ")).includes(query));
+        document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => {
+            const v = Object.values(m);
+            return `<div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${v[0]}','${v[1]}')">
+                <div style="font-size:13px;"><b>${v[0]}</b> - ${v[1]}</div>
+            </div>`;
+        }).join('');
     }
 
     function selectMachine(no, ad) {
@@ -270,7 +280,8 @@
     }
 
     async function kaydet(islem, adet) {
-        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
+        const v = Object.values(seciliUrun);
+        const veri = { sap: v[0], ad: v[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
             alert("İŞLEM BAŞARILI!"); showPage('page-search');
@@ -288,10 +299,10 @@
             const [uRes, pRes, mRes] = await Promise.all([
                 fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
             ]);
-            const parseToArray = (d) => XLSX.utils.sheet_to_json(XLSX.read(d, {type:'string'}).Sheets.Sheet1, {header: 1});
-            kullanicilar = parseToArray(uRes).slice(1);
-            urunler = parseToArray(pRes).slice(1).filter(r => r.length > 0);
-            makineler = parseToArray(mRes).slice(1);
+            const parseCSV = (d) => XLSX.utils.sheet_to_json(XLSX.read(d, {type:'string'}).Sheets.Sheet1);
+            kullanicilar = parseCSV(uRes);
+            urunler = parseCSV(pRes).filter(r => Object.values(r).length > 2);
+            makineler = parseCSV(mRes);
         } catch (e) { console.error(e); }
     };
 </script>
