@@ -26,6 +26,10 @@
         .dropdown-menu { display: none; position: absolute; right: 0; top: 45px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 190px; z-index: 5000; border: 1px solid #eee; overflow: hidden; }
         .dropdown-menu div { padding: 14px 18px; color: var(--text-color); cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 10px; }
 
+        /* Müzik Kontrolü */
+        #music-control { position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: var(--valeo-dark); color: white; padding: 10px 15px; border-radius: 30px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; border: 1px solid var(--valeo-green); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.3s; }
+        #music-control:hover { transform: scale(1.05); background: #444; }
+
         .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: var(--card-bg); padding: 20px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; max-height: 90vh; overflow-y: auto; }
         #gorsel-panel { display: none; margin-top: 15px; border: 2px solid var(--valeo-green); border-radius: 10px; overflow: hidden; height: 300px; background: white; }
@@ -38,17 +42,17 @@
         .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .history-table th { background: var(--valeo-dark); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
         .history-table td { padding: 12px; border-bottom: 1px solid #eee; }
-
-        /* Müzik Kontrol Paneli */
-        #music-control { position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: var(--valeo-dark); color: white; padding: 10px 15px; border-radius: 25px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid var(--valeo-green); }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
 
 <audio id="bg-music" loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" type="audio/mpeg">
 </audio>
-<div id="music-control" onclick="toggleMusic()">🎵 <span id="music-text">Müziği Başlat</span></div>
+
+<div id="music-control" onclick="toggleMusic()">
+    <span id="music-icon">🎵</span> <span id="music-text">Ararım Seni...</span>
+</div>
 
 <div class="container">
     <div class="top-bar">
@@ -60,7 +64,7 @@
             <div class="menu-btn" onclick="toggleMenu(event)" style="cursor:pointer; font-size:24px;">☰</div>
             <div id="dropdown" class="dropdown-menu">
                 <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
-                <div onclick="gecmisGoster(true)">📋 İşlemler</div>
+                <div onclick="gecmisGoster()">📋 İşlemler</div>
                 <div onclick="kullaniciSayfasiGoster()">👥 Kullanıcılar</div>
                 <div onclick="guvenliCikis()" style="color: var(--danger);">🚪 Güvenli Çıkış</div>
             </div>
@@ -70,7 +74,6 @@
     <div id="login-screen" style="max-width: 400px; margin: auto;">
         <div style="text-align:center; padding:30px;">
             <div style="font-size: 45px; color: var(--valeo-green); font-weight: 900;">VALEO</div>
-            <p style="font-size: 12px; opacity: 0.7;">Ararım Seni...</p>
         </div>
         <div class="content">
             <input type="text" id="user-input" placeholder="Kullanıcı Adı">
@@ -93,7 +96,12 @@
             <div onclick="anaSayfayaDon()" style="cursor:pointer; font-weight:bold;">🔙 GERİ</div>
             <div style="font-weight:bold;">İŞLEM GEÇMİŞİ</div>
         </div>
-        <div class="content"><table class="history-table"><thead><tr><th>SAP</th><th>AD</th><th>PERS</th><th>ADET</th><th>TİP</th><th>TARİH</th></tr></thead><tbody id="history-body"></tbody></table></div>
+        <div class="content">
+            <table class="history-table">
+                <thead><tr><th>SAP</th><th>AD</th><th>PERS</th><th>ADET</th><th>TİP</th><th>TARİH</th></tr></thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="users-screen" style="display:none; height: 100%; flex-direction: column;">
@@ -123,9 +131,9 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
-    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=1584268931&single=true&output=csv';
-    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBkW/pub?gid=185766952&single=true&output=csv';
+    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
+    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], kullanicilar = [], seciliUrun = null;
 
@@ -137,7 +145,7 @@
         const m = document.getElementById('bg-music');
         const txt = document.getElementById('music-text');
         if (m.paused) { m.play(); txt.innerText = "Müziği Durdur"; } 
-        else { m.pause(); txt.innerText = "Müziği Başlat"; }
+        else { m.pause(); txt.innerText = "Ararım Seni..."; }
     }
 
     async function girisYap() {
@@ -146,8 +154,7 @@
         if (found) { 
             localStorage.setItem('depoUser', u); 
             loginSuccess(u);
-            const m = document.getElementById('bg-music');
-            m.play().then(() => document.getElementById('music-text').innerText = "Müziği Durdur").catch(() => {});
+            document.getElementById('bg-music').play().catch(() => {});
         } else { alert("Hatalı Giriş!"); }
     }
 
@@ -158,35 +165,8 @@
         document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
     }
 
-    // STANDART FONKSİYONLAR (ARAMA, MODAL, NORMALİZASYON...)
+    // ARAMA VE NORMALİZASYON
     function trNormalize(t) { return t ? t.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g') : ""; }
-
-    function highlightText(text, keywords) {
-        if (!keywords || keywords.length === 0 || !text) return text;
-        let originalText = text.toString(), lowerText = trNormalize(originalText), result = "", lastIdx = 0, matches = [];
-        keywords.forEach(key => {
-            let startPos = 0;
-            while ((startPos = lowerText.indexOf(key, startPos)) !== -1) {
-                matches.push({ start: startPos, end: startPos + key.length });
-                startPos += key.length;
-            }
-        });
-        matches.sort((a, b) => a.start - b.start);
-        let merged = [];
-        if (matches.length > 0) {
-            let current = matches[0];
-            for (let i = 1; i < matches.length; i++) {
-                if (matches[i].start < current.end) current.end = Math.max(current.end, matches[i].end);
-                else { merged.push(current); current = matches[i]; }
-            }
-            merged.push(current);
-        }
-        merged.forEach(m => {
-            result += originalText.substring(lastIdx, m.start) + `<span class="highlight">${originalText.substring(m.start, m.end)}</span>`;
-            lastIdx = m.end;
-        });
-        return result + originalText.substring(lastIdx);
-    }
 
     function aramaYap() {
         const queryNorm = trNormalize(document.getElementById('search').value).trim();
@@ -199,17 +179,11 @@
         document.getElementById('results').innerHTML = filtered.slice(0, 40).map(i => {
             const v = Object.values(i);
             return `<div class="product-card" onclick="openModal('${v[0]}','${v[1].replace(/'/g, "\\'")}','${v[2]}','${v[3]}')">
-                <div style="font-weight:900;">SAP: ${highlightText(v[0], keywords)}</div>
-                <div style="font-weight:700;">${highlightText(v[1], keywords)}</div>
+                <div style="font-weight:900;">SAP: ${v[0]}</div>
+                <div style="font-weight:700;">${v[1]}</div>
                 <div style="font-size:12px; opacity:0.6;">📍 ${v[2]} | 📦 ${v[3]} ADET</div>
             </div>`;
         }).join('');
-    }
-
-    function toggleGorselPanel() {
-        const p = document.getElementById('gorsel-panel'), f = document.getElementById('gorsel-frame');
-        if (p.style.display === 'block') p.style.display = 'none';
-        else { p.style.display = 'block'; f.src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`; }
     }
 
     function openModal(sap, ad, adres, stok) {
@@ -265,6 +239,11 @@
     function anaSayfayaDon() { document.getElementById('history-screen').style.display='none'; document.getElementById('users-screen').style.display='none'; document.getElementById('app-screen').style.display='flex'; }
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
+    function toggleGorselPanel() {
+        const p = document.getElementById('gorsel-panel'), f = document.getElementById('gorsel-frame');
+        if (p.style.display === 'block') p.style.display = 'none';
+        else { p.style.display = 'block'; f.src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`; }
+    }
 
     window.onload = async () => {
         try {
