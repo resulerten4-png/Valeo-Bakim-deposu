@@ -210,21 +210,27 @@
                         fTarih = isNaN(d.getTime()) ? tHam : d.toLocaleString('tr-TR');
                     }
                 }
-                return `<tr><td><b>${row[0] || '-'}</b></td><td>${row[3] || '0'}</td><td style="color:${row[4]==='STOKTAN DÜŞÜM'?'var(--danger)':'var(--valeo-blue)'}">${row[4]==='STOKTAN DÜŞÜM'?'Düşüm':'Talep'}</td><td>${row[5] || '-'}</td><td style="font-size:9px;">${fTarih}</td></tr>`;
+                return `<tr><td><b>${row[0] || '-'}</b></td><td>${row[3] || '0'}</td><td style="color:${row[4]==='STOKTAN DÜŞÜM'?'var(--danger)':'var(--valeo-blue)'}">${row[4]==='STOKTAN DÜŞÜM'?'Düşüm':'Talep'}</td><td>${row[5] || '-'}</td><td style="font-size:9px; white-space:nowrap;">${fTarih}</td></tr>`;
             }).join('');
         } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata oluştu.</td></tr>'; }
     }
 
     function girisYap() {
-        const u = document.getElementById('user-input').value.trim().toLowerCase();
-        const p = document.getElementById('pass-input').value.trim();
-        // Hem başlık içeren hem içermeyen veriler için esnek giriş
+        const uInput = document.getElementById('user-input').value.trim().toLowerCase();
+        const pInput = document.getElementById('pass-input').value.trim();
+        
         const found = kullanicilar.find(row => {
             const v = Object.values(row);
-            return (v[0]?.toString().toLowerCase() === u && v[1]?.toString() === p);
+            // Sütun başlığı olsa da olmasa da ilk 2 sütunu kontrol eder
+            return v[0]?.toString().toLowerCase() === uInput && v[1]?.toString() === pInput;
         });
-        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } 
-        else { alert("Hatalı kullanıcı adı veya şifre!"); }
+
+        if (found) { 
+            localStorage.setItem('depoUser', uInput); 
+            showPage('page-search'); 
+        } else { 
+            alert("Hatalı giriş! Kullanıcı adı veya şifre yanlış."); 
+        }
     }
 
     function toggleImage() {
@@ -303,7 +309,7 @@
             kullanicilar = parseCSV(uRes);
             urunler = parseCSV(pRes).filter(r => Object.values(r).length > 2);
             makineler = parseCSV(mRes);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Yükleme Hatası:", e); }
     };
 </script>
 </body>
