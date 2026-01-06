@@ -38,7 +38,7 @@
 <body onclick="closeMenuOutside(event)">
 
 <div class="container">
-    <div class="top-bar">
+    <div id="main-top-bar" class="top-bar" style="display:none;">
         <div style="display: flex; align-items: center; gap: 10px;">
             <div id="btn-back" onclick="goBack()" style="display:none; cursor:pointer; font-size:18px;">⬅️</div>
             <div id="user-info" style="font-size: 12px; font-weight: 800; letter-spacing: 1px;">VALEO PORTAL</div>
@@ -52,6 +52,8 @@
     </div>
 
     <div id="page-login" class="page active-page">
+        <div onclick="toggleDarkMode()" style="position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; z-index: 100;">🌓</div>
+        
         <div class="content" style="text-align:center; justify-content: center; display: flex; flex-direction: column;">
             <h1 style="color:var(--valeo-green); font-size:48px; margin:0; font-weight:800;">Valeo</h1>
             <p style="letter-spacing:3px; font-size:10px; opacity:0.6; margin-bottom:40px; font-weight:600;">BAKIM DEPO SİSTEMİ</p>
@@ -138,6 +140,15 @@
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
         document.getElementById(pageId).classList.add('active-page');
+        
+        // Giriş sayfasında üst barı gizle, diğerlerinde göster
+        const topBar = document.getElementById('main-top-bar');
+        if (pageId === 'page-login') {
+            topBar.style.display = 'none';
+        } else {
+            topBar.style.display = 'flex';
+        }
+        
         document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
     }
 
@@ -155,38 +166,28 @@
         const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
         
         const filtered = urunler.filter(u => {
-            const vals = Object.values(u);
-            const targetText = trNormalize((vals[0] || "") + " " + (vals[1] || ""));
+            const targetText = trNormalize((u[0] || "") + " " + (u[1] || ""));
             return searchTerms.every(term => targetText.includes(term));
         });
 
-        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
-            const v = Object.values(u);
-            let dSap = String(v[0]), dAd = String(v[1]);
-            searchTerms.forEach(t => {
-                const regex = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                dSap = dSap.replace(regex, '<mark style="background:#f1c40f; color:black; padding:0 2px; border-radius:3px;">$1</mark>');
-                dAd = dAd.replace(regex, '<mark style="background:#f1c40f; color:black; padding:0 2px; border-radius:3px;">$1</mark>');
-            });
-            return `<div class="product-card" onclick="openDetail('${v[0]}')">
-                <div style="font-weight:900;">SAP: ${dSap}</div>
-                <div style="font-weight:700; font-size:14px;">${dAd}</div>
-                <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${v[2] || "-"} | 📦 ${v[3] || "0"} ADET</div>
-            </div>`;
-        }).join('');
+        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => `
+            <div class="product-card" onclick="openDetail('${u[0]}')">
+                <div style="font-weight:900;">SAP: ${u[0]}</div>
+                <div style="font-weight:700; font-size:14px;">${u[1]}</div>
+                <div style="font-size:12px; color:#888; margin-top:5px;">📍 ${u[2] || "-"} | 📦 ${u[3] || "0"} ADET</div>
+            </div>`).join('');
     }
 
     function openDetail(sap) {
-        seciliUrun = urunler.find(u => Object.values(u)[0].toString() === sap.toString());
+        seciliUrun = urunler.find(u => u[0].toString() === sap.toString());
         if(!seciliUrun) return;
-        const v = Object.values(seciliUrun);
-        document.getElementById('detay-ad').innerText = v[1];
-        document.getElementById('detay-sap').innerText = "SAP: " + v[0];
-        document.getElementById('detay-adres').innerText = v[2];
-        document.getElementById('detay-stok').innerText = v[3];
+        document.getElementById('detay-ad').innerText = seciliUrun[1];
+        document.getElementById('detay-sap').innerText = "SAP: " + seciliUrun[0];
+        document.getElementById('detay-adres').innerText = seciliUrun[2];
+        document.getElementById('detay-stok').innerText = seciliUrun[3];
         document.getElementById('detail-image-panel').style.display = "none";
         document.getElementById('btn-toggle-img').innerText = "🖼️ GÖRSELİ GÖSTER";
-        document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(v[1])}`;
+        document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`;
         showPage('page-detail');
     }
 
@@ -194,14 +195,11 @@
         showPage('page-history');
         document.getElementById('dropdown').style.display = 'none';
         document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Yükleniyor...</td></tr>';
-        
         try {
             const res = await fetch(GECMIS_URL);
             const csvText = await res.text();
             const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
-            
             const rows = data.slice(1).reverse().slice(0, 40); 
-            
             document.getElementById('history-body').innerHTML = rows.map(row => {
                 let tHam = row[6], fTarih = "-";
                 if (tHam) {
@@ -209,46 +207,31 @@
                     if (!isNaN(tHam) && tHam > 40000) {
                         const dObj = XLSX.SSF.parse_date_code(tHam);
                         d = new Date(dObj.y, dObj.m - 1, dObj.d, dObj.H, dObj.M);
-                    } else {
-                        d = new Date(tHam);
-                    }
+                    } else { d = new Date(tHam); }
 
                     if (!isNaN(d.getTime())) {
                         const gun = String(d.getDate()).padStart(2, '0');
                         const ay = String(d.getMonth() + 1).padStart(2, '0');
                         const yil = d.getFullYear();
-                        const saat = String(d.getHours()).padStart(2, '0');
-                        const dak = String(d.getMinutes()).padStart(2, '0');
-                        fTarih = `${gun}.${ay}.${yil} ${saat}:${dak}`;
+                        fTarih = `${gun}.${ay}.${yil}`;
                     } else { fTarih = tHam; }
                 }
                 return `<tr>
                     <td><b>${row[0] || '-'}</b></td>
                     <td>${row[3] || '0'}</td>
-                    <td style="color:${row[4]==='STOKTAN DÜŞÜM'?'var(--danger)':'var(--valeo-blue)'}">${row[4]==='STOKTAN DÜŞÜM'?'Düşüm':'Talep'}</td>
+                    <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
                     <td>${row[5] || '-'}</td>
-                    <td style="font-size:9px; white-space:nowrap;">${fTarih}</td>
+                    <td style="font-size:9px; opacity:0.7;">${fTarih}</td>
                 </tr>`;
             }).join('');
         } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata oluştu.</td></tr>'; }
     }
 
     function girisYap() {
-        const uInput = document.getElementById('user-input').value.trim().toLowerCase();
-        const pInput = document.getElementById('pass-input').value.trim();
-        
-        // Esnek Giriş Sistemi: Başlık olsa da olmasa da ilk iki sütunu kontrol eder
-        const found = kullanicilar.find(row => {
-            const v = Object.values(row);
-            return v[0]?.toString().toLowerCase() === uInput && v[1]?.toString() === pInput;
-        });
-
-        if (found) { 
-            localStorage.setItem('depoUser', uInput); 
-            showPage('page-search'); 
-        } else { 
-            alert("Hatalı giriş! Kullanıcı adı veya şifre yanlış."); 
-        }
+        const u = document.getElementById('user-input').value.trim().toLowerCase();
+        const p = document.getElementById('pass-input').value.trim();
+        const found = kullanicilar.find(row => row[0]?.toString().toLowerCase() === u && row[1]?.toString() === p);
+        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } else { alert("Hatalı giriş!"); }
     }
 
     function toggleImage() {
@@ -269,13 +252,11 @@
     function makineAramaYap() {
         const query = trNormalize(document.getElementById('action-machine-search').value);
         if(!query) { document.getElementById('machine-results').innerHTML = ""; return; }
-        const filtered = makineler.filter(m => trNormalize(Object.values(m).join(" ")).includes(query));
-        document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => {
-            const v = Object.values(m);
-            return `<div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${v[0]}','${v[1]}')">
-                <div style="font-size:13px;"><b>${v[0]}</b> - ${v[1]}</div>
-            </div>`;
-        }).join('');
+        const filtered = makineler.filter(m => trNormalize(m.join(" ")).includes(query));
+        document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => `
+            <div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${m[0]}','${m[1]}')">
+                <div style="font-size:13px;"><b>${m[0]}</b> - ${m[1]}</div>
+            </div>`).join('');
     }
 
     function selectMachine(no, ad) {
@@ -304,8 +285,7 @@
     }
 
     async function kaydet(islem, adet) {
-        const v = Object.values(seciliUrun);
-        const veri = { sap: v[0], ad: v[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
             alert("İŞLEM BAŞARILI!"); showPage('page-search');
@@ -323,12 +303,14 @@
             const [uRes, pRes, mRes] = await Promise.all([
                 fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
             ]);
-            // Veriyi en güvenli şekilde (XLSX parsing) okuyoruz
-            const parseCSV = (d) => XLSX.utils.sheet_to_json(XLSX.read(d, {type:'string'}).Sheets.Sheet1);
-            kullanicilar = parseCSV(uRes);
-            urunler = parseCSV(pRes).filter(r => Object.values(r).length > 2);
-            makineler = parseCSV(mRes);
-        } catch (e) { console.error("Yükleme Hatası:", e); }
+            const parseCSVToArray = (data) => {
+                const wb = XLSX.read(data, {type:'string'});
+                return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
+            };
+            kullanicilar = parseCSVToArray(uRes).slice(1);
+            urunler = parseCSVToArray(pRes).slice(1).filter(r => r.length > 0);
+            makineler = parseCSVToArray(mRes).slice(1);
+        } catch (e) { console.error(e); }
     };
 </script>
 </body>
