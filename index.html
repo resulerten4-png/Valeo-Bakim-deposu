@@ -365,7 +365,6 @@
         return highlighted;
     }
 
-    // GÜNCELLENMİŞ MODERN ARAMA FONKSİYONU
     function aramaYap() {
         const rawInput = document.getElementById('search-main').value;
         const resultsContainer = document.getElementById('search-results');
@@ -414,7 +413,6 @@
         showPage('page-detail');
     }
 
-    // GÜNCELLENMİŞ MODERN MAKİNE ARAMA FONKSİYONLARI
     function makineAramaYap() {
         const query = trNormalize(document.getElementById('action-machine-search').value);
         const resultsDiv = document.getElementById('machine-results');
@@ -551,6 +549,22 @@
             makineler = JSON.parse(localStorage.getItem('cached_makineler') || '[]');
         }
     };
+
+    // --- BURASI SİHİRLİ DOKUNUŞ: ÇEVRİMDIŞI AÇILIŞ SİSTEMİ ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swSource = `
+                const CACHE_NAME = 'valeo-v2-offline-cache';
+                const APP_ASSETS = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap'];
+                self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS))); self.skipWaiting(); });
+                self.addEventListener('activate', event => { event.waitUntil(clients.claim()); });
+                self.addEventListener('fetch', event => { event.respondWith(caches.match(event.request).then(response => response || fetch(event.request))); });
+            `;
+            const blob = new Blob([swSource], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(err => console.log('Hafıza Sistemi Hatası:', err));
+        });
+    }
 </script>
 </body>
 </html>
