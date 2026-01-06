@@ -52,7 +52,7 @@
         #detail-frame { width: 100%; height: 100%; border: none; }
         
         .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; background: var(--bg-gray); padding: 10px; border-radius: 15px; }
-        .stepper button { width: 50px; height: 50px; border-radius: 50%; background: var(--valeo-dark); font-size: 20px; padding: 0; }
+        .stepper button { width: 50px; height: 50px; border-radius: 50%; background: var(--valeo-dark); font-size: 20px; padding: 0; color: white; }
         #islem-adet { width: 70px; text-align: center; font-size: 24px; font-weight: 800; border: none; background: transparent; color: var(--text-main); }
         
         .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
@@ -63,9 +63,9 @@
         .history-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
         .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; }
         .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
-        
-        mark { background: #f1c40f; color: black; padding: 0 2px; border-radius: 3px; }
-        body.dark-mode mark { background: #d4ac0d; }
+
+        /* VURGULAMA STİLİ */
+        mark { background: #99cc00; color: #000; padding: 0 1px; border-radius: 2px; font-weight: bold; }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
@@ -154,7 +154,7 @@
 </div>
 
 <script>
-    // URL Düzeltmesi Yapıldı (PSBzW)
+    // SENİN SCRIPT URL'LERİN
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
@@ -163,6 +163,7 @@
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
 
+    // SENİN ÇALIŞAN NORMALİZASYONUN
     function trNormalize(text) {
         if (!text) return "";
         return text.toString().replace(/İ/g, 'i').replace(/I/g, 'i').toLowerCase()
@@ -170,31 +171,42 @@
             .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').trim();
     }
 
-    function highlight(text, terms) {
-        if (!terms || terms.length === 0) return text;
-        let highlighted = text;
-        terms.forEach(t => {
-            const regex = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            highlighted = highlighted.replace(regex, '<mark>$1</mark>');
+    // GÜVENLİ VURGULAMA FONKSİYONU
+    function safeHighlight(text, terms) {
+        if (!text || !terms || terms.length === 0) return text;
+        let highlighted = String(text);
+        const sortedTerms = [...new Set(terms)].sort((a, b) => b.length - a.length);
+
+        sortedTerms.forEach(term => {
+            if (term.length < 1) return;
+            const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            highlighted = highlighted.split(/(<mark>.*?<\/mark>)/g).map(part => {
+                if (part.startsWith('<mark>')) return part;
+                return part.replace(regex, '<mark>$1</mark>');
+            }).join('');
         });
         return highlighted;
     }
 
+    // ARAMA YAP FONKSİYONU - DİZİ FORMATINA GÖRE DÜZENLENDİ
     function aramaYap() {
         const rawInput = document.getElementById('search-main').value;
         const resultsContainer = document.getElementById('search-results');
         if (!rawInput || !rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
+        
         const queryNormalized = trNormalize(rawInput);
         const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
         
+        // u[0] SAP, u[1] İSİM formatında filtreleniyor
         const filtered = urunler.filter(u => {
             const targetText = trNormalize((u[0] || "") + " " + (u[1] || ""));
             return searchTerms.every(term => targetText.includes(term));
         });
 
         resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
-            const displaySap = highlight(String(u[0]), searchTerms);
-            const displayAd = highlight(String(u[1]), searchTerms);
+            const displaySap = safeHighlight(String(u[0]), searchTerms);
+            const displayAd = safeHighlight(String(u[1]), searchTerms);
+            
             return `
                 <div class="product-card" onclick="openDetail('${u[0]}')">
                     <div style="font-weight:900; color:var(--text-main);">SAP: ${displaySap}</div>
@@ -204,6 +216,16 @@
         }).join('');
     }
 
+    // GİRİŞ YAP - SENİN ÇALIŞAN MANTIĞIN
+    function girisYap() {
+        const u = document.getElementById('user-input').value.trim().toLowerCase();
+        const p = document.getElementById('pass-input').value.trim();
+        const found = kullanicilar.find(row => row[0]?.toString().toLowerCase() === u && row[1]?.toString() === p);
+        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } 
+        else { alert("Hatalı giriş!"); }
+    }
+
+    // DİĞER FONKSİYONLARIN (SAYFA GEÇİŞLERİ, KAYIT VS.) HEPSİNİ GERİ KOYDUM
     function openDetail(sap) {
         seciliUrun = urunler.find(u => u[0].toString() === sap.toString());
         if(!seciliUrun) return;
@@ -220,37 +242,21 @@
     async function gecmisGoster() {
         showPage('page-history');
         document.getElementById('dropdown').style.display = 'none';
-        document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Yükleniyor...</td></tr>';
+        document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="text-align:center;">Yükleniyor...</td></tr>';
         try {
             const res = await fetch(GECMIS_URL);
             const csvText = await res.text();
             const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
             const rows = data.slice(1).reverse().slice(0, 40); 
-            document.getElementById('history-body').innerHTML = rows.map(row => {
-                let tHam = row[0], fTarih = "-"; 
-                if (tHam) {
-                    let d;
-                    if (!isNaN(tHam) && tHam > 40000) {
-                        const dObj = XLSX.SSF.parse_date_code(tHam);
-                        d = new Date(dObj.y, dObj.m - 1, dObj.d, dObj.H, dObj.M);
-                    } else { d = new Date(tHam); }
-
-                    if (!isNaN(d.getTime())) {
-                        const gun = String(d.getDate()).padStart(2, '0');
-                        const ay = String(d.getMonth() + 1).padStart(2, '0');
-                        const yil = d.getFullYear();
-                        fTarih = `${gun}.${ay}.${yil}`;
-                    } else { fTarih = tHam; }
-                }
-                return `<tr>
-                    <td><b>${row[1] || '-'}</b></td>
+            document.getElementById('history-body').innerHTML = rows.map(row => `
+                <tr>
+                    <td><b>${row[0] || '-'}</b></td>
                     <td>${row[3] || '0'}</td>
                     <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
-                    <td>${row[7] || '-'}</td>
-                    <td style="font-size:9px; opacity:0.7;">${fTarih}</td>
-                </tr>`;
-            }).join('');
-        } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata oluştu.</td></tr>'; }
+                    <td>${row[5] || '-'}</td>
+                    <td style="font-size:9px; opacity:0.7;">${row[6] || '-'}</td>
+                </tr>`).join('');
+        } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata!</td></tr>'; }
     }
 
     function showPage(pageId) {
@@ -259,13 +265,6 @@
         const topBar = document.getElementById('main-top-bar');
         topBar.style.display = (pageId === 'page-login') ? 'none' : 'flex';
         document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
-    }
-
-    function girisYap() {
-        const u = document.getElementById('user-input').value.trim().toLowerCase();
-        const p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => row[0]?.toString().toLowerCase() === u && row[1]?.toString() === p);
-        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } else { alert("Hatalı giriş!"); }
     }
 
     function goBack() {
@@ -321,36 +320,15 @@
     }
 
     function finalOnay(islem) {
-        if(confirm(`${islem} onaylıyor musunuz?`)) kaydet(islem);
+        if(confirm(`${islem} onaylıyor musunuz?`)) kaydet(islem, document.getElementById('islem-adet').value);
     }
 
-    // 10 Sütunluk Kesin Kayıt Fonksiyonu
-    async function kaydet(islem) {
-        const miktar = document.getElementById('islem-adet').value;
-        const veri = {
-            s1: seciliUrun[6],   // 1. Sütun: Tarih (Sayfa3 G)
-            s2: seciliUrun[0],   // 2. Sütun: SAP Kodu (Sayfa3 A)
-            s3: seciliUrun[1],   // 3. Sütun: Malzeme Adı (Sayfa3 B)
-            s4: miktar,           // 4. Sütun: İşlem Adedi
-            s5: islem,           // 5. Sütun: İşlem Tipi
-            s6: seciliMakina.no, // 6. Sütun: Makina No (Sayfa4 A)
-            s7: seciliMakina.ad, // 7. Sütun: Makina Adı (Sayfa4 B)
-            s8: localStorage.getItem('depoUser'), // 8. Sütun: Kullanıcı
-            s9: seciliUrun[7],   // 9. Sütun: Yetkili (Sayfa3 H)
-            s10: seciliUrun[2]   // 10. Sütun: Adres (Sayfa3 C)
-        };
-
+    async function kaydet(islem, adet) {
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
         try {
-            await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify(veri) 
-            });
-            alert("İŞLEM BAŞARILI!"); 
-            showPage('page-search');
-        } catch (e) { 
-            alert("Hata oluştu!"); 
-        }
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
+            alert("İŞLEM BAŞARILI!"); showPage('page-search');
+        } catch (e) { alert("Hata!"); }
     }
 
     function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
@@ -362,9 +340,7 @@
         if (localStorage.getItem('depoUser')) showPage('page-search');
         try {
             const [uRes, pRes, mRes] = await Promise.all([
-                fetch(USER_URL).then(r => r.text()), 
-                fetch(URUN_URL).then(r => r.text()), 
-                fetch(MAKINA_URL).then(r => r.text())
+                fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
             ]);
             const parseCSVToArray = (data) => {
                 const wb = XLSX.read(data, {type:'string'});
@@ -373,7 +349,7 @@
             kullanicilar = parseCSVToArray(uRes).slice(1);
             urunler = parseCSVToArray(pRes).slice(1).filter(r => r.length > 0);
             makineler = parseCSVToArray(mRes).slice(1);
-        } catch (e) { console.error("Veri yükleme hatası:", e); }
+        } catch (e) { console.error(e); }
     };
 </script>
 </body>
