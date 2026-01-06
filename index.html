@@ -7,7 +7,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* Renk Değişkenleri - Okunabilirlik Odaklı */
         :root { 
             --valeo-green: #99cc00; 
             --valeo-blue: #0091ff; 
@@ -15,7 +14,7 @@
             --bg-gray: #f4f7f6; 
             --card-bg: #ffffff; 
             --text-main: #2d3436; 
-            --text-sub: #57606f; /* Daha koyu gri */
+            --text-sub: #57606f; 
             --danger: #ff4757; 
             --shadow: 0 10px 25px rgba(0,0,0,0.05);
             --border: #edf2f7;
@@ -25,49 +24,31 @@
             --bg-gray: #0f0f0f; 
             --card-bg: #1e1e1e; 
             --text-main: #ffffff; 
-            --text-sub: #ced6e0; /* Karanlıkta daha açık, okunur gri */
+            --text-sub: #ced6e0; 
             --valeo-dark: #000000;
             --border: #333333;
             --shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
         body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
-        
         .container { background: var(--card-bg); width: 100%; max-width: 450px; height: 92vh; border-radius: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; position: relative; margin: 10px; border: 1px solid var(--border); }
-        
         .top-bar { background: var(--valeo-dark); color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
         .content { padding: 20px; overflow-y: auto; flex-grow: 1; }
-
-        input { width: 100%; padding: 16px; margin: 10px 0; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 15px; box-sizing: border-box; transition: 0.2s; }
+        input { width: 100%; padding: 16px; margin: 10px 0; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 15px; box-sizing: border-box; }
         input:focus { border-color: var(--valeo-green); outline: none; }
-        
         button { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #95a5a6 !important; opacity: 0.5; cursor: not-allowed; }
-
-        .product-card { background: var(--card-bg); border: 1px solid var(--border); margin-bottom: 12px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; transition: 0.2s; }
-        .product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--valeo-green); }
-        
-        /* Önemli: Karanlık modda SAP ve Adres yazılarının rengi */
+        .product-card { background: var(--card-bg); border: 1px solid var(--border); margin-bottom: 12px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; }
         .product-card .sap-text { font-weight: 900; color: var(--text-main); }
-        .product-card .info-text { font-size: 12px; color: var(--text-sub); margin-top: 5px; }
-
         .page { display: none; height: 100%; flex-direction: column; animation: fadeIn 0.3s; }
         .active-page { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         mark { background: #f1c40f; color: #000; padding: 0 2px; border-radius: 3px; font-weight: bold; }
-        body.dark-mode mark { background: #ffdd59; }
-
-        /* Stepper ve Diğerleri */
-        .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; background: var(--bg-gray); padding: 10px; border-radius: 15px; }
-        #islem-adet { width: 70px; text-align: center; font-size: 24px; font-weight: 800; border: none; background: transparent; color: var(--text-main); }
-        
         .history-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
         .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; }
         .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
-
-        .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
-        .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); }
+        .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; border: 1px solid var(--border); }
+        .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); color: var(--text-main); }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
@@ -110,7 +91,7 @@
             <div id="detail-image-panel" style="display:none; width:100%; height:200px; margin-bottom:15px; border-radius:15px; overflow:hidden; border:1px solid var(--border);">
                 <iframe id="detail-frame" style="width:100%; height:100%; border:none;" src=""></iframe>
             </div>
-            <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px;">🖼️ GÖRSELİ GÖSTER</button>
+            <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px; width:auto;">🖼️ GÖRSELİ GÖSTER</button>
             <h2 id="detay-ad" style="margin:5px 0; font-size:22px; color:var(--text-main);"></h2>
             <div id="detay-sap" style="font-weight:900; color:var(--valeo-green); font-size:18px; margin-bottom:15px;"></div>
             <div style="background:var(--bg-gray); padding:15px; border-radius:12px; font-size:14px; color:var(--text-main);">
@@ -129,10 +110,10 @@
             <div id="selected-machine-box" style="display:none; background:var(--valeo-blue); color:white; padding:12px; border-radius:10px; margin:10px 0; font-weight:bold;"></div>
             <div style="margin-top:20px; text-align:center;">
                 <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">İŞLEM ADEDİ</label>
-                <div class="stepper">
-                    <button style="width:50px; height:50px; border-radius:50%; padding:0;" onclick="adetDegistir(-1)">-</button>
-                    <input type="number" id="islem-adet" value="0" readonly>
-                    <button style="width:50px; height:50px; border-radius:50%; padding:0;" onclick="adetDegistir(1)">+</button>
+                <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin:20px 0;">
+                    <button style="width:50px; height:50px; border-radius:50%;" onclick="adetDegistir(-1)">-</button>
+                    <input type="number" id="islem-adet" value="0" readonly style="width:70px; text-align:center; font-size:24px; border:none; background:transparent;">
+                    <button style="width:50px; height:50px; border-radius:50%;" onclick="adetDegistir(1)">+</button>
                 </div>
             </div>
             <button id="btn-dusum" style="background:var(--danger); margin-top:10px;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 STOKTAN DÜŞÜM</button>
@@ -171,41 +152,30 @@
 
     function highlight(text, terms) {
         if (!terms || terms.length === 0) return text;
-        let highlighted = text;
+        let h = text;
         terms.forEach(t => {
             const regex = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            highlighted = highlighted.replace(regex, '<mark>$1</mark>');
+            h = h.replace(regex, '<mark>$1</mark>');
         });
-        return highlighted;
+        return h;
     }
 
     function aramaYap() {
-        const rawInput = document.getElementById('search-main').value;
-        const resultsContainer = document.getElementById('search-results');
-        if (!rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
-        const queryNormalized = trNormalize(rawInput);
-        const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
-        
-        const filtered = urunler.filter(u => {
-            const targetText = trNormalize((u[0] || "") + " " + (u[1] || ""));
-            return searchTerms.every(term => targetText.includes(term));
-        });
-
-        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
-            const dSap = highlight(String(u[0]), searchTerms);
-            const dAd = highlight(String(u[1]), searchTerms);
-            return `
-                <div class="product-card" onclick="openDetail('${u[0]}')">
-                    <div class="sap-text">SAP: ${dSap}</div>
-                    <div style="font-weight:700; font-size:14px; color:var(--text-main);">${dAd}</div>
-                    <div class="info-text">📍 ${u[2] || "-"} | 📦 ${u[3] || "0"} ADET</div>
-                </div>`;
-        }).join('');
+        const raw = document.getElementById('search-main').value;
+        const res = document.getElementById('search-results');
+        if (!raw.trim()) { res.innerHTML = ""; return; }
+        const terms = trNormalize(raw).split(/\s+/).filter(t => t.length > 0);
+        const filtered = urunler.filter(u => terms.every(t => trNormalize((u[0]||"") + " " + (u[1]||"")).includes(t)));
+        res.innerHTML = filtered.slice(0, 25).map(u => `
+            <div class="product-card" onclick="openDetail('${u[0]}')">
+                <div class="sap-text">SAP: ${highlight(String(u[0]), terms)}</div>
+                <div style="font-weight:700; color:var(--text-main);">${highlight(String(u[1]), terms)}</div>
+                <div style="font-size:12px; color:var(--text-sub);">📍 ${u[2]||"-"} | 📦 ${u[3]||"0"} ADET</div>
+            </div>`).join('');
     }
 
     function openDetail(sap) {
         seciliUrun = urunler.find(u => u[0].toString() === sap.toString());
-        if(!seciliUrun) return;
         document.getElementById('detay-ad').innerText = seciliUrun[1];
         document.getElementById('detay-sap').innerText = "SAP: " + seciliUrun[0];
         document.getElementById('detay-adres').innerText = seciliUrun[2];
@@ -220,62 +190,66 @@
         document.getElementById('dropdown').style.display = 'none';
         document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Yükleniyor...</td></tr>';
         try {
-            const res = await fetch(GECMIS_URL);
-            const csvText = await res.text();
-            const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
-            const rows = data.slice(1).reverse().slice(0, 30); 
+            const r = await fetch(GECMIS_URL);
+            const csv = await r.text();
+            const data = XLSX.utils.sheet_to_json(XLSX.read(csv, {type:'string'}).Sheets.Sheet1, {header: 1});
+            const rows = data.slice(1).reverse().slice(0, 35); 
             document.getElementById('history-body').innerHTML = rows.map(row => {
-                let fTarih = row[6] ? (isNaN(row[6]) ? row[6] : XLSX.SSF.format('dd.mm.yyyy', row[6])) : "-";
+                let fT = "-";
+                if (row[6]) {
+                    if (!isNaN(row[6])) { fT = XLSX.SSF.format('dd.mm.yyyy', row[6]); }
+                    else { fT = row[6].split(' ')[0]; }
+                }
                 return `<tr>
-                    <td><b>${row[0] || '-'}</b></td>
-                    <td>${row[3] || '0'}</td>
-                    <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
-                    <td>${row[5] || '-'}</td>
-                    <td style="opacity:0.7;">${fTarih}</td>
+                    <td><b>${row[0]||'-'}</b></td>
+                    <td>${row[3]||'0'}</td>
+                    <td style="color:${row[4]==='STOKTAN DÜŞÜM'?'var(--danger)':'var(--valeo-blue)'}">${row[4]==='STOKTAN DÜŞÜM'?'Düşüm':'Talep'}</td>
+                    <td>${row[5]||'-'}</td>
+                    <td style="opacity:0.7;">${fT}</td>
                 </tr>`;
             }).join('');
-        } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata oluştu.</td></tr>'; }
+        } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata!</td></tr>'; }
     }
 
-    function showPage(pageId) {
+    function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(pageId).classList.add('active-page');
-        document.getElementById('main-top-bar').style.display = (pageId === 'page-login') ? 'none' : 'flex';
-        document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
+        document.getElementById(id).classList.add('active-page');
+        document.getElementById('main-top-bar').style.display = (id === 'page-login') ? 'none' : 'flex';
+        document.getElementById('btn-back').style.display = (id === 'page-login' || id === 'page-search') ? 'none' : 'block';
     }
 
     function girisYap() {
         const u = document.getElementById('user-input').value.trim().toLowerCase();
         const p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => row[0]?.toString().toLowerCase() === u && row[1]?.toString() === p);
-        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } else { alert("Hatalı giriş!"); }
+        if (kullanicilar.find(r => r[0]?.toString().toLowerCase() === u && r[1]?.toString() === p)) {
+            localStorage.setItem('depoUser', u); showPage('page-search');
+        } else { alert("Hatalı!"); }
     }
 
     function goBack() {
-        if (document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
-        else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail');
-        else if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search');
+        if (document.getElementById('page-history').classList.contains('active-page') || document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
+        else showPage('page-detail');
     }
 
     function toggleImage() {
-        const panel = document.getElementById('detail-image-panel');
-        panel.style.display = panel.style.display === "none" ? "block" : "none";
-        document.getElementById('btn-toggle-img').innerText = panel.style.display === "none" ? "🖼️ GÖRSELİ GÖSTER" : "✖ GİZLE";
+        const p = document.getElementById('detail-image-panel');
+        p.style.display = p.style.display === "none" ? "block" : "none";
+        document.getElementById('btn-toggle-img').innerText = p.style.display === "none" ? "🖼️ GÖRSELİ GÖSTER" : "✖ GİZLE";
     }
 
     function goToAction() {
         seciliMakina = null; document.getElementById('islem-adet').value = 0;
         document.getElementById('selected-machine-box').style.display = 'none';
-        document.getElementById('machine-results').innerHTML = "";
         document.getElementById('action-machine-search').value = "";
+        document.getElementById('machine-results').innerHTML = "";
         updateButtons(); showPage('page-action');
     }
 
     function makineAramaYap() {
-        const query = trNormalize(document.getElementById('action-machine-search').value);
-        if(!query) { document.getElementById('machine-results').innerHTML = ""; return; }
-        const filtered = makineler.filter(m => trNormalize(m.join(" ")).includes(query));
-        document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => `
+        const q = trNormalize(document.getElementById('action-machine-search').value);
+        if(!q) { document.getElementById('machine-results').innerHTML = ""; return; }
+        const f = makineler.filter(m => trNormalize(m.join(" ")).includes(q));
+        document.getElementById('machine-results').innerHTML = f.slice(0, 5).map(m => `
             <div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${m[0]}','${m[1]}')">
                 <div style="font-size:13px; color:var(--text-main);"><b>${m[0]}</b> - ${m[1]}</div>
             </div>`).join('');
@@ -290,27 +264,24 @@
     }
 
     function adetDegistir(d) {
-        let v = parseInt(document.getElementById('islem-adet').value) + d;
-        if(v < 0) v = 0;
+        let v = Math.max(0, parseInt(document.getElementById('islem-adet').value) + d);
         document.getElementById('islem-adet').value = v;
         updateButtons();
     }
 
     function updateButtons() {
-        const hasAdet = parseInt(document.getElementById('islem-adet').value) > 0;
-        document.getElementById('btn-dusum').disabled = !(seciliMakina && hasAdet);
-        document.getElementById('btn-talep').disabled = !(seciliMakina && hasAdet);
+        const ok = (seciliMakina && parseInt(document.getElementById('islem-adet').value) > 0);
+        document.getElementById('btn-dusum').disabled = !ok;
+        document.getElementById('btn-talep').disabled = !ok;
     }
 
-    function finalOnay(islem) {
-        if(confirm(`${islem} onaylıyor musunuz?`)) kaydet(islem, document.getElementById('islem-adet').value);
-    }
+    function finalOnay(i) { if(confirm(i + " onaylıyor musunuz?")) kaydet(i, document.getElementById('islem-adet').value); }
 
-    async function kaydet(islem, adet) {
-        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
+    async function kaydet(i, a) {
+        const v = { sap: seciliUrun[0], ad: seciliUrun[1], adet: a, islem: i, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
         try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-            alert("İŞLEM BAŞARILI!"); showPage('page-search');
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(v) });
+            alert("BAŞARILI!"); showPage('page-search');
         } catch (e) { alert("Hata!"); }
     }
 
@@ -322,13 +293,9 @@
     window.onload = async () => {
         if (localStorage.getItem('depoUser')) showPage('page-search');
         try {
-            const [uRes, pRes, mRes] = await Promise.all([
-                fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
-            ]);
-            const parse = (data) => XLSX.utils.sheet_to_json(XLSX.read(data, {type:'string'}).Sheets[XLSX.read(data, {type:'string'}).SheetNames[0]], {header: 1});
-            kullanicilar = parse(uRes).slice(1);
-            urunler = parse(pRes).slice(1).filter(r => r.length > 0);
-            makineler = parse(mRes).slice(1);
+            const [u, p, m] = await Promise.all([fetch(USER_URL).then(r=>r.text()), fetch(URUN_URL).then(r=>r.text()), fetch(MAKINA_URL).then(r=>r.text())]);
+            const parse = (d) => XLSX.utils.sheet_to_json(XLSX.read(d, {type:'string'}).Sheets.Sheet1, {header: 1});
+            kullanicilar = parse(u).slice(1); urunler = parse(p).slice(1).filter(r=>r.length>0); makineler = parse(m).slice(1);
         } catch (e) { console.error(e); }
     };
 </script>
