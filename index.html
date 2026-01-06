@@ -16,6 +16,7 @@
             --text-main: #2d3436; 
             --text-sub: #636e72; 
             --danger: #ff4757; 
+            --warning: #f1c40f;
             --shadow: 0 10px 25px rgba(0,0,0,0.08); 
             --border: #edf2f7;
         }
@@ -47,9 +48,17 @@
             border: 1px solid var(--border); 
         }
 
+        #offline-status {
+            text-align: center;
+            padding: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            display: none;
+            z-index: 100;
+        }
+
         @media (min-width: 768px) { .container { max-width: 600px; height: 85vh; } }
 
-        /* Yeni Modern Modal Tasarımı */
         .modal-overlay {
             display: none;
             position: absolute;
@@ -133,8 +142,6 @@
         .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
         .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); }
         
-        .machine-selection-box { background: var(--valeo-blue); color: white; padding: 12px; border-radius: 10px; margin: 10px 0; font-weight: bold; font-size: 14px; }
-        
         .history-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
         .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; }
         .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
@@ -145,6 +152,8 @@
 <body onclick="closeMenuOutside(event)">
 
 <div class="container">
+    <div id="offline-status"></div>
+
     <div id="custom-modal" class="modal-overlay">
         <div class="modal-card">
             <div id="modal-icon" class="modal-icon">⚠️</div>
@@ -159,7 +168,7 @@
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <div style="font-weight: 800; color: var(--valeo-green);">İŞLEMİNİZ DEVAM EDİYOR...</div>
+        <div id="loading-text" style="font-weight: 800; color: var(--valeo-green);">İŞLEMİNİZ DEVAM EDİYOR...</div>
         <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">Lütfen bekleyiniz.</div>
     </div>
 
@@ -189,9 +198,12 @@
 
     <div id="page-search" class="page">
         <div class="content">
-            <h3 style="margin-top:0;">Stok Ara</h3>
-            <input type="text" id="search-main" placeholder="Malzeme adı veya SAP..." oninput="aramaYap()">
-            <div id="search-results"></div>
+            <h3 style="margin-top:0; font-weight: 800; letter-spacing: -0.5px;">Stok Arama</h3>
+            <div style="position:relative; margin-bottom: 20px;">
+                <input type="text" id="search-main" placeholder="Malzeme adı veya SAP no..." oninput="aramaYap()" style="padding-left:45px; height: 60px; border-radius: 16px;">
+                <span style="position:absolute; left:15px; top:20px; font-size: 20px; opacity:0.5;">🔍</span>
+            </div>
+            <div id="search-results" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </div>
     </div>
 
@@ -213,20 +225,32 @@
 
     <div id="page-action" class="page">
         <div class="content">
-            <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">MAKİNA SEÇİMİ</label>
-            <input type="text" id="action-machine-search" placeholder="Makina ara..." oninput="makineAramaYap()">
-            <div id="machine-results" style="max-height:150px; overflow-y:auto;"></div>
-            <div id="selected-machine-box" class="machine-selection-box" style="display:none;"></div>
-            <div style="margin-top:20px; text-align:center;">
+            <label style="font-weight:bold; font-size:12px; color:var(--text-sub); letter-spacing: 1px;">MAKİNE SEÇİMİ</label>
+            <div style="position:relative;">
+                <input type="text" id="action-machine-search" placeholder="Makine kodu veya adı ile ara..." oninput="makineAramaYap()" style="padding-left:45px;">
+                <span style="position:absolute; left:15px; top:25px; opacity:0.5;">🔍</span>
+            </div>
+
+            <div id="selected-machine-box" style="display:none; background: linear-gradient(135deg, var(--valeo-blue), #00d2ff); color: white; padding: 15px; border-radius: 16px; margin: 10px 0; box-shadow: 0 4px 15px rgba(0,145,255,0.3);">
+                <div style="font-size:11px; opacity:0.9; margin-bottom:4px; font-weight:600;">SEÇİLİ MAKİNE</div>
+                <div id="selected-machine-text" style="font-weight:800; font-size:16px;"></div>
+            </div>
+
+            <div id="machine-results" style="max-height:220px; overflow-y:auto; margin-top:5px; border-radius:12px;"></div>
+            
+            <div style="margin-top:25px; text-align:center; background:var(--bg-gray); padding:20px; border-radius:20px; border:1px solid var(--border);">
                 <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">İŞLEM ADEDİ</label>
                 <div class="stepper">
-                    <button onclick="adetDegistir(-1)">-</button>
+                    <button onclick="adetDegistir(-1)" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1);">-</button>
                     <input type="number" id="islem-adet" value="0" readonly>
-                    <button onclick="adetDegistir(1)">+</button>
+                    <button onclick="adetDegistir(1)" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1);">+</button>
                 </div>
             </div>
-            <button id="btn-dusum" style="background:var(--danger); margin-top:10px;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 STOKTAN DÜŞÜM</button>
-            <button id="btn-talep" style="background:var(--valeo-dark); margin-top:10px;" onclick="finalOnay('SİPARİŞ TALEBİ')" disabled>🛒 SİPARİŞ TALEBİ</button>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btn-dusum" style="background:var(--danger); flex: 1; padding: 20px 10px;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 DÜŞÜM</button>
+                <button id="btn-talep" style="background:var(--valeo-dark); flex: 1; padding: 20px 10px;" onclick="finalOnay('SİPARİŞ TALEBİ')" disabled>🛒 TALEP</button>
+            </div>
         </div>
     </div>
 
@@ -253,67 +277,77 @@
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
+    let isSyncing = false;
 
-    // --- MODAL VE UYARI FONKSİYONLARI ---
-    function closeModal() { 
-        document.getElementById('custom-modal').style.display = 'none'; 
+    function getQueue() { return JSON.parse(localStorage.getItem('valeo_offline_queue') || '[]'); }
+    function setQueue(q) { 
+        localStorage.setItem('valeo_offline_queue', JSON.stringify(q));
+        updateOnlineStatus();
     }
 
-    // İlk Giriş Bing Bilgilendirmesi
-    function checkBingPermission() {
-        if (!localStorage.getItem('bingApproved')) {
-            const modal = document.getElementById('custom-modal');
-            const confirmBtn = document.getElementById('modal-confirm-btn');
-            document.getElementById('modal-cancel-btn').style.display = 'none';
-            document.getElementById('modal-icon').innerText = 'ℹ️';
-            document.getElementById('modal-title').innerText = 'Görsel Erişimi';
-            document.getElementById('modal-text').innerHTML = 'Görseller Microsoft Bing üzerinden sağlanmaktadır. <br><br>Lütfen açılacak sayfada <b>"Kabul Et"</b> butonuna basarak çerezleri onaylayın. Bu işlem bir kez yapılacaktır.';
-            confirmBtn.innerText = 'ANLADIM';
-            confirmBtn.style.background = 'var(--valeo-blue)';
-            confirmBtn.onclick = function() {
-                localStorage.setItem('bingApproved', 'true');
-                closeModal();
-                window.open('https://www.bing.com', '_blank');
-            };
-            modal.style.display = 'flex';
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    function updateOnlineStatus() {
+        const bar = document.getElementById('offline-status');
+        const queue = getQueue();
+        if (navigator.onLine) {
+            bar.style.display = 'block'; bar.style.background = 'var(--valeo-green)'; bar.style.color = '#fff';
+            bar.innerHTML = '✅ SİSTEM ÇEVRİMİÇİ'; processQueue();
+        } else {
+            bar.style.display = 'block'; bar.style.background = 'var(--warning)'; bar.style.color = '#000';
+            bar.innerHTML = `⚠️ ÇEVRİMDIŞI MOD: ${queue.length} BEKLEYEN İŞLEM`;
         }
     }
+
+    async function processQueue() {
+        if (isSyncing || !navigator.onLine) return;
+        let queue = getQueue();
+        if (queue.length === 0) return;
+        isSyncing = true;
+        document.getElementById('loading-overlay').style.display = 'flex';
+        while (queue.length > 0) {
+            const item = queue[0];
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(item) });
+                queue.shift();
+                localStorage.setItem('valeo_offline_queue', JSON.stringify(queue));
+            } catch (e) { break; }
+        }
+        document.getElementById('loading-overlay').style.display = 'none';
+        isSyncing = false;
+        updateOnlineStatus();
+    }
+
+    function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
     function finalOnay(islem) {
         const modal = document.getElementById('custom-modal');
         const confirmBtn = document.getElementById('modal-confirm-btn');
-        const cancelBtn = document.getElementById('modal-cancel-btn');
         const adet = document.getElementById('islem-adet').value;
-        cancelBtn.style.display = 'block';
+        document.getElementById('modal-cancel-btn').style.display = 'block';
         confirmBtn.innerText = 'ONAYLA';
         document.getElementById('modal-icon').innerText = islem === 'STOKTAN DÜŞÜM' ? '📉' : '🛒';
         document.getElementById('modal-title').innerText = islem;
         document.getElementById('modal-text').innerHTML = `<b>${seciliUrun[1]}</b> ürününden <b>${adet} adet</b> için işlem yapılacaktır.<br><br>Onaylıyor musunuz?`;
         confirmBtn.style.background = islem === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)';
-        confirmBtn.onclick = function() {
-            closeModal();
-            kaydet(islem, adet);
-        };
+        confirmBtn.onclick = function() { closeModal(); kaydet(islem, adet); };
         modal.style.display = 'flex';
     }
 
-    function showSuccessModal() {
+    function showSuccessModal(isOffline = false) {
         const modal = document.getElementById('custom-modal');
         const confirmBtn = document.getElementById('modal-confirm-btn');
         document.getElementById('modal-cancel-btn').style.display = 'none';
-        document.getElementById('modal-icon').innerText = '✅';
-        document.getElementById('modal-title').innerText = 'BAŞARILI';
-        document.getElementById('modal-text').innerText = 'İşleminiz başarıyla kaydedildi.';
+        document.getElementById('modal-icon').innerText = isOffline ? '⏳' : '✅';
+        document.getElementById('modal-title').innerText = isOffline ? 'KUYRUĞA ALINDI' : 'BAŞARILI';
+        document.getElementById('modal-text').innerText = isOffline ? 'Bağlantı gelince otomatik gönderilecek.' : 'İşleminiz kaydedildi.';
         confirmBtn.innerText = 'TAMAM';
         confirmBtn.style.background = 'var(--valeo-green)';
-        confirmBtn.onclick = function() {
-            closeModal();
-            showPage('page-search');
-        };
+        confirmBtn.onclick = function() { closeModal(); showPage('page-search'); };
         modal.style.display = 'flex';
     }
 
-    // --- TEMEL FONKSİYONLAR ---
     function trNormalize(text) {
         if (!text) return "";
         return text.toString().replace(/İ/g, 'i').replace(/I/g, 'i').toLowerCase()
@@ -324,45 +358,47 @@
     function safeHighlight(text, terms) {
         if (!text || !terms || terms.length === 0) return text;
         let highlighted = String(text);
-        const sortedTerms = [...new Set(terms)].sort((a, b) => b.length - a.length);
-        sortedTerms.forEach(term => {
-            if (term.length < 1) return;
+        terms.forEach(term => {
             const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            highlighted = highlighted.split(/(<mark>.*?<\/mark>)/g).map(part => {
-                if (part.startsWith('<mark>')) return part;
-                return part.replace(regex, '<mark>$1</mark>');
-            }).join('');
+            highlighted = highlighted.replace(regex, '<mark>$1</mark>');
         });
         return highlighted;
     }
 
+    // GÜNCELLENMİŞ MODERN ARAMA FONKSİYONU
     function aramaYap() {
         const rawInput = document.getElementById('search-main').value;
         const resultsContainer = document.getElementById('search-results');
-        if (!rawInput || !rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
+        
+        if (!rawInput || !rawInput.trim()) { 
+            resultsContainer.innerHTML = `<div style="text-align:center; margin-top:40px; opacity:0.4;">📦 Aramaya başlayın...</div>`; 
+            return; 
+        }
+
         const queryNormalized = trNormalize(rawInput);
         const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
+        
         const filtered = urunler.filter(u => {
             const targetText = trNormalize((u[0] || "") + " " + (u[1] || ""));
             return searchTerms.every(term => targetText.includes(term));
         });
+
         resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
             const displaySap = safeHighlight(String(u[0]), searchTerms);
             const displayAd = safeHighlight(String(u[1]), searchTerms);
-            return `<div class="product-card" onclick="openDetail('${u[0]}')">
-                    <div style="font-weight:900; color:var(--text-main);">SAP: ${displaySap}</div>
-                    <div style="font-weight:700; font-size:14px; color:var(--text-main);">${displayAd}</div>
-                    <div style="font-size:12px; color:var(--text-sub); margin-top:5px;">📍 ${u[2] || "-"} | 📦 ${u[3] || "0"} ADET</div>
+            const stokAdet = parseInt(u[3] || 0);
+            const stokRenk = stokAdet <= 0 ? 'var(--danger)' : 'var(--valeo-green)';
+
+            return `
+                <div class="product-card" onclick="openDetail('${u[0]}')" style="border-left: 6px solid ${stokRenk}; padding: 18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div style="font-weight:900; color:var(--valeo-blue); font-size:13px;">SAP: ${displaySap}</div>
+                        <div style="background:${stokRenk}20; color:${stokRenk}; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:800;">${stokAdet} ADET</div>
+                    </div>
+                    <div style="font-weight:700; font-size:15px; color:var(--text-main); margin-top:8px;">${displayAd}</div>
+                    <div style="font-size:12px; color:var(--text-sub); margin-top:10px;">📍 Adres: ${u[2] || "-"}</div>
                 </div>`;
         }).join('');
-    }
-
-    function girisYap() {
-        const u = document.getElementById('user-input').value.trim().toLowerCase();
-        const p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => row[0]?.toString().toLowerCase() === u && row[1]?.toString() === p);
-        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } 
-        else { alert("Hatalı giriş!"); }
     }
 
     function openDetail(sap) {
@@ -378,45 +414,28 @@
         showPage('page-detail');
     }
 
-    async function gecmisGoster() {
-        showPage('page-history');
-        document.getElementById('dropdown').style.display = 'none';
-        document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="text-align:center;">Yükleniyor...</td></tr>';
-        try {
-            const res = await fetch(GECMIS_URL);
-            const csvText = await res.text();
-            const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
-            const rows = data.slice(1).reverse().slice(0, 40); 
-            document.getElementById('history-body').innerHTML = rows.map(row => `
-                <tr>
-                    <td><b>${row[0] || '-'}</b></td>
-                    <td>${row[3] || '0'}</td>
-                    <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
-                    <td>${row[5] || '-'}</td>
-                    <td style="font-size:9px; opacity:0.7;">${row[6] || '-'}</td>
-                </tr>`).join('');
-        } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata!</td></tr>'; }
+    // GÜNCELLENMİŞ MODERN MAKİNE ARAMA FONKSİYONLARI
+    function makineAramaYap() {
+        const query = trNormalize(document.getElementById('action-machine-search').value);
+        const resultsDiv = document.getElementById('machine-results');
+        if(!query) { resultsDiv.innerHTML = ""; return; }
+        
+        const filtered = makineler.filter(m => trNormalize(m.join(" ")).includes(query));
+        
+        resultsDiv.innerHTML = filtered.slice(0, 6).map(m => `
+            <div class="product-card" style="padding:16px; border-left: 6px solid var(--valeo-blue); margin-bottom:8px;" onclick="selectMachine('${m[0]}','${m[1]}')">
+                <div style="font-size:14px; color:var(--text-main); font-weight:800;">${m[0]}</div>
+                <div style="font-size:12px; color:var(--text-sub); margin-top:3px;">${m[1]}</div>
+            </div>`).join('');
     }
 
-    function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(pageId).classList.add('active-page');
-        const topBar = document.getElementById('main-top-bar');
-        topBar.style.display = (pageId === 'page-login') ? 'none' : 'flex';
-        document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
-    }
-
-    function goBack() {
-        if (document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
-        else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail');
-        else if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search');
-    }
-
-    function toggleImage() {
-        const panel = document.getElementById('detail-image-panel');
-        const btn = document.getElementById('btn-toggle-img');
-        if (panel.style.display === "none") { panel.style.display = "block"; btn.innerText = "✖ GÖRSELİ GİZLE"; }
-        else { panel.style.display = "none"; btn.innerText = "🖼️ GÖRSELİ GÖSTER"; }
+    function selectMachine(no, ad) {
+        seciliMakina = { no, ad };
+        document.getElementById('selected-machine-text').innerText = no + " - " + ad;
+        document.getElementById('selected-machine-box').style.display = 'block';
+        document.getElementById('machine-results').innerHTML = "";
+        document.getElementById('action-machine-search').value = "";
+        updateButtons();
     }
 
     function goToAction() {
@@ -425,24 +444,6 @@
         document.getElementById('machine-results').innerHTML = "";
         document.getElementById('action-machine-search').value = "";
         updateButtons(); showPage('page-action');
-    }
-
-    function makineAramaYap() {
-        const query = trNormalize(document.getElementById('action-machine-search').value);
-        if(!query) { document.getElementById('machine-results').innerHTML = ""; return; }
-        const filtered = makineler.filter(m => trNormalize(m.join(" ")).includes(query));
-        document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => `
-            <div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${m[0]}','${m[1]}')">
-                <div style="font-size:13px; color:var(--text-main);"><b>${m[0]}</b> - ${m[1]}</div>
-            </div>`).join('');
-    }
-
-    function selectMachine(no, ad) {
-        seciliMakina = { no, ad };
-        document.getElementById('selected-machine-box').innerText = "✅ SEÇİLDİ: " + no;
-        document.getElementById('selected-machine-box').style.display = 'block';
-        document.getElementById('machine-results').innerHTML = "";
-        updateButtons();
     }
 
     function adetDegistir(d) {
@@ -459,16 +460,61 @@
     }
 
     async function kaydet(islem, adet) {
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser'), timestamp: new Date().toISOString() };
+        if (!navigator.onLine) {
+            let q = getQueue(); q.push(veri); setQueue(q);
+            showSuccessModal(true); return;
+        }
         document.getElementById('loading-overlay').style.display = 'flex';
-        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
             document.getElementById('loading-overlay').style.display = 'none';
-            showSuccessModal();
+            showSuccessModal(false);
         } catch (e) { 
+            let q = getQueue(); q.push(veri); setQueue(q);
             document.getElementById('loading-overlay').style.display = 'none';
-            alert("Sistem Hatası!"); 
+            showSuccessModal(true);
         }
+    }
+
+    async function gecmisGoster() {
+        showPage('page-history');
+        document.getElementById('dropdown').style.display = 'none';
+        if(!navigator.onLine) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">İnternet gerekli.</td></tr>'; return; }
+        try {
+            const res = await fetch(GECMIS_URL); const csv = await res.text();
+            const data = XLSX.utils.sheet_to_json(XLSX.read(csv, {type:'string'}).Sheets.Sheet1, {header: 1});
+            const rows = data.slice(1).reverse().slice(0, 40); 
+            document.getElementById('history-body').innerHTML = rows.map(row => `
+                <tr><td><b>${row[0]}</b></td><td>${row[3]}</td><td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td><td>${row[5]}</td><td>${row[6]}</td></tr>`).join('');
+        } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata!</td></tr>'; }
+    }
+
+    function girisYap() {
+        const u = document.getElementById('user-input').value.trim().toLowerCase();
+        const p = document.getElementById('pass-input').value.trim();
+        const found = kullanicilar.find(row => row[0]?.toString().toLowerCase() === u && row[1]?.toString() === p);
+        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } 
+        else { alert("Hatalı giriş!"); }
+    }
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+        document.getElementById(pageId).classList.add('active-page');
+        document.getElementById('main-top-bar').style.display = (pageId === 'page-login') ? 'none' : 'flex';
+        document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
+    }
+
+    function goBack() {
+        if (document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
+        else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail');
+        else if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search');
+    }
+
+    function toggleImage() {
+        const panel = document.getElementById('detail-image-panel');
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+        document.getElementById('btn-toggle-img').innerText = panel.style.display === "none" ? "🖼️ GÖRSELİ GÖSTER" : "✖ GÖRSELİ GİZLE";
     }
 
     function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
@@ -476,21 +522,34 @@
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
-    window.onload = async () => {
-        if (localStorage.getItem('depoUser')) showPage('page-search');
-        checkBingPermission(); // Bilgilendirme uyarısını kontrol et
-        try {
-            const [uRes, pRes, mRes] = await Promise.all([
-                fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
-            ]);
-            const parseCSVToArray = (data) => {
-                const wb = XLSX.read(data, {type:'string'});
-                return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
+    function checkBingPermission() {
+        if (!localStorage.getItem('bingApproved')) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-cancel-btn').style.display = 'none';
+            document.getElementById('modal-title').innerText = 'Görsel Erişimi';
+            document.getElementById('modal-text').innerText = 'Görseller Microsoft Bing üzerinden sağlanmaktadır.';
+            document.getElementById('modal-confirm-btn').onclick = function() {
+                localStorage.setItem('bingApproved', 'true'); closeModal(); window.open('https://www.bing.com', '_blank');
             };
-            kullanicilar = parseCSVToArray(uRes).slice(1);
-            urunler = parseCSVToArray(pRes).slice(1).filter(r => r.length > 0);
-            makineler = parseCSVToArray(mRes).slice(1);
-        } catch (e) { console.error(e); }
+            modal.style.display = 'flex';
+        }
+    }
+
+    window.onload = async () => {
+        updateOnlineStatus();
+        if (localStorage.getItem('depoUser')) showPage('page-search');
+        checkBingPermission();
+        if(navigator.onLine) {
+            try {
+                const [uRes, pRes, mRes] = await Promise.all([fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())]);
+                const parseCSV = (d) => XLSX.utils.sheet_to_json(XLSX.read(d, {type:'string'}).Sheets.Sheet1, {header: 1});
+                kullanicilar = parseCSV(uRes).slice(1); urunler = parseCSV(pRes).slice(1).filter(r => r.length > 0); makineler = parseCSV(mRes).slice(1);
+                localStorage.setItem('cached_urunler', JSON.stringify(urunler)); localStorage.setItem('cached_makineler', JSON.stringify(makineler));
+            } catch (e) { console.error(e); }
+        } else {
+            urunler = JSON.parse(localStorage.getItem('cached_urunler') || '[]');
+            makineler = JSON.parse(localStorage.getItem('cached_makineler') || '[]');
+        }
     };
 </script>
 </body>
