@@ -30,7 +30,7 @@
             --shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
-        body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: 0.3s; }
         .container { background: var(--card-bg); width: 100%; max-width: 450px; height: 92vh; border-radius: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; position: relative; margin: 10px; border: 1px solid var(--border); }
         .top-bar { background: var(--valeo-dark); color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
         .content { padding: 20px; overflow-y: auto; flex-grow: 1; }
@@ -39,13 +39,12 @@
         button { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #95a5a6 !important; opacity: 0.5; cursor: not-allowed; }
         .product-card { background: var(--card-bg); border: 1px solid var(--border); margin-bottom: 12px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; }
-        .product-card .sap-text { font-weight: 900; color: var(--text-main); }
         .page { display: none; height: 100%; flex-direction: column; animation: fadeIn 0.3s; }
         .active-page { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         mark { background: #f1c40f; color: #000; padding: 0 2px; border-radius: 3px; font-weight: bold; }
         .history-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; }
         .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
         .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; border: 1px solid var(--border); }
         .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); color: var(--text-main); }
@@ -106,14 +105,14 @@
         <div class="content">
             <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">MAKİNA SEÇİMİ</label>
             <input type="text" id="action-machine-search" placeholder="Makina ara..." oninput="makineAramaYap()">
-            <div id="machine-results"></div>
+            <div id="machine-results" style="max-height:150px; overflow-y:auto;"></div>
             <div id="selected-machine-box" style="display:none; background:var(--valeo-blue); color:white; padding:12px; border-radius:10px; margin:10px 0; font-weight:bold;"></div>
             <div style="margin-top:20px; text-align:center;">
                 <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">İŞLEM ADEDİ</label>
-                <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin:20px 0;">
-                    <button style="width:50px; height:50px; border-radius:50%;" onclick="adetDegistir(-1)">-</button>
-                    <input type="number" id="islem-adet" value="0" readonly style="width:70px; text-align:center; font-size:24px; border:none; background:transparent;">
-                    <button style="width:50px; height:50px; border-radius:50%;" onclick="adetDegistir(1)">+</button>
+                <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin:20px 0; background:var(--bg-gray); padding:10px; border-radius:15px;">
+                    <button style="width:50px; height:50px; border-radius:50%; background:var(--valeo-dark);" onclick="adetDegistir(-1)">-</button>
+                    <input type="number" id="islem-adet" value="0" readonly style="width:70px; text-align:center; font-size:24px; border:none; background:transparent; color:var(--text-main); font-weight:800;">
+                    <button style="width:50px; height:50px; border-radius:50%; background:var(--valeo-dark);" onclick="adetDegistir(1)">+</button>
                 </div>
             </div>
             <button id="btn-dusum" style="background:var(--danger); margin-top:10px;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 STOKTAN DÜŞÜM</button>
@@ -168,9 +167,9 @@
         const filtered = urunler.filter(u => terms.every(t => trNormalize((u[0]||"") + " " + (u[1]||"")).includes(t)));
         res.innerHTML = filtered.slice(0, 25).map(u => `
             <div class="product-card" onclick="openDetail('${u[0]}')">
-                <div class="sap-text">SAP: ${highlight(String(u[0]), terms)}</div>
-                <div style="font-weight:700; color:var(--text-main);">${highlight(String(u[1]), terms)}</div>
-                <div style="font-size:12px; color:var(--text-sub);">📍 ${u[2]||"-"} | 📦 ${u[3]||"0"} ADET</div>
+                <div style="font-weight:900; color:var(--text-main);">SAP: ${highlight(String(u[0]), terms)}</div>
+                <div style="font-weight:700; color:var(--text-main); font-size:14px;">${highlight(String(u[1]), terms)}</div>
+                <div style="font-size:12px; color:var(--text-sub); margin-top:5px;">📍 ${u[2]||"-"} | 📦 ${u[3]||"0"} ADET</div>
             </div>`).join('');
     }
 
@@ -192,13 +191,16 @@
         try {
             const r = await fetch(GECMIS_URL);
             const csv = await r.text();
-            const data = XLSX.utils.sheet_to_json(XLSX.read(csv, {type:'string'}).Sheets.Sheet1, {header: 1});
+            const wb = XLSX.read(csv, {type:'string'});
+            const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
             const rows = data.slice(1).reverse().slice(0, 35); 
             document.getElementById('history-body').innerHTML = rows.map(row => {
                 let fT = "-";
                 if (row[6]) {
-                    if (!isNaN(row[6])) { fT = XLSX.SSF.format('dd.mm.yyyy', row[6]); }
-                    else { fT = row[6].split(' ')[0]; }
+                    try {
+                        if (!isNaN(row[6])) { fT = XLSX.SSF.format('dd.mm.yyyy', row[6]); }
+                        else { fT = row[6].split(' ')[0]; }
+                    } catch(e) { fT = row[6]; }
                 }
                 return `<tr>
                     <td><b>${row[0]||'-'}</b></td>
@@ -208,7 +210,7 @@
                     <td style="opacity:0.7;">${fT}</td>
                 </tr>`;
             }).join('');
-        } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata!</td></tr>'; }
+        } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Veri yüklenemedi.</td></tr>'; }
     }
 
     function showPage(id) {
@@ -223,12 +225,13 @@
         const p = document.getElementById('pass-input').value.trim();
         if (kullanicilar.find(r => r[0]?.toString().toLowerCase() === u && r[1]?.toString() === p)) {
             localStorage.setItem('depoUser', u); showPage('page-search');
-        } else { alert("Hatalı!"); }
+        } else { alert("Kullanıcı adı veya şifre hatalı!"); }
     }
 
     function goBack() {
-        if (document.getElementById('page-history').classList.contains('active-page') || document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
-        else showPage('page-detail');
+        if (document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
+        else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail');
+        else if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search');
     }
 
     function toggleImage() {
@@ -281,8 +284,8 @@
         const v = { sap: seciliUrun[0], ad: seciliUrun[1], adet: a, islem: i, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(v) });
-            alert("BAŞARILI!"); showPage('page-search');
-        } catch (e) { alert("Hata!"); }
+            alert("İŞLEM BAŞARILI!"); showPage('page-search');
+        } catch (e) { alert("Bir hata oluştu!"); }
     }
 
     function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
@@ -294,9 +297,12 @@
         if (localStorage.getItem('depoUser')) showPage('page-search');
         try {
             const [u, p, m] = await Promise.all([fetch(USER_URL).then(r=>r.text()), fetch(URUN_URL).then(r=>r.text()), fetch(MAKINA_URL).then(r=>r.text())]);
-            const parse = (d) => XLSX.utils.sheet_to_json(XLSX.read(d, {type:'string'}).Sheets.Sheet1, {header: 1});
+            const parse = (d) => {
+                const workbook = XLSX.read(d, {type:'string'});
+                return XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+            };
             kullanicilar = parse(u).slice(1); urunler = parse(p).slice(1).filter(r=>r.length>0); makineler = parse(m).slice(1);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Veri çekme hatası:", e); }
     };
 </script>
 </body>
