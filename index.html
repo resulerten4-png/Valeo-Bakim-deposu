@@ -61,8 +61,8 @@
         .machine-selection-box { background: var(--valeo-blue); color: white; padding: 12px; border-radius: 10px; margin: 10px 0; font-weight: bold; font-size: 14px; }
         
         .history-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-        .history-table th { background: var(--valeo-dark); color: white; padding: 8px 4px; text-align: left; position: sticky; top: 0; white-space: nowrap; }
-        .history-table td { padding: 8px 4px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; white-space: nowrap; }
+        .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
         
         mark { background: #f1c40f; color: black; padding: 0 2px; border-radius: 3px; }
         body.dark-mode mark { background: #d4ac0d; }
@@ -210,15 +210,15 @@
         const rows = data.slice(1).reverse().slice(0, 40);
         document.getElementById('history-body').innerHTML = rows.map(row => `
             <tr>
-                <td>${row[6] || '-'}</td> <td>${row[0] || '-'}</td> <td>${row[1] || '-'}</td> <td>${row[3] || '0'}</td> <td>${row[4] || '-'}</td> <td>${row[5] || '-'}</td> <td>${row[2] || '-'}</td> <td>${row[7] || '-'}</td> </tr>`).join('');
+                <td>${row[0] || '-'}</td> <td>${row[1] || '-'}</td> <td>${row[2] || '-'}</td> <td>${row[3] || '0'}</td> <td>${row[4] || '-'}</td> <td>${row[5] || '-'}</td> <td>${row[6] || '-'}</td> <td>${row[7] || '-'}</td> </tr>`).join('');
     }
 
     function makineAramaYap() {
         const query = trNormalize(document.getElementById('action-machine-search').value);
-        if(!query) return;
+        if(!query) { document.getElementById('machine-results').innerHTML = ""; return; }
         const filtered = makineler.filter(m => trNormalize(m[0] + " " + m[1]).includes(query));
         document.getElementById('machine-results').innerHTML = filtered.slice(0, 5).map(m => `
-            <div class="product-card" style="padding:10px;" onclick="selectMachine('${m[0]}','${m[1]}')">
+            <div class="product-card" style="padding:10px; border-left-color:var(--valeo-blue);" onclick="selectMachine('${m[0]}','${m[1]}')">
                 ${m[0]} - ${m[1]}
             </div>`).join('');
     }
@@ -233,35 +233,87 @@
 
     async function kaydet(islem, adet) {
         const userRow = kullanicilar.find(r => r[0]?.toString().toLowerCase() === localStorage.getItem('depoUser'));
-        const yetkili = userRow ? userRow[7] : "-"; // Sayfa3 H Sütunu
+        const yetkili = userRow ? userRow[7] : "-"; 
 
         const veri = { 
-            sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, 
-            makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser'), yetkili: yetkili
+            tarih: new Date().toLocaleString('tr-TR'),
+            sap: seciliUrun[0], 
+            ad: seciliUrun[1], 
+            adet: adet, 
+            islem: islem, 
+            makina: seciliMakina.no, 
+            kullanici: localStorage.getItem('depoUser'),
+            yetkili: yetkili
         };
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-        alert("İŞLEM BAŞARILI!"); showPage('page-search');
+
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
+            alert("İŞLEM BAŞARILI!"); showPage('page-search');
+        } catch (e) { alert("Hata!"); }
     }
 
-    // Orijinal Navigasyon ve Yardımcı Fonksiyonlar
-    function showPage(p) { document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active-page')); document.getElementById(p).classList.add('active-page'); document.getElementById('main-top-bar').style.display = (p==='page-login')?'none':'flex'; document.getElementById('btn-back').style.display = (p==='page-login'||p==='page-search')?'none':'block'; }
-    function girisYap() { const u = document.getElementById('user-input').value.trim().toLowerCase(); const p = document.getElementById('pass-input').value.trim(); const f = kullanicilar.find(r=>r[0]?.toString().toLowerCase()===u&&r[1]?.toString()===p); if(f){localStorage.setItem('depoUser',u);showPage('page-search');}else{alert("Hata!");} }
-    function goBack() { if(document.getElementById('page-detail').classList.contains('active-page'))showPage('page-search'); else showPage('page-detail'); }
-    function toggleImage() { const p = document.getElementById('detail-image-panel'); p.style.display=(p.style.display==='none')?'block':'none'; }
-    function goToAction() { seciliMakina=null; document.getElementById('islem-adet').value=0; document.getElementById('selected-machine-box').style.display='none'; showPage('page-action'); }
-    function adetDegistir(d) { let v = parseInt(document.getElementById('islem-adet').value)+d; if(v>=0)document.getElementById('islem-adet').value=v; updateButtons(); }
-    function updateButtons() { document.getElementById('btn-dusum').disabled = !(seciliMakina && parseInt(document.getElementById('islem-adet').value)>0); }
-    function finalOnay(i) { if(confirm(i+" Onay?")) kaydet(i, document.getElementById('islem-adet').value); }
-    function toggleMenu(e) { e.stopPropagation(); const d=document.getElementById('dropdown'); d.style.display=(d.style.display==='block')?'none':'block'; }
-    function closeMenuOutside() { document.getElementById('dropdown').style.display='none'; }
+    function showPage(p) { 
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active-page')); 
+        document.getElementById(p).classList.add('active-page'); 
+        document.getElementById('main-top-bar').style.display = (p === 'page-login') ? 'none' : 'flex'; 
+        document.getElementById('btn-back').style.display = (p === 'page-login' || p === 'page-search') ? 'none' : 'block'; 
+    }
+
+    function girisYap() { 
+        const u = document.getElementById('user-input').value.trim().toLowerCase(); 
+        const p = document.getElementById('pass-input').value.trim(); 
+        const found = kullanicilar.find(r => r[0]?.toString().toLowerCase() === u && r[1]?.toString() === p); 
+        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } else { alert("Hata!"); } 
+    }
+
+    function goBack() { 
+        if (document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search'); 
+        else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail'); 
+        else if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search'); 
+    }
+
+    function toggleImage() { 
+        const panel = document.getElementById('detail-image-panel'); 
+        const btn = document.getElementById('btn-toggle-img'); 
+        if (panel.style.display === "none") { panel.style.display = "block"; btn.innerText = "✖ GÖRSELİ GİZLE"; } 
+        else { panel.style.display = "none"; btn.innerText = "🖼️ GÖRSELİ GÖSTER"; } 
+    }
+
+    function goToAction() { 
+        seciliMakina = null; document.getElementById('islem-adet').value = 0; 
+        document.getElementById('selected-machine-box').style.display = 'none'; 
+        updateButtons(); showPage('page-action'); 
+    }
+
+    function adetDegistir(d) { 
+        let v = parseInt(document.getElementById('islem-adet').value) + d; 
+        if(v >= 0) document.getElementById('islem-adet').value = v; 
+        updateButtons(); 
+    }
+
+    function updateButtons() { 
+        const hasAdet = parseInt(document.getElementById('islem-adet').value) > 0; 
+        document.getElementById('btn-dusum').disabled = !(seciliMakina && hasAdet); 
+        document.getElementById('btn-talep').disabled = !(seciliMakina && hasAdet); 
+    }
+
+    function finalOnay(i) { if(confirm(i + " onaylıyor musunuz?")) kaydet(i, document.getElementById('islem-adet').value); }
+    function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = (d.style.display === 'block') ? 'none' : 'block'; }
+    function closeMenuOutside() { document.getElementById('dropdown').style.display = 'none'; }
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
-    function guvenliCikis() { localStorage.clear(); location.reload(); }
+    function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
     window.onload = async () => {
-        const [u, p, m] = await Promise.all([fetch(USER_URL).then(r=>r.text()), fetch(URUN_URL).then(r=>r.text()), fetch(MAKINA_URL).then(r=>r.text())]);
-        const parse = (d) => XLSX.utils.sheet_to_json(XLSX.read(d,{type:'string'}).Sheets.Sheet1, {header:1});
-        kullanicilar = parse(u).slice(1); urunler = parse(p).slice(1); makineler = parse(m).slice(1);
-        if(localStorage.getItem('depoUser')) showPage('page-search');
+        if (localStorage.getItem('depoUser')) showPage('page-search');
+        try {
+            const [uRes, pRes, mRes] = await Promise.all([
+                fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())
+            ]);
+            const parseCSV = (data) => XLSX.utils.sheet_to_json(XLSX.read(data, {type:'string'}).Sheets.Sheet1, {header: 1});
+            kullanicilar = parseCSV(uRes).slice(1);
+            urunler = parseCSV(pRes).slice(1);
+            makineler = parseCSV(mRes).slice(1);
+        } catch (e) { console.error(e); }
     };
 </script>
 </body>
