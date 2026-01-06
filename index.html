@@ -49,6 +49,43 @@
 
         @media (min-width: 768px) { .container { max-width: 600px; height: 85vh; } }
 
+        /* Custom Modal Tasarımı */
+        .modal-overlay {
+            display: none;
+            position: absolute; /* Container içinde kalması için */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            width: 85%;
+            max-width: 350px;
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            animation: modalSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-icon { font-size: 45px; margin-bottom: 15px; }
+        .modal-title { font-weight: 800; font-size: 20px; margin-bottom: 10px; color: var(--text-main); }
+        .modal-text { font-size: 14px; color: var(--text-sub); margin-bottom: 25px; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 10px; }
+        .modal-btn { flex: 1; padding: 15px; border-radius: 14px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; font-size: 13px; }
+        .btn-confirm { background: var(--valeo-green); color: white; }
+        .btn-cancel { background: var(--bg-gray); color: var(--text-main); }
+
+        /* Loading Overlay */
         #loading-overlay {
             display: none;
             position: absolute;
@@ -109,6 +146,18 @@
 <body onclick="closeMenuOutside(event)">
 
 <div class="container">
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div id="modal-icon" class="modal-icon">⚠️</div>
+            <div id="modal-title" class="modal-title">Emin misiniz?</div>
+            <div id="modal-text" class="modal-text">Bu işlemi onaylıyor musunuz?</div>
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn" class="modal-btn btn-cancel" onclick="closeModal()">İPTAL</button>
+                <button id="modal-confirm-btn" class="modal-btn btn-confirm">ONAYLA</button>
+            </div>
+        </div>
+    </div>
+
     <div id="loading-overlay">
         <div class="spinner"></div>
         <div style="font-weight: 800; color: var(--valeo-green);">İŞLEMİNİZ DEVAM EDİYOR...</div>
@@ -206,17 +255,47 @@
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
 
-    // Türkiye formatında tarih oluşturucu (GG.AA.YYYY SS:DD)
-    function getTurkishDateTime() {
-        const now = new Date();
-        const d = String(now.getDate()).padStart(2, '0');
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        const y = now.getFullYear();
-        const h = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        return `${d}.${m}.${y} ${h}:${min}`;
+    // MODAL FONKSIYONLARI
+    function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
+
+    function finalOnay(islem) {
+        const modal = document.getElementById('custom-modal');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        const adet = document.getElementById('islem-adet').value;
+        
+        cancelBtn.style.display = 'block';
+        confirmBtn.innerText = 'ONAYLA';
+        document.getElementById('modal-icon').innerText = islem === 'STOKTAN DÜŞÜM' ? '📉' : '🛒';
+        document.getElementById('modal-title').innerText = islem;
+        document.getElementById('modal-text').innerHTML = `<b>${seciliUrun[1]}</b> ürününden <b>${adet} adet</b> için işlem yapılacaktır.<br><br>Onaylıyor musunuz?`;
+        
+        confirmBtn.style.background = islem === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)';
+        
+        confirmBtn.onclick = function() {
+            closeModal();
+            kaydet(islem, adet);
+        };
+        modal.style.display = 'flex';
     }
 
+    function showSuccessModal() {
+        const modal = document.getElementById('custom-modal');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        document.getElementById('modal-cancel-btn').style.display = 'none';
+        document.getElementById('modal-icon').innerText = '✅';
+        document.getElementById('modal-title').innerText = 'BAŞARILI';
+        document.getElementById('modal-text').innerText = 'İşleminiz başarıyla kaydedildi.';
+        confirmBtn.innerText = 'TAMAM';
+        confirmBtn.style.background = 'var(--valeo-green)';
+        confirmBtn.onclick = function() {
+            closeModal();
+            showPage('page-search');
+        };
+        modal.style.display = 'flex';
+    }
+
+    // MEVCUT SISTEM FONKSIYONLARI
     function trNormalize(text) {
         if (!text) return "";
         return text.toString().replace(/İ/g, 'i').replace(/I/g, 'i').toLowerCase()
@@ -290,17 +369,14 @@
             const csvText = await res.text();
             const data = XLSX.utils.sheet_to_json(XLSX.read(csvText, {type:'string'}).Sheets.Sheet1, {header: 1});
             const rows = data.slice(1).reverse().slice(0, 40); 
-            document.getElementById('history-body').innerHTML = rows.map(row => {
-                // Tarih hücresini TR formatına çekmeye çalış, yoksa olduğu gibi yaz
-                let tarih = row[6] || '-';
-                return `
+            document.getElementById('history-body').innerHTML = rows.map(row => `
                 <tr>
                     <td><b>${row[0] || '-'}</b></td>
                     <td>${row[3] || '0'}</td>
                     <td style="color:${row[4] === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)'}">${row[4] === 'STOKTAN DÜŞÜM' ? 'Düşüm' : 'Talep'}</td>
                     <td>${row[5] || '-'}</td>
-                    <td style="font-size:9px; opacity:0.7;">${tarih}</td>
-                </tr>`}).join('');
+                    <td style="font-size:9px; opacity:0.7;">${row[6] || '-'}</td>
+                </tr>`).join('');
         } catch (e) { document.getElementById('history-body').innerHTML = '<tr><td colspan="5">Hata!</td></tr>'; }
     }
 
@@ -364,29 +440,13 @@
         document.getElementById('btn-talep').disabled = !(seciliMakina && hasAdet);
     }
 
-    function finalOnay(islem) {
-        if(confirm(`${islem} onaylıyor musunuz?`)) kaydet(islem, document.getElementById('islem-adet').value);
-    }
-
     async function kaydet(islem, adet) {
         document.getElementById('loading-overlay').style.display = 'flex';
-        
-        // Veriyi gönderirken TR formatında tarih ekliyoruz
-        const veri = { 
-            sap: seciliUrun[0], 
-            ad: seciliUrun[1], 
-            adet: adet, 
-            islem: islem, 
-            makina: seciliMakina.no, 
-            kullanici: localStorage.getItem('depoUser'),
-            tarih: getTurkishDateTime() 
-        };
-
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser') };
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
             document.getElementById('loading-overlay').style.display = 'none';
-            alert("İŞLEM BAŞARILI!"); 
-            showPage('page-search');
+            showSuccessModal();
         } catch (e) { 
             document.getElementById('loading-overlay').style.display = 'none';
             alert("Hata!"); 
