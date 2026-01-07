@@ -272,14 +272,14 @@
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
     let isSyncing = false;
 
-    // OFFLINE MANTIK (UNTITLED1'DEN AKTARILAN)
+    // OFFLINE MANTIK
     function getQueue() { return JSON.parse(localStorage.getItem('valeo_queue') || '[]'); }
     function setQueue(q) { localStorage.setItem('valeo_queue', JSON.stringify(q)); updateOnlineStatus(); }
 
@@ -320,7 +320,6 @@
         updateOnlineStatus();
     }
 
-    // GİRİŞ VE ARAMA FONKSİYONLARI (HAFIZADAN ÇALIŞAN)
     function girisYap() {
         const u = document.getElementById('user-input').value.trim().toLowerCase();
         const p = document.getElementById('pass-input').value.trim();
@@ -336,6 +335,17 @@
     function trNormalize(text) {
         if (!text) return "";
         return text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/İ/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g').trim();
+    }
+
+    // RENKLENDİRME YARDIMCI FONKSİYONU
+    function highlightText(text, terms) {
+        if (!terms || terms.length === 0) return text;
+        let highlighted = text.toString();
+        terms.forEach(term => {
+            const regex = new RegExp(`(${term})`, "gi");
+            highlighted = highlighted.replace(regex, '<mark>$1</mark>');
+        });
+        return highlighted;
     }
 
     function aramaYap() {
@@ -355,11 +365,17 @@
         resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
             const v = Object.values(u);
             const sap = v[0], ad = v[1], adres = v[2], stok = v[3];
+            
+            // Renklendirilmiş halleri
+            const highlightedSap = highlightText(sap, searchTerms);
+            const highlightedAd = highlightText(ad, searchTerms);
+            const highlightedAdres = highlightText(adres, searchTerms);
+
             return `
                 <div class="product-card" onclick="openDetail('${sap}')">
-                    <div style="font-weight:900; color:var(--valeo-blue); font-size:13px;">SAP: ${sap}</div>
-                    <div style="font-weight:700; font-size:15px; margin-top:8px;">${ad}</div>
-                    <div style="font-size:12px; color:var(--text-sub); margin-top:10px;">📍 Adres: ${adres} | 📦 ${stok} ADET</div>
+                    <div style="font-weight:900; color:var(--valeo-blue); font-size:13px;">SAP: ${highlightedSap}</div>
+                    <div style="font-weight:700; font-size:15px; margin-top:8px;">${highlightedAd}</div>
+                    <div style="font-size:12px; color:var(--text-sub); margin-top:10px;">📍 Adres: ${highlightedAdres} | 📦 ${stok} ADET</div>
                 </div>`;
         }).join('');
     }
@@ -392,7 +408,6 @@
         }
     }
 
-    // SAYFA YÖNETİMİ VE MODALLAR
     function openDetail(sap) {
         seciliUrun = Object.values(urunler.find(u => Object.values(u)[0].toString() === sap.toString()));
         document.getElementById('detay-ad').innerText = seciliUrun[1];
@@ -408,11 +423,15 @@
         const query = trNormalize(document.getElementById('action-machine-search').value);
         const resultsDiv = document.getElementById('machine-results');
         if(!query) { resultsDiv.innerHTML = ""; return; }
+        const searchTerms = query.split(/\s+/).filter(t => t.length > 0);
         const filtered = makineler.filter(m => trNormalize(Object.values(m).join(" ")).includes(query));
+        
         resultsDiv.innerHTML = filtered.slice(0, 6).map(m => {
             const v = Object.values(m);
+            const hNo = highlightText(v[0], searchTerms);
+            const hAd = highlightText(v[1], searchTerms);
             return `<div class="product-card" style="padding:16px;" onclick="selectMachine('${v[0]}','${v[1]}')">
-                <div style="font-weight:800;">${v[0]}</div><div style="font-size:12px;">${v[1]}</div>
+                <div style="font-weight:800;">${hNo}</div><div style="font-size:12px;">${hAd}</div>
             </div>`}).join('');
     }
 
@@ -489,7 +508,6 @@
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
     window.onload = async () => {
-        // Önce hafızadaki verileri yükle (Offline Giriş/Arama için kritik)
         urunler = JSON.parse(localStorage.getItem('valeo_cache_urun') || '[]');
         kullanicilar = JSON.parse(localStorage.getItem('valeo_cache_user') || '[]');
         makineler = JSON.parse(localStorage.getItem('valeo_cache_makina') || '[]');
@@ -506,7 +524,6 @@
                 urunler = await parse(pRes);
                 makineler = await parse(mRes);
 
-                // Hafızaya yedekle
                 localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
                 localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler));
                 localStorage.setItem('valeo_cache_makina', JSON.stringify(makineler));
