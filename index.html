@@ -3,516 +3,433 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valeo Bakım Portalı - V2 PRO</title>
+    <title>Valeo Bakım Portalı</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --valeo-green: #99cc00; 
-            --valeo-blue: #0091ff; 
-            --valeo-dark: #1a1a1b; 
-            --bg-gray: #f8f9fa; 
-            --card-bg: #ffffff; 
-            --text-main: #2d3436; 
-            --text-sub: #636e72; 
-            --danger: #ff4757; 
-            --warning: #f1c40f;
-            --shadow: 0 10px 25px rgba(0,0,0,0.08); 
-            --border: #edf2f7;
-        }
+        :root { --valeo-green: #99cc00; --valeo-blue: #0091ff; --valeo-dark: #2d2d2d; --bg-gray: #f4f7f6; --card-bg: #ffffff; --text-color: #2d2d2d; --danger: #e74c3c; --warning: #f1c40f; }
+        body.dark-mode { --bg-gray: #1a1a1a; --card-bg: #2d2d2d; --text-color: #f4f7f6; --valeo-dark: #000000; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-gray); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: var(--text-color); transition: 0.3s; }
+        .container { background: var(--card-bg); width: 95%; max-width: 450px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; height: 95vh; position: relative; }
         
-        body.dark-mode { 
-            --bg-gray: #121212; 
-            --card-bg: #1e1e1e; 
-            --text-main: #f5f6fa; 
-            --text-sub: #b2bec3; 
-            --valeo-dark: #000000; 
-            --border: #2d3436;
-            --shadow: 0 10px 25px rgba(0,0,0,0.4);
-        }
+        /* BAĞLANTI DURUM GÖSTERGESİ STİLLERİ */
+        .status-info { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .online-dot { background-color: var(--valeo-green); box-shadow: 0 0 5px var(--valeo-green); }
+        .offline-dot { background-color: var(--danger); box-shadow: 0 0 5px var(--danger); }
+        #status-text { font-size: 10px; font-weight: bold; text-transform: uppercase; }
 
-        body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: 0.3s; padding: 10px; box-sizing: border-box; }
+        /* OFFLINE DURUM ÇUBUĞU */
+        #offline-banner { background: var(--warning); color: #000; padding: 5px; text-align: center; font-size: 11px; font-weight: bold; display: none; z-index: 5000; }
+        #offline-banner.active { display: block; }
+
+        .watermark-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; user-select: none; z-index: 0; width: 100%; }
+        .watermark-text { font-size: 90px; font-weight: 900; color: var(--valeo-green); opacity: 0.12; line-height: 0.85; letter-spacing: -2px; font-family: 'Roboto Mono', monospace; }
+        .watermark-subtext { font-size: 20px; font-weight: 700; color: var(--text-color); opacity: 0.08; letter-spacing: 10px; text-transform: uppercase; border-top: 2px solid var(--valeo-green); display: inline-block; margin-top: 5px; padding-top: 5px; }
+
+        .top-bar { background: var(--valeo-dark); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 2000; position: relative; }
+        .user-section { display: flex; flex-direction: column; }
+        .content { padding: 20px; overflow-y: auto; flex-grow: 1; position: relative; z-index: 1; }
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 2px solid #ddd; background: var(--card-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; position: relative; z-index: 2; }
+        button { background: var(--valeo-green); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
+        button:disabled { background: #ccc !important; cursor: not-allowed; opacity: 0.6; }
         
-        .container { 
-            background: var(--card-bg); 
-            width: 100%; 
-            max-width: 500px; 
-            height: 95vh; 
-            max-height: 900px; 
-            border-radius: 24px; 
-            box-shadow: var(--shadow); 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-            position: relative; 
-            border: 1px solid var(--border); 
-        }
-
-        #offline-status {
-            text-align: center;
-            padding: 8px;
-            font-size: 11px;
-            font-weight: 800;
-            display: none;
-            z-index: 100;
-        }
-
-        @media (min-width: 768px) { .container { max-width: 600px; height: 85vh; } }
-
-        .modal-overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-card {
-            background: var(--card-bg);
-            width: 85%;
-            max-width: 350px;
-            border-radius: 24px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            animation: modalSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes modalSlideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-icon { font-size: 45px; margin-bottom: 15px; }
-        .modal-title { font-weight: 800; font-size: 20px; margin-bottom: 10px; color: var(--text-main); }
-        .modal-text { font-size: 14px; color: var(--text-sub); margin-bottom: 25px; line-height: 1.5; }
-        .modal-buttons { display: flex; gap: 10px; }
-        .modal-btn { flex: 1; padding: 15px; border-radius: 14px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; font-size: 13px; }
-        .btn-confirm { background: var(--valeo-green); color: white; }
-        .btn-cancel { background: var(--bg-gray); color: var(--text-main); }
-
-        #loading-overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            z-index: 1000;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(4px);
-        }
-        body.dark-mode #loading-overlay { background: rgba(0, 0, 0, 0.85); }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid var(--border);
-            border-top: 4px solid var(--valeo-green);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 10px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .top-bar { background: var(--valeo-dark); color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0; }
-        .content { padding: 20px; overflow-y: auto; flex-grow: 1; position: relative; }
-        
-        input { width: 100%; padding: 16px; margin: 10px 0; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 15px; box-sizing: border-box; transition: 0.2s; }
-        input:focus { border-color: var(--valeo-green); outline: none; }
-        
-        button { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:disabled { background: #cbd5e0 !important; opacity: 0.6; cursor: not-allowed; }
-        
-        .product-card { background: var(--card-bg); border: 1px solid var(--border); margin-bottom: 12px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; transition: 0.2s; }
-        .product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-        
-        .page { display: none; height: 100%; flex-direction: column; animation: fadeIn 0.3s; }
-        .active-page { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        #detail-image-panel { width: 100%; height: 200px; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 1px solid var(--border); display: none; }
-        #detail-frame { width: 100%; height: 100%; border: none; }
-        
-        .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; background: var(--bg-gray); padding: 10px; border-radius: 15px; }
-        .stepper button { width: 50px; height: 50px; border-radius: 50%; background: var(--valeo-dark); font-size: 20px; padding: 0; color: white; }
-        #islem-adet { width: 70px; text-align: center; font-size: 24px; font-weight: 800; border: none; background: transparent; color: var(--text-main); }
-        
-        .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
-        .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); }
-        
-        .history-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; }
-        .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
-
-        mark { background: #99cc00; color: #000; padding: 0 1px; border-radius: 2px; font-weight: bold; }
+        .product-card { background: var(--card-bg); border: 1px solid #eee; margin-top: 10px; padding: 15px; border-radius: 10px; border-left: 6px solid var(--valeo-green); cursor: pointer; position: relative; z-index: 2; }
+        .highlight { background-color: #ffeb3b; color: #000; font-weight: bold; border-radius: 2px; }
+        .menu-container { position: relative; }
+        .menu-btn { cursor: pointer; font-size: 24px; padding: 5px; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 45px; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); min-width: 190px; z-index: 5000; overflow: hidden; border: 1px solid #eee; }
+        .dropdown-menu div { padding: 14px 18px; color: var(--text-color); cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .history-bar { background: var(--valeo-green); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; position: relative; z-index: 500; }
+        .stats-container { display: flex; justify-content: space-around; background: var(--valeo-dark); color: white; padding: 5px; font-size: 10px; border-bottom: 2px solid var(--valeo-green); }
+        .stat-item { display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: 0.2s; }
+        .stat-active { background: rgba(255,255,255,0.2); outline: 1px solid white; }
+        .toggle-container { display: flex; align-items: center; background: rgba(0,0,0,0.2); border-radius: 20px; padding: 2px; cursor: pointer; position: relative; width: 100px; height: 26px; user-select: none; }
+        .toggle-option { flex: 1; text-align: center; font-size: 9px; z-index: 2; transition: 0.3s; color: white; }
+        .toggle-slider { position: absolute; width: 48px; height: 22px; background: var(--valeo-dark); border-radius: 18px; left: 2px; transition: 0.3s; z-index: 1; }
+        .all-active .toggle-slider { left: 50px; }
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 8px; table-layout: fixed; }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 8px 1px; text-align: left; position: sticky; top: 0; }
+        .history-table td { padding: 8px 1px; border-bottom: 1px solid #eee; color: var(--text-color); word-wrap: break-word; vertical-align: middle; }
+        .sap-cell { white-space: nowrap; font-weight: bold; }
+        .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card-bg); padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; max-height: 90vh; overflow-y: auto;}
+        #gorsel-panel { display: none; margin-top: 15px; border: 2px solid var(--valeo-green); border-radius: 10px; overflow: hidden; height: 250px; position: relative; background: white; }
+        #gorsel-frame { width: 100%; height: 100%; border: none; }
+        .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
+        .stepper button { width: 50px; height: 50px; padding: 0; font-size: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--valeo-dark); color: white; }
+        #islem-adet { width: 80px; text-align: center; font-size: 28px; font-weight: 800; border: none; background: transparent; pointer-events: none; margin: 0; color: var(--text-color); }
     </style>
 </head>
-<body onclick="closeMenuOutside(event)">
+<body>
 
 <div class="container">
-    <div id="offline-status"></div>
+    <div id="offline-banner">📡 Çevrimdışı: <span id="queue-count">0</span> işlem bekliyor.</div>
 
-    <div id="custom-modal" class="modal-overlay">
-        <div class="modal-card">
-            <div id="modal-icon" class="modal-icon">⚠️</div>
-            <div id="modal-title" class="modal-title">Emin misiniz?</div>
-            <div id="modal-text" class="modal-text">Bu işlemi onaylıyor musunuz?</div>
-            <div class="modal-buttons">
-                <button id="modal-cancel-btn" class="modal-btn btn-cancel" onclick="closeModal()">İPTAL</button>
-                <button id="modal-confirm-btn" class="modal-btn btn-confirm">ONAYLA</button>
+    <div class="top-bar">
+        <div class="user-section">
+            <div id="user-display">👤 YÜKLENİYOR...</div>
+            <div id="connection-indicator" class="status-info">
+                <span id="status-dot" class="status-dot online-dot"></span>
+                <span id="status-text" style="color: var(--valeo-green);">Çevrimiçi</span>
+            </div>
+        </div>
+        <div id="top-right-section">
+            <div id="login-dark-btn" class="dark-only-btn" onclick="toggleDarkMode()" style="cursor:pointer; font-size:20px;">🌓</div>
+            <div id="app-menu-wrap" class="menu-container" style="display:none;">
+                <div class="menu-btn" onclick="toggleMenu()">☰</div>
+                <div id="dropdown" class="dropdown-menu">
+                    <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
+                    <div onclick="gecmisGoster(true)">📋 İşlemler</div>
+                    <div onclick="guvenliCikis()" style="color: var(--danger);">🚪 Güvenli Çıkış</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <div id="loading-text" style="font-weight: 800; color: var(--valeo-green);">İŞLEMİNİZ DEVAM EDİYOR...</div>
-        <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">Lütfen bekleyiniz.</div>
-    </div>
-
-    <div id="main-top-bar" class="top-bar" style="display:none;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <div id="btn-back" onclick="goBack()" style="display:none; cursor:pointer; font-size:18px;">⬅️</div>
-            <div style="font-size: 12px; font-weight: 800; letter-spacing: 1px;">VALEO PORTAL</div>
+    <div id="login-screen">
+        <div style="text-align:center; padding:25px 20px;">
+            <div style="font-size: 45px; color: var(--valeo-green); font-weight: 900; letter-spacing: -2px;">VALEO</div>
+            <div style="font-size: 11px; opacity: 0.6; letter-spacing: 2px;">BAKIM DEPO PORTALI</div>
         </div>
-        <div style="cursor:pointer; font-size: 20px;" onclick="toggleMenu(event)">☰</div>
-        <div id="dropdown" class="dropdown-menu">
-            <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
-            <div onclick="gecmisGoster()">📋 İşlem Geçmişi</div>
-            <div onclick="guvenliCikis()" style="color:var(--danger)">🚪 Çıkış Yap</div>
-        </div>
-    </div>
-
-    <div id="page-login" class="page active-page">
-        <div onclick="toggleDarkMode()" style="position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; z-index: 100;">🌓</div>
-        <div class="content" style="text-align:center; justify-content: center; display: flex; flex-direction: column;">
-            <h1 style="color:var(--valeo-green); font-size:48px; margin:0; font-weight:800;">Valeo</h1>
-            <p style="letter-spacing:3px; font-size:10px; opacity:0.6; margin-bottom:40px; font-weight:600;">BAKIM DEPO SİSTEMİ</p>
+        <div class="content">
             <input type="text" id="user-input" placeholder="Kullanıcı Adı">
             <input type="password" id="pass-input" placeholder="Şifre">
             <button onclick="girisYap()">SİSTEME GİRİŞ</button>
         </div>
     </div>
 
-    <div id="page-search" class="page">
-        <div class="content">
-            <h3 style="margin-top:0; font-weight: 800; letter-spacing: -0.5px;">Stok Arama</h3>
-            <div style="position:relative; margin-bottom: 20px;">
-                <input type="text" id="search-main" placeholder="Malzeme adı veya SAP no..." oninput="aramaYap()" style="padding-left:45px; height: 60px; border-radius: 16px;">
-                <span style="position:absolute; left:15px; top:20px; font-size: 20px; opacity:0.5;">🔍</span>
-            </div>
-            <div id="search-results" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    <div id="app-screen" style="display:none; height: 100%; flex-direction: column; position: relative;">
+        <div id="central-watermark" class="watermark-bg">
+            <div class="watermark-text">VALEO</div>
+            <div class="watermark-subtext">BAKIM DEPO</div>
+        </div>
+
+        <div class="content" id="search-scroll-area" onscroll="checkSearchScroll(this)">
+            <input type="text" id="search" placeholder="Malzeme veya SAP ara..." oninput="aramaYap(true)">
+            <div id="count-info" style="font-size:11px; margin-bottom:10px; color:#888;"></div>
+            <div id="results"></div>
         </div>
     </div>
 
-    <div id="page-detail" class="page">
-        <div class="content">
-            <div id="detail-image-panel"><iframe id="detail-frame" src=""></iframe></div>
-            <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px; height: auto; width: auto; display: inline-block;">
-                🖼️ GÖRSELİ GÖSTER
-            </button>
-            <h2 id="detay-ad" style="margin:5px 0; font-size:22px;"></h2>
-            <div id="detay-sap" style="font-weight:900; color:var(--valeo-green); font-size:18px; margin-bottom:15px;"></div>
-            <div style="background:var(--bg-gray); padding:15px; border-radius:12px; font-size:14px; border: 1px solid var(--border);">
-                <div style="margin-bottom:8px;">📍 <b>Adres:</b> <span id="detay-adres"></span></div>
-                <div>📦 <b>Stok:</b> <span id="detay-stok"></span> ADET</div>
-            </div>
-            <button onclick="goToAction()" style="margin-top:25px; background:var(--valeo-blue);">BU ÜRÜNÜ SEÇ</button>
-        </div>
-    </div>
-
-    <div id="page-action" class="page">
-        <div class="content">
-            <label style="font-weight:bold; font-size:12px; color:var(--text-sub); letter-spacing: 1px;">MAKİNE SEÇİMİ</label>
-            <div style="position:relative;">
-                <input type="text" id="action-machine-search" placeholder="Makine kodu veya adı ile ara..." oninput="makineAramaYap()" style="padding-left:45px;">
-                <span style="position:absolute; left:15px; top:25px; opacity:0.5;">🔍</span>
-            </div>
-
-            <div id="selected-machine-box" style="display:none; background: linear-gradient(135deg, var(--valeo-blue), #00d2ff); color: white; padding: 15px; border-radius: 16px; margin: 10px 0; box-shadow: 0 4px 15px rgba(0,145,255,0.3);">
-                <div style="font-size:11px; opacity:0.9; margin-bottom:4px; font-weight:600;">SEÇİLİ MAKİNE</div>
-                <div id="selected-machine-text" style="font-weight:800; font-size:16px;"></div>
-            </div>
-
-            <div id="machine-results" style="max-height:220px; overflow-y:auto; margin-top:5px; border-radius:12px;"></div>
-            
-            <div style="margin-top:25px; text-align:center; background:var(--bg-gray); padding:20px; border-radius:20px; border:1px solid var(--border);">
-                <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">İŞLEM ADEDİ</label>
-                <div class="stepper">
-                    <button onclick="adetDegistir(-1)" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1);">-</button>
-                    <input type="number" id="islem-adet" value="0" readonly>
-                    <button onclick="adetDegistir(1)" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1);">+</button>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button id="btn-dusum" style="background:var(--danger); flex: 1; padding: 20px 10px;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 DÜŞÜM</button>
-                <button id="btn-talep" style="background:var(--valeo-dark); flex: 1; padding: 20px 10px;" onclick="finalOnay('SİPARİŞ TALEBİ')" disabled>🛒 TALEP</button>
+    <div id="history-screen" style="display:none; height: 100%; flex-direction: column;">
+        <div class="history-bar">
+            <div onclick="anaSayfayaDon()" style="cursor:pointer; font-size:12px;">🔙 GERİ</div>
+            <div class="toggle-container" id="history-toggle" onclick="toggleHistoryView()">
+                <div class="toggle-slider"></div>
+                <div class="toggle-option">KENDİ</div>
+                <div class="toggle-option">TÜMÜ</div>
             </div>
         </div>
-    </div>
-
-    <div id="page-history" class="page">
-        <div class="content">
-            <h3 style="margin-top:0;">Son İşlemler</h3>
-            <div style="overflow-x: auto;">
-                <table class="history-table">
-                    <thead>
-                        <tr><th>SAP</th><th>ADET</th><th>TİP</th><th>PERS</th><th>TARİH</th></tr>
-                    </thead>
-                    <tbody id="history-body"></tbody>
-                </table>
-            </div>
+        <div class="stats-container">
+            <div class="stat-item" id="btn-filter-dusum" onclick="gecmisFiltrele('STOKTAN DÜŞÜM')">📉 DÜŞÜM: <span id="stat-dusum" style="color:var(--danger); font-weight:bold;">0</span></div>
+            <div class="stat-item" id="btn-filter-siparis" onclick="gecmisFiltrele('SİPARİŞ TALEBİ')">🛒 SİPARİŞ: <span id="stat-siparis" style="color:var(--valeo-blue); font-weight:bold;">0</span></div>
+        </div>
+        <div class="content" id="history-scroll-area" style="padding: 5px;" onscroll="checkHistoryScroll(this)">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th style="width: 17%;">SAP KODU</th>
+                        <th style="width: 25%;">MALZEME ADI</th>
+                        <th style="width: 14%;">PERSONEL</th>
+                        <th style="width: 8%;">ADET</th>
+                        <th style="width: 12%;">TALEP</th>
+                        <th style="width: 12%;">TARİH</th>
+                        <th style="width: 12%;">SORUMLU</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
+<div id="action-modal" class="modal">
+    <div class="modal-content">
+        <h3 id="modal-subtitle" style="font-size:18px; margin-top:0;"></h3>
+        <button id="btn-gorsel-toggle" style="background:var(--valeo-dark); color:white; margin-bottom:15px; font-size:12px; padding:10px; width:100%;" onclick="toggleGorselPanel()">🖼️ GÖRSELİ GÖSTER / GİZLE</button>
+        <div id="gorsel-panel">
+            <iframe id="gorsel-frame" src=""></iframe>
+        </div>
+        <div class="stepper">
+            <button onclick="adetDegistir(-1)">-</button>
+            <input type="number" id="islem-adet" value="0" readonly>
+            <button onclick="adetDegistir(1)">+</button>
+        </div>
+        <button id="btn-dusum" style="background:var(--danger);" onclick="onayliKaydet('STOKTAN DÜŞÜM', this)" disabled>📉 STOKTAN DÜŞÜM</button>
+        <button id="btn-talep" style="background:var(--valeo-blue); color:white; margin-top:10px;" onclick="onayliKaydet('SİPARİŞ TALEBİ', this)" disabled>🛒 SİPARİŞ OLUŞTUR</button>
+        <button onclick="modalKapat()" style="background:#eee; color:#333; margin-top:15px;">VAZGEÇ</button>
+    </div>
+</div>
+
 <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        if(type === 'success') {
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        } else if(type === 'login') {
+            osc.frequency.setValueAtTime(523, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(1046, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        } else if(type === 'error') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
-    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
-    const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
-    let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
-    let isSyncing = false;
-
-    // OFFLINE MANTIK (UNTITLED1'DEN AKTARILAN)
-    function getQueue() { return JSON.parse(localStorage.getItem('valeo_queue') || '[]'); }
-    function setQueue(q) { localStorage.setItem('valeo_queue', JSON.stringify(q)); updateOnlineStatus(); }
-
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
-    function updateOnlineStatus() {
-        const bar = document.getElementById('offline-status');
-        const queue = getQueue();
+    let urunler = [], kullanicilar = [], seciliUrun = null;
+    let filteredUrunler = [], rawHistory = [], filteredHistory = [], displayedUrunCount = 30, displayedHistoryCount = 30;
+    let showAllUsers = false, activeFilter = null;
+    
+    // BAĞLANTI DURUMU YÖNETİMİ
+    function updateStatusIndicator() {
+        const dot = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
         if (navigator.onLine) {
-            bar.style.display = 'block'; bar.style.background = 'var(--valeo-green)'; bar.style.color = '#fff';
-            bar.innerHTML = '✅ SİSTEM ÇEVRİMİÇİ'; 
-            syncData(); 
+            dot.className = "status-dot online-dot";
+            text.innerText = "Çevrimiçi";
+            text.style.color = "var(--valeo-green)";
+            syncData(); // İnternet gelince bekleyenleri gönder
         } else {
-            bar.style.display = 'block'; bar.style.background = 'var(--warning)'; bar.style.color = '#000';
-            bar.innerHTML = `⚠️ ÇEVRİMDIŞI MOD: ${queue.length} BEKLEYEN İŞLEM`;
+            dot.className = "status-dot offline-dot";
+            text.innerText = "Çevrimdışı";
+            text.style.color = "var(--danger)";
+        }
+    }
+    window.addEventListener('online', updateStatusIndicator);
+    window.addEventListener('offline', updateStatusIndicator);
+
+    // OFFLINE KUYRUK YÖNETİMİ
+    let isSyncing = false;
+    let syncQueue = JSON.parse(localStorage.getItem('valeo_queue') || '[]');
+
+    function updateQueueUI() {
+        const banner = document.getElementById('offline-banner');
+        const countSpan = document.getElementById('queue-count');
+        if (syncQueue.length > 0) {
+            banner.classList.add('active');
+            countSpan.innerText = syncQueue.length;
+        } else {
+            banner.classList.remove('active');
         }
     }
 
     async function syncData() {
-        if (isSyncing || !navigator.onLine) return;
-        let queue = getQueue();
-        if (queue.length === 0) return;
+        if (isSyncing || syncQueue.length === 0 || !navigator.onLine) return;
         isSyncing = true;
-        document.getElementById('loading-overlay').style.display = 'flex';
-        
-        while (queue.length > 0) {
-            const item = queue[0];
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(item) });
-                queue.shift();
-                localStorage.setItem('valeo_queue', JSON.stringify(queue));
-            } catch (e) { break; }
-        }
-        
-        document.getElementById('loading-overlay').style.display = 'none';
-        isSyncing = false;
-        updateOnlineStatus();
-    }
-
-    // GİRİŞ VE ARAMA FONKSİYONLARI (HAFIZADAN ÇALIŞAN)
-    function girisYap() {
-        const u = document.getElementById('user-input').value.trim().toLowerCase();
-        const p = document.getElementById('pass-input').value.trim();
-        const found = kullanicilar.find(row => (row[0] || row.Kullanıcı)?.toString().toLowerCase() === u && (row[1] || row.Şifre)?.toString() === p);
-        if (found) { 
-            localStorage.setItem('depoUser', u); 
-            showPage('page-search'); 
-        } else { 
-            alert("Hatalı giriş!"); 
+        const item = syncQueue[0];
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(item) });
+            syncQueue.shift();
+            localStorage.setItem('valeo_queue', JSON.stringify(syncQueue));
+            updateQueueUI();
+            isSyncing = false;
+            syncData(); // Bir sonrakine geç
+        } catch (e) {
+            isSyncing = false;
         }
     }
 
     function trNormalize(text) {
         if (!text) return "";
-        return text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/İ/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g').trim();
+        return text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/İ/g, 'i').replace(/ö/g, 'o').replace(/Ö/g, 'o').replace(/ü/g, 'u').replace(/Ü/g, 'u').replace(/ş/g, 's').replace(/Ş/g, 's').replace(/ç/g, 'c').replace(/Ç/g, 'c').replace(/ğ/g, 'g').replace(/Ğ/g, 'g');
     }
 
-    function aramaYap() {
-        const rawInput = document.getElementById('search-main').value;
-        const resultsContainer = document.getElementById('search-results');
-        if (!rawInput || !rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
-
-        const queryNormalized = trNormalize(rawInput);
-        const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
-        
-        const filtered = urunler.filter(u => {
-            const rowData = Object.values(u).join(" ");
-            const targetText = trNormalize(rowData);
-            return searchTerms.every(term => targetText.includes(term));
+    function renklendir(metin, kelimeler) {
+        if (!kelimeler.length || !metin) return metin;
+        let metinStr = metin.toString();
+        const siraliKelimeler = [...kelimeler].sort((a, b) => b.length - a.length);
+        siraliKelimeler.forEach(k => {
+            if (k.trim() === "") return;
+            const regex = new RegExp(`(${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            metinStr = metinStr.replace(regex, (match) => `[[HIGHLIGHT]]${match}[[END]]`);
         });
+        return metinStr.split('[[HIGHLIGHT]]').join('<span class="highlight">').split('[[END]]').join('</span>');
+    }
 
-        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
-            const v = Object.values(u);
-            const sap = v[0], ad = v[1], adres = v[2], stok = v[3];
-            return `
-                <div class="product-card" onclick="openDetail('${sap}')">
-                    <div style="font-weight:900; color:var(--valeo-blue); font-size:13px;">SAP: ${sap}</div>
-                    <div style="font-weight:700; font-size:15px; margin-top:8px;">${ad}</div>
-                    <div style="font-size:12px; color:var(--text-sub); margin-top:10px;">📍 Adres: ${adres} | 📦 ${stok} ADET</div>
-                </div>`;
+    function adetDegistir(deger) {
+        const input = document.getElementById('islem-adet');
+        let mevcut = parseInt(input.value) + deger;
+        if (mevcut < 0) mevcut = 0;
+        input.value = mevcut;
+        document.getElementById('btn-dusum').disabled = mevcut <= 0;
+        document.getElementById('btn-talep').disabled = mevcut <= 0;
+    }
+
+    function toggleGorselPanel() {
+        const p = document.getElementById('gorsel-panel'), f = document.getElementById('gorsel-frame');
+        if (p.style.display === 'block') { p.style.display = 'none'; f.src = ""; } 
+        else { p.style.display = 'block'; f.src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`; }
+    }
+
+    function excelTarihFormatla(serial) {
+        if (!serial || isNaN(serial)) return serial || "";
+        const date = new Date(Math.round((serial - 25569) * 86400 * 1000));
+        date.setHours(date.getHours() - 3); 
+        return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}.${date.getFullYear().toString().substring(2)} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    }
+
+    async function gecmisGoster(isNew = false) {
+        document.getElementById('dropdown').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'none';
+        document.getElementById('history-screen').style.display = 'flex';
+        if (isNew) {
+            document.getElementById('history-body').innerHTML = "<tr><td colspan='7' style='text-align:center;'>Yükleniyor...</td></tr>";
+            try {
+                const res = await fetch(GECMIS_URL);
+                const data = XLSX.utils.sheet_to_json(XLSX.read(await res.text(), {type:'string'}).Sheets.Sheet1, {header: 1});
+                rawHistory = data.slice(1).reverse();
+                applyHistoryLogic();
+            } catch (e) { document.getElementById('history-body').innerHTML = "<tr><td colspan='7'>Çevrimdışı Modda Geçmiş Görülemez.</td></tr>"; }
+        }
+    }
+
+    function applyHistoryLogic() {
+        const currentUser = localStorage.getItem('depoUser');
+        let processed = showAllUsers ? rawHistory : rawHistory.filter(row => row[5] && row[5].toString().toLowerCase() === currentUser.toLowerCase());
+        document.getElementById('stat-dusum').innerText = processed.filter(r => r[4] === 'STOKTAN DÜŞÜM').length;
+        document.getElementById('stat-siparis').innerText = processed.filter(r => r[4] === 'SİPARİŞ TALEBİ').length;
+        if (activeFilter) processed = processed.filter(row => row[4] === activeFilter);
+        filteredHistory = processed; displayedHistoryCount = 30;
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const body = document.getElementById('history-body');
+        const chunk = filteredHistory.slice(0, displayedHistoryCount);
+        body.innerHTML = chunk.map(row => {
+            const tip = row[4] || '';
+            let color = tip === "STOKTAN DÜŞÜM" ? "var(--danger)" : (tip === "SİPARİŞ TALEBİ" ? "var(--valeo-blue)" : "var(--valeo-green)");
+            return `<tr><td class="sap-cell">${row[0]}</td><td>${row[1]}</td><td>${row[5]}</td><td>${row[3]}</td><td style="color:${color}; font-weight:bold;">${tip}</td><td>${excelTarihFormatla(row[6])}</td><td>${row[7]||'-'}</td></tr>`;
         }).join('');
     }
 
-    async function kaydet(islem, adet) {
-        const veri = { 
-            sap: seciliUrun[0], 
-            ad: seciliUrun[1], 
-            adet: adet, 
-            islem: islem, 
-            makina: seciliMakina.no, 
-            kullanici: localStorage.getItem('depoUser'), 
-            timestamp: new Date().toISOString() 
-        };
-
-        if (!navigator.onLine) {
-            let q = getQueue(); q.push(veri); setQueue(q);
-            showSuccessModal(true); return;
-        }
-
-        document.getElementById('loading-overlay').style.display = 'flex';
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-            document.getElementById('loading-overlay').style.display = 'none';
-            showSuccessModal(false);
-        } catch (e) { 
-            let q = getQueue(); q.push(veri); setQueue(q);
-            document.getElementById('loading-overlay').style.display = 'none';
-            showSuccessModal(true);
-        }
+    function aramaYap(isNew = false) {
+        const val = document.getElementById('search').value;
+        const norm = trNormalize(val).trim();
+        document.getElementById('central-watermark').style.display = norm ? 'none' : 'block';
+        if(isNew) { displayedUrunCount = 30; document.getElementById('search-scroll-area').scrollTop = 0; }
+        if(!norm) { document.getElementById('results').innerHTML = ""; return; }
+        const kelimeler = norm.split(/\s+/);
+        filteredUrunler = urunler.filter(u => kelimeler.every(k => trNormalize(Object.values(u).join(" ")).includes(k)));
+        document.getElementById('count-info').innerText = filteredUrunler.length + " ürün.";
+        renderSearchItems(kelimeler);
     }
 
-    // SAYFA YÖNETİMİ VE MODALLAR
-    function openDetail(sap) {
-        seciliUrun = Object.values(urunler.find(u => Object.values(u)[0].toString() === sap.toString()));
-        document.getElementById('detay-ad').innerText = seciliUrun[1];
-        document.getElementById('detay-sap').innerText = "SAP: " + seciliUrun[0];
-        document.getElementById('detay-adres').innerText = seciliUrun[2];
-        document.getElementById('detay-stok').innerText = seciliUrun[3];
-        document.getElementById('detail-image-panel').style.display = "none";
-        document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`;
-        showPage('page-detail');
+    function renderSearchItems(kelimeler = []) {
+        const chunk = filteredUrunler.slice(0, displayedUrunCount);
+        document.getElementById('results').innerHTML = chunk.map(i => {
+            const v = Object.values(i);
+            return `<div class="product-card" onclick="openModal('${v[0]}','${v[1].replace(/'/g, "\\'")}','${v[2]}','${v[3]}')">
+                <div style="font-weight:900;">SAP: ${renklendir(v[0], kelimeler)}</div>
+                <div style="font-weight:700;">${renklendir(v[1], kelimeler)}</div>
+                <div style="font-size:12px; color:#888;">📍 ${v[2]} | 📦 ${v[3]} ADET</div>
+            </div>`;
+        }).join('');
     }
 
-    function makineAramaYap() {
-        const query = trNormalize(document.getElementById('action-machine-search').value);
-        const resultsDiv = document.getElementById('machine-results');
-        if(!query) { resultsDiv.innerHTML = ""; return; }
-        const filtered = makineler.filter(m => trNormalize(Object.values(m).join(" ")).includes(query));
-        resultsDiv.innerHTML = filtered.slice(0, 6).map(m => {
-            const v = Object.values(m);
-            return `<div class="product-card" style="padding:16px;" onclick="selectMachine('${v[0]}','${v[1]}')">
-                <div style="font-weight:800;">${v[0]}</div><div style="font-size:12px;">${v[1]}</div>
-            </div>`}).join('');
+    function openModal(sap, ad, adres, stok) {
+        seciliUrun = [sap, ad, adres, stok];
+        document.getElementById('modal-subtitle').innerText = ad;
+        document.getElementById('islem-adet').value = '0';
+        
+        // MODAL HER AÇILDIĞINDA BUTONLAR KİLİTLİ BAŞLAR (0 ADET KURALI)
+        document.getElementById('btn-dusum').disabled = true;
+        document.getElementById('btn-talep').disabled = true;
+        
+        document.getElementById('action-modal').style.display = 'flex';
     }
 
-    function selectMachine(no, ad) {
-        seciliMakina = { no, ad };
-        document.getElementById('selected-machine-text').innerText = no + " - " + ad;
-        document.getElementById('selected-machine-box').style.display = 'block';
-        document.getElementById('machine-results').innerHTML = "";
-        updateButtons();
-    }
-
-    function goToAction() {
-        seciliMakina = null; document.getElementById('islem-adet').value = 0;
-        document.getElementById('selected-machine-box').style.display = 'none';
-        updateButtons(); showPage('page-action');
-    }
-
-    function adetDegistir(d) {
-        let v = parseInt(document.getElementById('islem-adet').value) + d;
-        if(v < 0) v = 0; document.getElementById('islem-adet').value = v;
-        updateButtons();
-    }
-
-    function updateButtons() {
-        const hasAdet = parseInt(document.getElementById('islem-adet').value) > 0;
-        document.getElementById('btn-dusum').disabled = !(seciliMakina && hasAdet);
-        document.getElementById('btn-talep').disabled = !(seciliMakina && hasAdet);
-    }
-
-    function finalOnay(islem) {
-        const modal = document.getElementById('custom-modal');
+    async function onayliKaydet(islem, btn) {
         const adet = document.getElementById('islem-adet').value;
-        document.getElementById('modal-cancel-btn').style.display = 'block';
-        document.getElementById('modal-icon').innerText = islem === 'STOKTAN DÜŞÜM' ? '📉' : '🛒';
-        document.getElementById('modal-title').innerText = islem;
-        document.getElementById('modal-text').innerHTML = `<b>${seciliUrun[1]}</b> ürününden <b>${adet} adet</b> için işlem yapılacaktır.`;
-        document.getElementById('modal-confirm-btn').onclick = function() { closeModal(); kaydet(islem, adet); };
-        modal.style.display = 'flex';
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adres: seciliUrun[2], adet: adet, islem: islem, kullanici: localStorage.getItem('depoUser') };
+        
+        if (!navigator.onLine) {
+            syncQueue.push(veri);
+            localStorage.setItem('valeo_queue', JSON.stringify(syncQueue));
+            updateQueueUI();
+            playSound('success');
+            alert("ÇEVRİMDIŞI KAYDEDİLDİ. İnternet gelince gönderilecek.");
+            modalKapat();
+            return;
+        }
+
+        const eski = btn.innerText; btn.innerText = "İŞLENİYOR..."; btn.disabled = true;
+        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) })
+        .then(() => { playSound('success'); alert("BAŞARILI!"); modalKapat(); btn.innerText = eski; })
+        .catch(() => { 
+            syncQueue.push(veri);
+            localStorage.setItem('valeo_queue', JSON.stringify(syncQueue));
+            updateQueueUI();
+            alert("Bağlantı koptu, kuyruğa alındı."); 
+            modalKapat();
+            btn.innerText = eski;
+        });
     }
 
-    function showSuccessModal(isOffline = false) {
-        const modal = document.getElementById('custom-modal');
-        document.getElementById('modal-cancel-btn').style.display = 'none';
-        document.getElementById('modal-icon').innerText = isOffline ? '⏳' : '✅';
-        document.getElementById('modal-title').innerText = isOffline ? 'KUYRUĞA ALINDI' : 'BAŞARILI';
-        document.getElementById('modal-text').innerText = isOffline ? 'Bağlantı gelince gönderilecek.' : 'İşleminiz kaydedildi.';
-        document.getElementById('modal-confirm-btn').innerText = 'TAMAM';
-        document.getElementById('modal-confirm-btn').onclick = function() { closeModal(); showPage('page-search'); };
-        modal.style.display = 'flex';
+    function girisYap() {
+        const u = document.getElementById('user-input').value.trim().toLowerCase(), p = document.getElementById('pass-input').value.trim();
+        const found = kullanicilar.find(row => { const v = Object.values(row); return v[0] && v[0].toString().toLowerCase() === u && v[1] && v[1].toString() === p; });
+        if (found) { localStorage.setItem('depoUser', u); playSound('login'); loginSuccess(u); } else { playSound('error'); alert("Hatalı Giriş!"); }
     }
 
-    function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
-    function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(pageId).classList.add('active-page');
-        document.getElementById('main-top-bar').style.display = (pageId === 'page-login') ? 'none' : 'flex';
-        document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
+    function loginSuccess(user) { 
+        document.getElementById('login-screen').style.display = 'none'; 
+        document.getElementById('app-screen').style.display = 'flex'; 
+        document.getElementById('user-display').innerText = "👤 " + user.toUpperCase();
+        document.getElementById('app-menu-wrap').style.display = 'block';
+        updateQueueUI();
+        updateStatusIndicator(); // Bağlantı durumunu göster
+        syncData();
     }
-
-    function goBack() {
-        if (document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
-        else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail');
-        else if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search');
-    }
-
-    function toggleImage() {
-        const panel = document.getElementById('detail-image-panel');
-        panel.style.display = panel.style.display === "none" ? "block" : "none";
-    }
-
-    function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
-    function closeMenuOutside() { document.getElementById('dropdown').style.display = 'none'; }
-    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
-    function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
     window.onload = async () => {
-        // Önce hafızadaki verileri yükle (Offline Giriş/Arama için kritik)
-        urunler = JSON.parse(localStorage.getItem('valeo_cache_urun') || '[]');
-        kullanicilar = JSON.parse(localStorage.getItem('valeo_cache_user') || '[]');
-        makineler = JSON.parse(localStorage.getItem('valeo_cache_makina') || '[]');
+        if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
+        
+        // ÖNCE HAFIZADAN YÜKLE (Çevrimdışı Arama İçin)
+        const localUrun = localStorage.getItem('valeo_cache_urun');
+        const localUser = localStorage.getItem('valeo_cache_user');
+        if (localUrun) urunler = JSON.parse(localUrun);
+        if (localUser) kullanicilar = JSON.parse(localUser);
 
-        if (localStorage.getItem('depoUser')) showPage('page-search');
-        updateOnlineStatus();
+        const storedUser = localStorage.getItem('depoUser');
+        if (storedUser) loginSuccess(storedUser);
 
-        if(navigator.onLine) {
-            try {
-                const [uRes, pRes, mRes] = await Promise.all([fetch(USER_URL), fetch(URUN_URL), fetch(MAKINA_URL)]);
-                const parse = async (r) => XLSX.utils.sheet_to_json(XLSX.read(await r.text(), {type:'string'}).Sheets.Sheet1);
-                
-                kullanicilar = await parse(uRes);
-                urunler = await parse(pRes);
-                makineler = await parse(mRes);
-
-                // Hafızaya yedekle
-                localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
-                localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler));
-                localStorage.setItem('valeo_cache_makina', JSON.stringify(makineler));
-            } catch (e) { console.error("Veri güncellenemedi, hafızadan devam ediliyor."); }
-        }
+        // SONRA GÜNCEL VERİYİ ÇEK VE YEDEKLE
+        try {
+            const [uRes, pRes] = await Promise.all([fetch(USER_URL), fetch(URUN_URL)]);
+            kullanicilar = XLSX.utils.sheet_to_json(XLSX.read(await uRes.text(), {type:'string'}).Sheets.Sheet1);
+            urunler = XLSX.utils.sheet_to_json(XLSX.read(await pRes.text(), {type:'string'}).Sheets.Sheet1).filter(row => Object.values(row).length > 0 && !String(Object.values(row)[0]).includes(':'));
+            localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler));
+            localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
+        } catch (e) { console.log("Çevrimdışı modda çalışıyor."); }
     };
+
+    function toggleMenu() { const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
+    function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', isDark); }
+    function anaSayfayaDon() { document.getElementById('history-screen').style.display = 'none'; document.getElementById('app-screen').style.display = 'flex'; }
+    function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
+    function modalKapat() { document.getElementById('action-modal').style.display = 'none'; document.getElementById('gorsel-panel').style.display = 'none'; document.getElementById('gorsel-frame').src = ""; }
+    function checkSearchScroll(el) { if(el.scrollTop + el.clientHeight >= el.scrollHeight - 50 && displayedUrunCount < filteredUrunler.length) { displayedUrunCount += 30; aramaYap(false); } }
+    function checkHistoryScroll(el) { if(el.scrollTop + el.clientHeight >= el.scrollHeight - 50 && displayedHistoryCount < filteredHistory.length) { displayedHistoryCount += 30; renderHistory(); } }
+    function toggleHistoryView() { showAllUsers = !showAllUsers; document.getElementById('history-toggle').classList.toggle('all-active', showAllUsers); applyHistoryLogic(); }
+    function gecmisFiltrele(tip) { activeFilter = (activeFilter === tip) ? null : tip; applyHistoryLogic(); }
 </script>
 </body>
 </html>
