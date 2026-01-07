@@ -279,6 +279,7 @@
     let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
     let isSyncing = false;
 
+    // --- ÇEVRİMDIŞI ÖZELLİKLERİ (UNTITLED1'DEN AKTARILAN) ---
     function getQueue() { return JSON.parse(localStorage.getItem('valeo_offline_queue') || '[]'); }
     function setQueue(q) { 
         localStorage.setItem('valeo_offline_queue', JSON.stringify(q));
@@ -293,7 +294,8 @@
         const queue = getQueue();
         if (navigator.onLine) {
             bar.style.display = 'block'; bar.style.background = 'var(--valeo-green)'; bar.style.color = '#fff';
-            bar.innerHTML = '✅ SİSTEM ÇEVRİMİÇİ'; processQueue();
+            bar.innerHTML = '✅ SİSTEM ÇEVRİMİÇİ'; 
+            processQueue(); 
         } else {
             bar.style.display = 'block'; bar.style.background = 'var(--warning)'; bar.style.color = '#000';
             bar.innerHTML = `⚠️ ÇEVRİMDIŞI MOD: ${queue.length} BEKLEYEN İŞLEM`;
@@ -305,7 +307,7 @@
         let queue = getQueue();
         if (queue.length === 0) return;
         isSyncing = true;
-        document.getElementById('loading-overlay').style.display = 'flex';
+        
         while (queue.length > 0) {
             const item = queue[0];
             try {
@@ -314,10 +316,10 @@
                 localStorage.setItem('valeo_offline_queue', JSON.stringify(queue));
             } catch (e) { break; }
         }
-        document.getElementById('loading-overlay').style.display = 'none';
         isSyncing = false;
         updateOnlineStatus();
     }
+    // -------------------------------------------------------
 
     function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
@@ -520,51 +522,31 @@
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
-    function checkBingPermission() {
-        if (!localStorage.getItem('bingApproved')) {
-            const modal = document.getElementById('custom-modal');
-            document.getElementById('modal-cancel-btn').style.display = 'none';
-            document.getElementById('modal-title').innerText = 'Görsel Erişimi';
-            document.getElementById('modal-text').innerText = 'Görseller Microsoft Bing üzerinden sağlanmaktadır.';
-            document.getElementById('modal-confirm-btn').onclick = function() {
-                localStorage.setItem('bingApproved', 'true'); closeModal(); window.open('https://www.bing.com', '_blank');
-            };
-            modal.style.display = 'flex';
-        }
-    }
-
     window.onload = async () => {
-        updateOnlineStatus();
+        // HAFIZADAKİ VERİLERİ ÖNCE YÜKLE (ÇEVRİMDIŞI ÇALIŞABİLMEK İÇİN)
+        urunler = JSON.parse(localStorage.getItem('cached_urunler') || '[]');
+        makineler = JSON.parse(localStorage.getItem('cached_makineler') || '[]');
+        kullanicilar = JSON.parse(localStorage.getItem('cached_kullanicilar') || '[]');
+
         if (localStorage.getItem('depoUser')) showPage('page-search');
-        checkBingPermission();
+        updateOnlineStatus();
+
         if(navigator.onLine) {
             try {
                 const [uRes, pRes, mRes] = await Promise.all([fetch(USER_URL).then(r => r.text()), fetch(URUN_URL).then(r => r.text()), fetch(MAKINA_URL).then(r => r.text())]);
                 const parseCSV = (d) => XLSX.utils.sheet_to_json(XLSX.read(d, {type:'string'}).Sheets.Sheet1, {header: 1});
-                kullanicilar = parseCSV(uRes).slice(1); urunler = parseCSV(pRes).slice(1).filter(r => r.length > 0); makineler = parseCSV(mRes).slice(1);
-                localStorage.setItem('cached_urunler', JSON.stringify(urunler)); localStorage.setItem('cached_makineler', JSON.stringify(makineler));
-            } catch (e) { console.error(e); }
-        } else {
-            urunler = JSON.parse(localStorage.getItem('cached_urunler') || '[]');
-            makineler = JSON.parse(localStorage.getItem('cached_makineler') || '[]');
+                
+                kullanicilar = parseCSV(uRes).slice(1); 
+                urunler = parseCSV(pRes).slice(1).filter(r => r.length > 0); 
+                makineler = parseCSV(mRes).slice(1);
+                
+                // GÜNCEL VERİYİ ÇEVRİMDIŞI KULLANIM İÇİN YEDEKLE
+                localStorage.setItem('cached_urunler', JSON.stringify(urunler)); 
+                localStorage.setItem('cached_makineler', JSON.stringify(makineler));
+                localStorage.setItem('cached_kullanicilar', JSON.stringify(kullanicilar));
+            } catch (e) { console.error("Veri güncellenemedi, hafızadaki veriler kullanılıyor."); }
         }
     };
-
-    // --- BURASI SİHİRLİ DOKUNUŞ: ÇEVRİMDIŞI AÇILIŞ SİSTEMİ ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            const swSource = `
-                const CACHE_NAME = 'valeo-v2-offline-cache';
-                const APP_ASSETS = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap'];
-                self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS))); self.skipWaiting(); });
-                self.addEventListener('activate', event => { event.waitUntil(clients.claim()); });
-                self.addEventListener('fetch', event => { event.respondWith(caches.match(event.request).then(response => response || fetch(event.request))); });
-            `;
-            const blob = new Blob([swSource], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).catch(err => console.log('Hafıza Sistemi Hatası:', err));
-        });
-    }
 </script>
 </body>
 </html>
