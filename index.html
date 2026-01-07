@@ -28,6 +28,7 @@
             --text-sub: #b2bec3; 
             --valeo-dark: #000000; 
             --border: #2d3436;
+            --shadow: 0 10px 25px rgba(0,0,0,0.4);
         }
 
         body { font-family: 'Inter', sans-serif; background: var(--bg-gray); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: 0.3s; padding: 10px; box-sizing: border-box; }
@@ -37,6 +38,7 @@
             width: 100%; 
             max-width: 500px; 
             height: 95vh; 
+            max-height: 900px; 
             border-radius: 24px; 
             box-shadow: var(--shadow); 
             display: flex; 
@@ -46,123 +48,222 @@
             border: 1px solid var(--border); 
         }
 
-        /* ÇEVRİMDIŞI BİLGİ ÇUBUĞU */
-        #offline-banner {
-            display: none;
-            background: var(--warning);
-            color: #000;
+        #offline-status {
             text-align: center;
             padding: 8px;
             font-size: 11px;
             font-weight: 800;
+            display: none;
             z-index: 100;
         }
 
-        .top-bar { background: var(--valeo-dark); color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        
-        .connection-status { display: flex; align-items: center; gap: 8px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; }
-        .dot-online { background: var(--valeo-green); box-shadow: 0 0 5px var(--valeo-green); }
-        .dot-offline { background: var(--danger); box-shadow: 0 0 5px var(--danger); }
-        .q-count { background: var(--danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; display: none; }
+        @media (min-width: 768px) { .container { max-width: 600px; height: 85vh; } }
 
-        .content { padding: 20px; overflow-y: auto; flex-grow: 1; }
-        
-        /* O ÇOK SEVDİĞİN GENİŞ ARAMA ÇUBUĞU */
-        .search-container { position: relative; margin-bottom: 20px; }
-        .search-container input { 
-            width: 100%; padding: 20px 20px 20px 55px; border-radius: 18px; 
-            border: 2px solid var(--border); background: var(--card-bg); 
-            color: var(--text-main); font-size: 16px; font-weight: 600;
-            box-sizing: border-box; transition: 0.3s;
+        .modal-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
         }
-        .search-container input:focus { border-color: var(--valeo-green); outline: none; box-shadow: 0 0 15px rgba(153, 204, 0, 0.1); }
-        .search-icon { position: absolute; left: 20px; top: 22px; font-size: 20px; opacity: 0.5; }
 
-        .product-card { 
-            background: var(--card-bg); border: 1px solid var(--border); 
-            margin-bottom: 12px; padding: 18px; border-radius: 20px; 
-            border-left: 6px solid var(--valeo-green); cursor: pointer; transition: 0.2s; 
+        .modal-card {
+            background: var(--card-bg);
+            width: 85%;
+            max-width: 350px;
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            animation: modalSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .product-card:active { transform: scale(0.97); }
 
-        button { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 15px; font-weight: 800; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        @keyframes modalSlideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
 
-        #loading { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:1000; justify-content:center; align-items:center; flex-direction:column; }
+        .modal-icon { font-size: 45px; margin-bottom: 15px; }
+        .modal-title { font-weight: 800; font-size: 20px; margin-bottom: 10px; color: var(--text-main); }
+        .modal-text { font-size: 14px; color: var(--text-sub); margin-bottom: 25px; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 10px; }
+        .modal-btn { flex: 1; padding: 15px; border-radius: 14px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; font-size: 13px; }
+        .btn-confirm { background: var(--valeo-green); color: white; }
+        .btn-cancel { background: var(--bg-gray); color: var(--text-main); }
+
+        #loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        body.dark-mode #loading-overlay { background: rgba(0, 0, 0, 0.85); }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--valeo-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .top-bar { background: var(--valeo-dark); color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0; }
+        .content { padding: 20px; overflow-y: auto; flex-grow: 1; position: relative; }
+        
+        input { width: 100%; padding: 16px; margin: 10px 0; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 15px; box-sizing: border-box; transition: 0.2s; }
+        input:focus { border-color: var(--valeo-green); outline: none; }
+        
+        button { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
+        button:disabled { background: #cbd5e0 !important; opacity: 0.6; cursor: not-allowed; }
+        
+        .product-card { background: var(--card-bg); border: 1px solid var(--border); margin-bottom: 12px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; transition: 0.2s; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
         
         .page { display: none; height: 100%; flex-direction: column; animation: fadeIn 0.3s; }
         .active-page { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        #detail-image-panel { width: 100%; height: 200px; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 1px solid var(--border); display: none; }
+        #detail-frame { width: 100%; height: 100%; border: none; }
+        
+        .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; background: var(--bg-gray); padding: 10px; border-radius: 15px; }
+        .stepper button { width: 50px; height: 50px; border-radius: 50%; background: var(--valeo-dark); font-size: 20px; padding: 0; color: white; }
+        #islem-adet { width: 70px; text-align: center; font-size: 24px; font-weight: 800; border: none; background: transparent; color: var(--text-main); }
+        
+        .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
+        .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); }
+        
+        .history-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        .history-table th { background: var(--valeo-dark); color: white; padding: 10px 5px; text-align: left; position: sticky; top: 0; }
+        .history-table td { padding: 10px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+
+        mark { background: #99cc00; color: #000; padding: 0 1px; border-radius: 2px; font-weight: bold; }
     </style>
 </head>
-<body>
+<body onclick="closeMenuOutside(event)">
 
 <div class="container">
-    <div id="offline-banner">⚠️ İNTERNET YOK - İŞLEMLER SIRAYA ALINIYOR</div>
+    <div id="offline-status"></div>
 
-    <div id="loading">
-        <div style="border:4px solid #f3f3f3; border-top:4px solid var(--valeo-green); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
-        <p style="font-weight:800; margin-top:10px;">LÜTFEN BEKLEYİN...</p>
-    </div>
-
-    <div id="main-nav" class="top-bar" style="display:none;">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <div id="back-btn" onclick="goBack()" style="display:none; cursor:pointer; font-size:20px;">⬅️</div>
-            <div>
-                <div style="font-size:11px; font-weight:800; letter-spacing:1px;">VALEO PORTAL</div>
-                <div class="connection-status">
-                    <div id="status-dot" class="dot dot-online"></div>
-                    <span id="status-text" style="font-size:9px;">Online</span>
-                    <span id="q-badge" class="q-count">0</span>
-                </div>
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div id="modal-icon" class="modal-icon">⚠️</div>
+            <div id="modal-title" class="modal-title">Emin misiniz?</div>
+            <div id="modal-text" class="modal-text">Bu işlemi onaylıyor musunuz?</div>
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn" class="modal-btn btn-cancel" onclick="closeModal()">İPTAL</button>
+                <button id="modal-confirm-btn" class="modal-btn btn-confirm">ONAYLA</button>
             </div>
         </div>
-        <div onclick="toggleMenu()" style="cursor:pointer; font-size:20px;">☰</div>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text" style="font-weight: 800; color: var(--valeo-green);">İŞLEMİNİZ DEVAM EDİYOR...</div>
+        <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">Lütfen bekleyiniz.</div>
+    </div>
+
+    <div id="main-top-bar" class="top-bar" style="display:none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="btn-back" onclick="goBack()" style="display:none; cursor:pointer; font-size:18px;">⬅️</div>
+            <div style="font-size: 12px; font-weight: 800; letter-spacing: 1px;">VALEO PORTAL</div>
+        </div>
+        <div style="cursor:pointer; font-size: 20px;" onclick="toggleMenu(event)">☰</div>
+        <div id="dropdown" class="dropdown-menu">
+            <div onclick="toggleDarkMode()">🌓 Karanlık Mod</div>
+            <div onclick="gecmisGoster()">📋 İşlem Geçmişi</div>
+            <div onclick="guvenliCikis()" style="color:var(--danger)">🚪 Çıkış Yap</div>
+        </div>
     </div>
 
     <div id="page-login" class="page active-page">
-        <div class="content" style="display:flex; flex-direction:column; justify-content:center; text-align:center;">
-            <h1 style="color:var(--valeo-green); font-size:45px; margin:0; font-weight:800;">Valeo</h1>
-            <p style="letter-spacing:3px; font-size:10px; opacity:0.6; margin-bottom:40px;">BAKIM DEPO SİSTEMİ</p>
-            <input type="text" id="user-in" placeholder="Kullanıcı Adı" style="width:100%; padding:15px; border-radius:12px; border:2px solid var(--border); margin-bottom:10px;">
-            <input type="password" id="pass-in" placeholder="Şifre" style="width:100%; padding:15px; border-radius:12px; border:2px solid var(--border); margin-bottom:20px;">
-            <button onclick="login()">SİSTEME GİRİŞ</button>
+        <div onclick="toggleDarkMode()" style="position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; z-index: 100;">🌓</div>
+        <div class="content" style="text-align:center; justify-content: center; display: flex; flex-direction: column;">
+            <h1 style="color:var(--valeo-green); font-size:48px; margin:0; font-weight:800;">Valeo</h1>
+            <p style="letter-spacing:3px; font-size:10px; opacity:0.6; margin-bottom:40px; font-weight:600;">BAKIM DEPO SİSTEMİ</p>
+            <input type="text" id="user-input" placeholder="Kullanıcı Adı">
+            <input type="password" id="pass-input" placeholder="Şifre">
+            <button onclick="girisYap()">SİSTEME GİRİŞ</button>
         </div>
     </div>
 
     <div id="page-search" class="page">
         <div class="content">
-            <h3 style="font-weight:800; margin-top:0;">Stok Arama</h3>
-            <div class="search-container">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="main-search" placeholder="SAP veya Malzeme adı yazın..." oninput="search()">
+            <h3 style="margin-top:0; font-weight: 800; letter-spacing: -0.5px;">Stok Arama</h3>
+            <div style="position:relative; margin-bottom: 20px;">
+                <input type="text" id="search-main" placeholder="Malzeme adı veya SAP no..." oninput="aramaYap()" style="padding-left:45px; height: 60px; border-radius: 16px;">
+                <span style="position:absolute; left:15px; top:20px; font-size: 20px; opacity:0.5;">🔍</span>
             </div>
-            <div id="search-results"></div>
+            <div id="search-results" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+    </div>
+
+    <div id="page-detail" class="page">
+        <div class="content">
+            <div id="detail-image-panel"><iframe id="detail-frame" src=""></iframe></div>
+            <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px; height: auto; width: auto; display: inline-block;">
+                🖼️ GÖRSELİ GÖSTER
+            </button>
+            <h2 id="detay-ad" style="margin:5px 0; font-size:22px;"></h2>
+            <div id="detay-sap" style="font-weight:900; color:var(--valeo-green); font-size:18px; margin-bottom:15px;"></div>
+            <div style="background:var(--bg-gray); padding:15px; border-radius:12px; font-size:14px; border: 1px solid var(--border);">
+                <div style="margin-bottom:8px;">📍 <b>Adres:</b> <span id="detay-adres"></span></div>
+                <div>📦 <b>Stok:</b> <span id="detay-stok"></span> ADET</div>
+            </div>
+            <button onclick="goToAction()" style="margin-top:25px; background:var(--valeo-blue);">BU ÜRÜNÜ SEÇ</button>
         </div>
     </div>
 
     <div id="page-action" class="page">
         <div class="content">
-            <h2 id="item-name" style="margin:0;"></h2>
-            <div id="item-sap" style="color:var(--valeo-blue); font-weight:800; font-size:18px; margin:10px 0 20px 0;"></div>
+            <label style="font-weight:bold; font-size:12px; color:var(--text-sub); letter-spacing: 1px;">MAKİNE SEÇİMİ</label>
+            <div style="position:relative;">
+                <input type="text" id="action-machine-search" placeholder="Makine kodu veya adı ile ara..." oninput="makineAramaYap()" style="padding-left:45px;">
+                <span style="position:absolute; left:15px; top:25px; opacity:0.5;">🔍</span>
+            </div>
+
+            <div id="selected-machine-box" style="display:none; background: linear-gradient(135deg, var(--valeo-blue), #00d2ff); color: white; padding: 15px; border-radius: 16px; margin: 10px 0; box-shadow: 0 4px 15px rgba(0,145,255,0.3);">
+                <div style="font-size:11px; opacity:0.9; margin-bottom:4px; font-weight:600;">SEÇİLİ MAKİNE</div>
+                <div id="selected-machine-text" style="font-weight:800; font-size:16px;"></div>
+            </div>
+
+            <div id="machine-results" style="max-height:220px; overflow-y:auto; margin-top:5px; border-radius:12px;"></div>
             
-            <div style="background:var(--bg-gray); padding:15px; border-radius:15px; margin-bottom:20px;">
-                <label style="font-size:11px; font-weight:800; color:var(--text-sub);">MAKİNE SEÇİMİ</label>
-                <input type="text" id="m-search" placeholder="Makine Ara..." oninput="searchM()" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border); margin-top:5px;">
-                <div id="m-results" style="max-height:120px; overflow-y:auto; margin-top:5px;"></div>
-                <div id="m-sel" style="display:none; margin-top:10px; background:var(--valeo-blue); color:white; padding:12px; border-radius:12px; font-weight:800; font-size:14px;"></div>
+            <div style="margin-top:25px; text-align:center; background:var(--bg-gray); padding:20px; border-radius:20px; border:1px solid var(--border);">
+                <label style="font-weight:bold; font-size:12px; color:var(--text-sub);">İŞLEM ADEDİ</label>
+                <div class="stepper">
+                    <button onclick="adetDegistir(-1)" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1);">-</button>
+                    <input type="number" id="islem-adet" value="0" readonly>
+                    <button onclick="adetDegistir(1)" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1);">+</button>
+                </div>
             </div>
 
-            <div style="display:flex; align-items:center; justify-content:center; gap:25px; margin-bottom:30px;">
-                <button onclick="qty(-1)" style="width:65px; background:var(--valeo-dark); font-size:24px;">-</button>
-                <span id="qty-txt" style="font-size:32px; font-weight:800;">1</span>
-                <button onclick="qty(1)" style="width:65px; background:var(--valeo-dark); font-size:24px;">+</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btn-dusum" style="background:var(--danger); flex: 1; padding: 20px 10px;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 DÜŞÜM</button>
+                <button id="btn-talep" style="background:var(--valeo-dark); flex: 1; padding: 20px 10px;" onclick="finalOnay('SİPARİŞ TALEBİ')" disabled>🛒 TALEP</button>
             </div>
+        </div>
+    </div>
 
-            <div style="display:flex; gap:12px;">
-                <button onclick="save('STOKTAN DÜŞÜM')" style="background:var(--danger); flex:1; height:70px;">📉 DÜŞÜM</button>
-                <button onclick="save('SİPARİŞ TALEBİ')" style="background:var(--valeo-dark); flex:1; height:70px;">🛒 TALEP</button>
+    <div id="page-history" class="page">
+        <div class="content">
+            <h3 style="margin-top:0;">Son İşlemler</h3>
+            <div style="overflow-x: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr><th>SAP</th><th>ADET</th><th>TİP</th><th>PERS</th><th>TARİH</th></tr>
+                    </thead>
+                    <tbody id="history-body"></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -170,149 +271,248 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
-    const URL_P = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
-    const URL_M = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
-    const URL_U = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
+    const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
+    const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
+    const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
+    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
 
-    let DB_P = [], DB_M = [], DB_U = [], SEL_P = null, SEL_M = null, CUR_QTY = 1;
+    let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
     let isSyncing = false;
 
-    // OFFLINE SİSTEMİ
-    function getQ() { return JSON.parse(localStorage.getItem('v_q') || '[]'); }
-    function setQ(q) { 
-        localStorage.setItem('v_q', JSON.stringify(q));
-        document.getElementById('q-badge').innerText = q.length;
-        document.getElementById('q-badge').style.display = q.length > 0 ? 'inline-block' : 'none';
+    // OFFLINE MANTIK (UNTITLED1'DEN AKTARILAN)
+    function getQueue() { return JSON.parse(localStorage.getItem('valeo_queue') || '[]'); }
+    function setQueue(q) { localStorage.setItem('valeo_queue', JSON.stringify(q)); updateOnlineStatus(); }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    function updateOnlineStatus() {
+        const bar = document.getElementById('offline-status');
+        const queue = getQueue();
+        if (navigator.onLine) {
+            bar.style.display = 'block'; bar.style.background = 'var(--valeo-green)'; bar.style.color = '#fff';
+            bar.innerHTML = '✅ SİSTEM ÇEVRİMİÇİ'; 
+            syncData(); 
+        } else {
+            bar.style.display = 'block'; bar.style.background = 'var(--warning)'; bar.style.color = '#000';
+            bar.innerHTML = `⚠️ ÇEVRİMDIŞI MOD: ${queue.length} BEKLEYEN İŞLEM`;
+        }
     }
 
-    window.addEventListener('online', updateConn);
-    window.addEventListener('offline', updateConn);
-
-    function updateConn() {
-        const on = navigator.onLine;
-        document.getElementById('status-dot').className = on ? 'dot dot-online' : 'dot dot-offline';
-        document.getElementById('status-text').innerText = on ? 'Çevrimiçi' : 'Çevrimdışı';
-        document.getElementById('offline-banner').style.display = on ? 'none' : 'block';
-        if(on) sync();
-    }
-
-    async function sync() {
-        if(isSyncing || !navigator.onLine) return;
-        let q = getQ(); if(q.length === 0) return;
+    async function syncData() {
+        if (isSyncing || !navigator.onLine) return;
+        let queue = getQueue();
+        if (queue.length === 0) return;
         isSyncing = true;
-        while(q.length > 0) {
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(q[0]) });
-                q.shift(); setQ(q);
-            } catch(e) { break; }
-        }
-        isSyncing = false;
-    }
-
-    // UYGULAMA
-    function login() {
-        const u = document.getElementById('user-in').value.trim().toLowerCase();
-        const p = document.getElementById('pass-in').value.trim();
-        const ok = DB_U.find(x => x[0]?.toString().toLowerCase() === u && x[1]?.toString() === p);
-        if(ok) { localStorage.setItem('depoUser', u); showPage('page-search'); } else alert("Hatalı Giriş!");
-    }
-
-    function search() {
-        const v = document.getElementById('main-search').value.toLowerCase();
-        const res = document.getElementById('search-results');
-        if(!v) { res.innerHTML = ""; return; }
-        const f = DB_P.filter(x => x[0].toString().includes(v) || x[1].toLowerCase().includes(v));
-        res.innerHTML = f.slice(0,20).map(x => `
-            <div class="product-card" onclick="openItem('${x[0]}')">
-                <div style="font-size:11px; color:var(--valeo-blue); font-weight:800;">SAP: ${x[0]}</div>
-                <div style="font-weight:700; margin:5px 0; font-size:15px;">${x[1]}</div>
-                <div style="font-size:12px; opacity:0.7;">📍 ${x[2]} | 📦 Stok: ${x[3]}</div>
-            </div>
-        `).join('');
-    }
-
-    function openItem(sap) {
-        SEL_P = DB_P.find(x => x[0].toString() === sap);
-        document.getElementById('item-name').innerText = SEL_P[1];
-        document.getElementById('item-sap').innerText = "SAP: " + SEL_P[0];
-        SEL_M = null; CUR_QTY = 1; updateQty();
-        document.getElementById('m-sel').style.display = "none";
-        showPage('page-action');
-    }
-
-    function searchM() {
-        const v = document.getElementById('m-search').value.toLowerCase();
-        const res = document.getElementById('m-results');
-        if(!v) { res.innerHTML = ""; return; }
-        const f = DB_M.filter(x => x[0].toLowerCase().includes(v) || x[1].toLowerCase().includes(v));
-        res.innerHTML = f.slice(0,5).map(x => `
-            <div onclick="selM('${x[0]}','${x[1]}')" style="padding:12px; border-bottom:1px solid #eee; cursor:pointer; font-size:13px;">
-                <b>${x[0]}</b> - ${x[1]}
-            </div>
-        `).join('');
-    }
-
-    function selM(id, ad) {
-        SEL_M = {id, ad};
-        const b = document.getElementById('m-sel');
-        b.innerText = "SEÇİLDİ: " + id; b.style.display = "block";
-        document.getElementById('m-results').innerHTML = "";
-        document.getElementById('m-search').value = "";
-    }
-
-    function qty(v) { CUR_QTY += v; if(CUR_QTY < 1) CUR_QTY = 1; updateQty(); }
-    function updateQty() { document.getElementById('qty-txt').innerText = CUR_QTY; }
-
-    async function save(type) {
-        if(!SEL_M) { alert("Lütfen makine seçin!"); return; }
-        const d = { sap: SEL_P[0], ad: SEL_P[1], adet: CUR_QTY, islem: type, makina: SEL_M.id, kullanici: localStorage.getItem('depoUser'), tarih: new Date().toLocaleString() };
+        document.getElementById('loading-overlay').style.display = 'flex';
         
-        if(!navigator.onLine) {
-            let q = getQ(); q.push(d); setQ(q);
-            alert("İnternet yok, işlem kuyruğa alındı!");
-            showPage('page-search'); return;
+        while (queue.length > 0) {
+            const item = queue[0];
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(item) });
+                queue.shift();
+                localStorage.setItem('valeo_queue', JSON.stringify(queue));
+            } catch (e) { break; }
+        }
+        
+        document.getElementById('loading-overlay').style.display = 'none';
+        isSyncing = false;
+        updateOnlineStatus();
+    }
+
+    // GİRİŞ VE ARAMA FONKSİYONLARI (HAFIZADAN ÇALIŞAN)
+    function girisYap() {
+        const u = document.getElementById('user-input').value.trim().toLowerCase();
+        const p = document.getElementById('pass-input').value.trim();
+        const found = kullanicilar.find(row => (row[0] || row.Kullanıcı)?.toString().toLowerCase() === u && (row[1] || row.Şifre)?.toString() === p);
+        if (found) { 
+            localStorage.setItem('depoUser', u); 
+            showPage('page-search'); 
+        } else { 
+            alert("Hatalı giriş!"); 
+        }
+    }
+
+    function trNormalize(text) {
+        if (!text) return "";
+        return text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/İ/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g').trim();
+    }
+
+    function aramaYap() {
+        const rawInput = document.getElementById('search-main').value;
+        const resultsContainer = document.getElementById('search-results');
+        if (!rawInput || !rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
+
+        const queryNormalized = trNormalize(rawInput);
+        const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
+        
+        const filtered = urunler.filter(u => {
+            const rowData = Object.values(u).join(" ");
+            const targetText = trNormalize(rowData);
+            return searchTerms.every(term => targetText.includes(term));
+        });
+
+        resultsContainer.innerHTML = filtered.slice(0, 25).map(u => {
+            const v = Object.values(u);
+            const sap = v[0], ad = v[1], adres = v[2], stok = v[3];
+            return `
+                <div class="product-card" onclick="openDetail('${sap}')">
+                    <div style="font-weight:900; color:var(--valeo-blue); font-size:13px;">SAP: ${sap}</div>
+                    <div style="font-weight:700; font-size:15px; margin-top:8px;">${ad}</div>
+                    <div style="font-size:12px; color:var(--text-sub); margin-top:10px;">📍 Adres: ${adres} | 📦 ${stok} ADET</div>
+                </div>`;
+        }).join('');
+    }
+
+    async function kaydet(islem, adet) {
+        const veri = { 
+            sap: seciliUrun[0], 
+            ad: seciliUrun[1], 
+            adet: adet, 
+            islem: islem, 
+            makina: seciliMakina.no, 
+            kullanici: localStorage.getItem('depoUser'), 
+            timestamp: new Date().toISOString() 
+        };
+
+        if (!navigator.onLine) {
+            let q = getQueue(); q.push(veri); setQueue(q);
+            showSuccessModal(true); return;
         }
 
-        document.getElementById('loading').style.display = "flex";
+        document.getElementById('loading-overlay').style.display = 'flex';
         try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) });
-            alert("Başarılı!");
-            showPage('page-search');
-        } catch(e) {
-            let q = getQ(); q.push(d); setQ(q);
-            alert("Kuyruğa eklendi.");
-        } finally { document.getElementById('loading').style.display = "none"; }
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
+            document.getElementById('loading-overlay').style.display = 'none';
+            showSuccessModal(false);
+        } catch (e) { 
+            let q = getQueue(); q.push(veri); setQueue(q);
+            document.getElementById('loading-overlay').style.display = 'none';
+            showSuccessModal(true);
+        }
     }
 
-    function showPage(id) {
+    // SAYFA YÖNETİMİ VE MODALLAR
+    function openDetail(sap) {
+        seciliUrun = Object.values(urunler.find(u => Object.values(u)[0].toString() === sap.toString()));
+        document.getElementById('detay-ad').innerText = seciliUrun[1];
+        document.getElementById('detay-sap').innerText = "SAP: " + seciliUrun[0];
+        document.getElementById('detay-adres').innerText = seciliUrun[2];
+        document.getElementById('detay-stok').innerText = seciliUrun[3];
+        document.getElementById('detail-image-panel').style.display = "none";
+        document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`;
+        showPage('page-detail');
+    }
+
+    function makineAramaYap() {
+        const query = trNormalize(document.getElementById('action-machine-search').value);
+        const resultsDiv = document.getElementById('machine-results');
+        if(!query) { resultsDiv.innerHTML = ""; return; }
+        const filtered = makineler.filter(m => trNormalize(Object.values(m).join(" ")).includes(query));
+        resultsDiv.innerHTML = filtered.slice(0, 6).map(m => {
+            const v = Object.values(m);
+            return `<div class="product-card" style="padding:16px;" onclick="selectMachine('${v[0]}','${v[1]}')">
+                <div style="font-weight:800;">${v[0]}</div><div style="font-size:12px;">${v[1]}</div>
+            </div>`}).join('');
+    }
+
+    function selectMachine(no, ad) {
+        seciliMakina = { no, ad };
+        document.getElementById('selected-machine-text').innerText = no + " - " + ad;
+        document.getElementById('selected-machine-box').style.display = 'block';
+        document.getElementById('machine-results').innerHTML = "";
+        updateButtons();
+    }
+
+    function goToAction() {
+        seciliMakina = null; document.getElementById('islem-adet').value = 0;
+        document.getElementById('selected-machine-box').style.display = 'none';
+        updateButtons(); showPage('page-action');
+    }
+
+    function adetDegistir(d) {
+        let v = parseInt(document.getElementById('islem-adet').value) + d;
+        if(v < 0) v = 0; document.getElementById('islem-adet').value = v;
+        updateButtons();
+    }
+
+    function updateButtons() {
+        const hasAdet = parseInt(document.getElementById('islem-adet').value) > 0;
+        document.getElementById('btn-dusum').disabled = !(seciliMakina && hasAdet);
+        document.getElementById('btn-talep').disabled = !(seciliMakina && hasAdet);
+    }
+
+    function finalOnay(islem) {
+        const modal = document.getElementById('custom-modal');
+        const adet = document.getElementById('islem-adet').value;
+        document.getElementById('modal-cancel-btn').style.display = 'block';
+        document.getElementById('modal-icon').innerText = islem === 'STOKTAN DÜŞÜM' ? '📉' : '🛒';
+        document.getElementById('modal-title').innerText = islem;
+        document.getElementById('modal-text').innerHTML = `<b>${seciliUrun[1]}</b> ürününden <b>${adet} adet</b> için işlem yapılacaktır.`;
+        document.getElementById('modal-confirm-btn').onclick = function() { closeModal(); kaydet(islem, adet); };
+        modal.style.display = 'flex';
+    }
+
+    function showSuccessModal(isOffline = false) {
+        const modal = document.getElementById('custom-modal');
+        document.getElementById('modal-cancel-btn').style.display = 'none';
+        document.getElementById('modal-icon').innerText = isOffline ? '⏳' : '✅';
+        document.getElementById('modal-title').innerText = isOffline ? 'KUYRUĞA ALINDI' : 'BAŞARILI';
+        document.getElementById('modal-text').innerText = isOffline ? 'Bağlantı gelince gönderilecek.' : 'İşleminiz kaydedildi.';
+        document.getElementById('modal-confirm-btn').innerText = 'TAMAM';
+        document.getElementById('modal-confirm-btn').onclick = function() { closeModal(); showPage('page-search'); };
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
+    function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(id).classList.add('active-page');
-        document.getElementById('main-nav').style.display = id === 'page-login' ? 'none' : 'flex';
-        document.getElementById('back-btn').style.display = id === 'page-search' ? 'none' : 'block';
+        document.getElementById(pageId).classList.add('active-page');
+        document.getElementById('main-top-bar').style.display = (pageId === 'page-login') ? 'none' : 'flex';
+        document.getElementById('btn-back').style.display = (pageId === 'page-login' || pageId === 'page-search') ? 'none' : 'block';
     }
 
-    function goBack() { showPage('page-search'); }
-    function toggleMenu() { alert("V2 PRO - Ayarlar"); }
+    function goBack() {
+        if (document.getElementById('page-detail').classList.contains('active-page')) showPage('page-search');
+        else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail');
+        else if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search');
+    }
+
+    function toggleImage() {
+        const panel = document.getElementById('detail-image-panel');
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+    }
+
+    function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
+    function closeMenuOutside() { document.getElementById('dropdown').style.display = 'none'; }
+    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
+    function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
     window.onload = async () => {
-        DB_P = JSON.parse(localStorage.getItem('c_p') || '[]');
-        DB_M = JSON.parse(localStorage.getItem('c_m') || '[]');
-        DB_U = JSON.parse(localStorage.getItem('c_u') || '[]');
-        setQ(getQ()); updateConn();
-        if(localStorage.getItem('depoUser')) showPage('page-search');
+        // Önce hafızadaki verileri yükle (Offline Giriş/Arama için kritik)
+        urunler = JSON.parse(localStorage.getItem('valeo_cache_urun') || '[]');
+        kullanicilar = JSON.parse(localStorage.getItem('valeo_cache_user') || '[]');
+        makineler = JSON.parse(localStorage.getItem('valeo_cache_makina') || '[]');
+
+        if (localStorage.getItem('depoUser')) showPage('page-search');
+        updateOnlineStatus();
 
         if(navigator.onLine) {
             try {
-                const [p, m, u] = await Promise.all([ fetch(URL_P).then(r=>r.text()), fetch(URL_M).then(r=>r.text()), fetch(URL_U).then(r=>r.text()) ]);
-                const parse = (c) => XLSX.utils.sheet_to_json(XLSX.read(c,{type:'string'}).Sheets.Sheet1,{header:1}).slice(1);
-                DB_P = parse(p); DB_M = parse(m); DB_U = parse(u);
-                localStorage.setItem('c_p', JSON.stringify(DB_P));
-                localStorage.setItem('c_m', JSON.stringify(DB_M));
-                localStorage.setItem('c_u', JSON.stringify(DB_U));
-            } catch(e) {}
+                const [uRes, pRes, mRes] = await Promise.all([fetch(USER_URL), fetch(URUN_URL), fetch(MAKINA_URL)]);
+                const parse = async (r) => XLSX.utils.sheet_to_json(XLSX.read(await r.text(), {type:'string'}).Sheets.Sheet1);
+                
+                kullanicilar = await parse(uRes);
+                urunler = await parse(pRes);
+                makineler = await parse(mRes);
+
+                // Hafızaya yedekle
+                localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
+                localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler));
+                localStorage.setItem('valeo_cache_makina', JSON.stringify(makineler));
+            } catch (e) { console.error("Veri güncellenemedi, hafızadan devam ediliyor."); }
         }
-    }
+    };
 </script>
-<style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
 </body>
 </html>
