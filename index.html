@@ -51,7 +51,6 @@
         #offline-status { text-align: center; padding: 8px; font-size: 11px; font-weight: 800; display: none; z-index: 100; }
         @media (min-width: 768px) { .container { max-width: 600px; height: 85vh; } }
 
-        /* MODAL */
         .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 2000; justify-content: center; align-items: center; }
         .modal-card { background: var(--card-bg); width: 85%; max-width: 350px; border-radius: 24px; padding: 30px; text-align: center; box-shadow: var(--shadow); animation: modalSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes modalSlideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -94,7 +93,6 @@
         .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
         .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); }
         
-        /* GEÇMİŞ SAYFASI ÖZEL STİLLERİ */
         .history-stats { display: flex; gap: 10px; margin-bottom: 15px; }
         .stat-box { flex: 1; padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; border: 1px solid var(--border); }
         .stat-box.active { border-color: currentColor; box-shadow: var(--shadow); transform: scale(1.05); }
@@ -214,13 +212,11 @@
     <div id="page-history" class="page">
         <div class="content">
             <h3 style="margin-top:0; font-weight:800;">İşlem Geçmişi</h3>
-            
             <div id="history-toggle-container" class="toggle-wrapper">
                 <div class="toggle-slider"></div>
                 <div id="toggle-own" class="toggle-btn active" onclick="setHistoryView(false)">KENDİ</div>
                 <div id="toggle-all" class="toggle-btn" onclick="setHistoryView(true)">TÜMÜ</div>
             </div>
-
             <div class="history-stats">
                 <div id="stat-dusum-box" class="stat-box" style="color:var(--danger);" onclick="setHistoryFilter('STOKTAN DÜŞÜM')">
                     <span id="stat-dusum-count">0</span>
@@ -231,7 +227,6 @@
                     <label>Talep</label>
                 </div>
             </div>
-
             <div style="overflow-x: auto;">
                 <table class="history-table">
                     <thead>
@@ -254,7 +249,6 @@
     let urunler = [], makineler = [], kullanicilar = [], rawHistory = [], seciliUrun = null, seciliMakina = null;
     let isSyncing = false, showAllHistory = false, historyFilter = null;
 
-    // OFFLINE & SYNC
     function getQueue() { return JSON.parse(localStorage.getItem('valeo_queue') || '[]'); }
     function setQueue(q) { localStorage.setItem('valeo_queue', JSON.stringify(q)); updateOnlineStatus(); }
     window.addEventListener('online', updateOnlineStatus);
@@ -286,7 +280,6 @@
         document.getElementById('loading-overlay').style.display = 'none'; isSyncing = false; updateOnlineStatus();
     }
 
-    // GİRİŞ & ARAMA
     function girisYap() {
         const u = document.getElementById('user-input').value.trim().toLowerCase();
         const p = document.getElementById('pass-input').value.trim();
@@ -330,7 +323,6 @@
         }).join('');
     }
 
-    // GEÇMİŞ YÖNETİMİ
     async function gecmisGoster() {
         showPage('page-history');
         document.getElementById('history-body').innerHTML = "<tr><td colspan='5' style='text-align:center;'>Yükleniyor...</td></tr>";
@@ -359,12 +351,9 @@
     function applyHistoryFilters() {
         const currentUser = localStorage.getItem('depoUser');
         let filtered = showAllHistory ? rawHistory : rawHistory.filter(r => r[5] && r[5].toString().toLowerCase() === currentUser);
-        
         document.getElementById('stat-dusum-count').innerText = filtered.filter(r => r[4] === 'STOKTAN DÜŞÜM').length;
         document.getElementById('stat-talep-count').innerText = filtered.filter(r => r[4] === 'SİPARİŞ TALEBİ').length;
-
         if (historyFilter) filtered = filtered.filter(r => r[4] === historyFilter);
-
         document.getElementById('history-body').innerHTML = filtered.slice(0, 50).map(row => {
             const tip = row[4];
             const color = tip === 'STOKTAN DÜŞÜM' ? 'var(--danger)' : 'var(--valeo-blue)';
@@ -384,7 +373,6 @@
         return `${date.getDate()}.${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
     }
 
-    // SAYFA VE MODAL YÖNETİMİ
     function openDetail(sap) {
         seciliUrun = Object.values(urunler.find(u => Object.values(u)[0].toString() === sap.toString()));
         document.getElementById('detay-ad').innerText = seciliUrun[1];
@@ -412,12 +400,15 @@
         seciliMakina = { no, ad };
         document.getElementById('selected-machine-text').innerText = no + " - " + ad;
         document.getElementById('selected-machine-box').style.display = 'block';
-        document.getElementById('machine-results').innerHTML = ""; updateButtons();
+        document.getElementById('machine-results').innerHTML = ""; 
+        document.getElementById('action-machine-search').value = ""; // Inputu temizle
+        updateButtons();
     }
 
     function goToAction() {
         seciliMakina = null; document.getElementById('islem-adet').value = 0;
         document.getElementById('selected-machine-box').style.display = 'none';
+        document.getElementById('action-machine-search').value = ""; // Inputu temizle
         updateButtons(); showPage('page-action');
     }
 
@@ -457,18 +448,37 @@
         document.getElementById('modal-text').innerText = off ? 'Bağlantı gelince iletilecek.' : 'İşlem tamamlandı.';
         document.getElementById('modal-cancel-btn').style.display = 'none';
         document.getElementById('modal-confirm-btn').innerText = 'TAMAM';
-        document.getElementById('modal-confirm-btn').onclick = function() { closeModal(); showPage('page-search'); location.reload(); };
+        
+        // TAMAM BUTONUNA BASINCA YAPILACAKLAR:
+        document.getElementById('modal-confirm-btn').onclick = function() { 
+            closeModal(); 
+            // 1. Sayfayı değiştirme, page-action'da kal.
+            // 2. Makine ve adet seçimlerini sıfırla.
+            seciliMakina = null;
+            document.getElementById('islem-adet').value = 0;
+            document.getElementById('selected-machine-box').style.display = 'none';
+            document.getElementById('action-machine-search').value = "";
+            document.getElementById('machine-results').innerHTML = "";
+            updateButtons();
+        };
         document.getElementById('custom-modal').style.display = 'flex';
     }
 
     function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
+    
     function showPage(pId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
         document.getElementById(pId).classList.add('active-page');
         document.getElementById('main-top-bar').style.display = (pId === 'page-login') ? 'none' : 'flex';
         document.getElementById('btn-back').style.display = (pId === 'page-login' || pId === 'page-search') ? 'none' : 'block';
     }
-    function goBack() { if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search'); else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail'); else showPage('page-search'); }
+
+    function goBack() { 
+        if (document.getElementById('page-history').classList.contains('active-page')) showPage('page-search'); 
+        else if (document.getElementById('page-action').classList.contains('active-page')) showPage('page-detail'); 
+        else showPage('page-search'); 
+    }
+
     function toggleImage() { const p = document.getElementById('detail-image-panel'); p.style.display = p.style.display === "none" ? "block" : "none"; }
     function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
     function closeMenuOutside() { document.getElementById('dropdown').style.display = 'none'; }
