@@ -420,7 +420,7 @@ async function kaydet(islem, adet) {
         alert("İnternet Hatası!"); 
         document.getElementById('loading-overlay').style.display = 'none';
     }
-}
+
     async function gecmisGoster() {
         showPage('page-history');
         const res = await fetch(GECMIS_URL);
