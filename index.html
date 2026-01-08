@@ -246,15 +246,9 @@
 function trNormalize(text) {
     if (!text) return "";
     return text.toString()
-        .toLocaleLowerCase('tr-TR') // Türkçe yerel küçük harf
-        .replace(/i̇/g, "i")         // Karmaşık i karakterlerini düzelt
-        .replace(/ı/g, 'i')
-        .replace(/ö/g, 'o')
-        .replace(/ü/g, 'u')
-        .replace(/ş/g, 's')
-        .replace(/ç/g, 'c')
-        .replace(/ğ/g, 'g')
-        .trim();
+        .replace(/İ/g, "i").replace(/I/g, "ı").toLowerCase()
+        .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
+        .replace(/ö/g, "o").replace(/ç/g, "c").trim();
 }
 
     
@@ -291,19 +285,19 @@ function aramaYap() {
     
     const filtered = urunler.filter(u => {
         const v = Object.values(u);
-        const sapNo = v[0] ? v[0].toString() : "";
-        const urunAdi = v[1] ? v[1].toString() : "";
+        // SAP'yi kesinlikle metne çevir ve tarih kısmını (boşluktan sonrasını) at
+        const sapNo = v[0] ? String(v[0]).split(' ')[0] : ""; 
+        const urunAdi = v[1] ? String(v[1]) : "";
         
         if (!sapNo || !urunAdi || sapNo.toLowerCase() === "sap") return false;
 
         const rowValues = trNormalize(v.join(" "));
-        // Her bir kelime satırda var mı kontrol et
         return searchTerms.every(term => rowValues.includes(term));
     });
     
     resultsContainer.innerHTML = filtered.slice(0, 30).map(u => {
         const v = Object.values(u);
-        const sap = v[0].toString();
+        const sap = String(v[0]).split(' ')[0]; // SAP'yi temizle
         const ad = v[1].toString();
         const adres = v[2] ? v[2].toString() : "-";
         const stok = parseInt(v[3]) || 0;
@@ -403,12 +397,13 @@ function aramaYap() {
         document.getElementById('custom-modal').style.display = 'flex';
     }
 async function kaydet(islem, adet) {
+    // Veriyi hazırlarken makina numarasını (seciliMakina.no) ekliyoruz
     const veri = { 
-        sap: seciliUrun[0], 
+        sap: String(seciliUrun[0]).split(' ')[0], 
         ad: seciliUrun[1], 
         adet: adet, 
         islem: islem, 
-        makina: seciliMakina.no, // BURASI MAKİNA NO GÖNDERİR
+        makina: seciliMakina ? seciliMakina.no : "Bilinmiyor", 
         kullanici: localStorage.getItem('depoUser'), 
         timestamp: new Date().toLocaleString('tr-TR') 
     };
@@ -423,7 +418,6 @@ async function kaydet(islem, adet) {
         document.getElementById('loading-overlay').style.display = 'none';
     }
 }
-
     async function gecmisGoster() {
         showPage('page-history');
         const res = await fetch(GECMIS_URL);
