@@ -254,15 +254,16 @@ function trNormalize(text) {
 
     
 
-    function highlightText(text, queries) {
-        if (!queries.length) return text;
-        let highlighted = text;
-        queries.forEach(query => {
-            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            highlighted = highlighted.replace(regex, '<mark>$1</mark>');
-        });
-        return highlighted;
-    }
+    ffunction highlightText(text, queries) {
+    if (!queries.length) return text;
+    let highlighted = text;
+    queries.forEach(query => {
+        // Sadece tam kelime başındaki veya sonundaki eşleşmeleri bulur (\b sınırı ile)
+        const regex = new RegExp(`(\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b)`, 'gi');
+        highlighted = highlighted.replace(regex, '<mark>$1</mark>');
+    });
+    return highlighted;
+}
 
     function aramaYap() {
     const rawInput = document.getElementById('search-main').value;
