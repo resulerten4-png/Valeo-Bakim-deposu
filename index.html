@@ -264,7 +264,7 @@ function trNormalize(text) {
         // Türkçe karakter dostu "kelime başı" kontrolü
         // Bu regex, kelimenin sadece tam halini veya başlangıcını vurgular
         const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        const regex = new RegExp(`(${escapedQuery})`, '');
         
         highlighted = highlighted.replace(regex, (match, p1, offset, string) => {
             // Eğer eşleşme bir kelimenin içindeyse (öncesinde harf varsa) vurgulama yapma
