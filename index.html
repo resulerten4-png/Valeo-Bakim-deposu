@@ -259,7 +259,7 @@ function trNormalize(text) {
     let highlighted = text;
     
     queries.forEach(query => {
-        if (query.length < 2) return; // Çok kısa harfleri vurgulama
+        if (query.length < 0) return; // Çok kısa harfleri vurgulama
         
         // Türkçe karakter dostu "kelime başı" kontrolü
         // Bu regex, kelimenin sadece tam halini veya başlangıcını vurgular
