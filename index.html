@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Valeo Bakım Portalı - V2 PRO</title>
-    <ipt src="https://ipt.google.com/macros/s/AKfycbyWzHmrSLI65MjxruN26ERAfhnJBjZ3L1iTDVkvSegorqZIvEQVe0bP-NIAIhdBI3G_2w/exec
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -205,15 +205,15 @@
     </div>
 </div>
 
-<ipt>
+<script>
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
-    const IPT_URL = 'https://script.google.com/macros/s/AKfycbyWzHmrSLI65MjxruN26ERAfhnJBjZ3L1iTDVkvSegorqZIvEQVe0bP-NIAIhdBI3G_2w/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmtiOIOgTE4rvFsqaTyXOqKfiyxz2f8zUWhGiRIH0j7ivRMqEant0rOCf28qfsGgczbQ/exec';
 
     let urunler = [], kullanicilar = [], makineler = [], seciliUrun = null;
-    let seciliMakina = null; // BU SATIRI MUTLAKA EKLE
+    let seciliMakina = null; // BU SATIRI EKLEDİK - Makine bilgisi burada tutulacak
 
     function trNormalize(text) {
         if (!text) return "";
@@ -398,33 +398,26 @@ function trNormalize(text) {
         document.getElementById('custom-modal').style.display = 'flex';
     }
 
-async function kaydet(islem, adet) {
-    if (!seciliMakina) { 
-        alert("Lütfen önce bir makine seçin!"); 
-        return; 
-    }
+   async function kaydet(islem, adet) {
+    if (!seciliMakina) { alert("Lütfen önce bir makine seçin!"); return; }
 
     const veri = { 
-        sap: String(seciliUrun[0]).split(" ")[0], // SAP yanındaki tarihleri temizler
+        sap: String(seciliUrun[0]).split(" ")[0], 
         ad: seciliUrun[1], 
         adet: adet, 
         islem: islem, 
-        makina: seciliMakina.no, // Makine No bilgisini pakete koyar
+        makina: seciliMakina.no, // EXCEL'E GİDECEK OLAN NO
         kullanici: localStorage.getItem('depoUser'), 
         timestamp: new Date().toLocaleString('tr-TR') 
     };
 
     document.getElementById('loading-overlay').style.display = 'flex';
     try {
-        await fetch(IPT_URL, { 
-            method: 'POST', 
-            mode: 'no-cors', 
-            body: JSON.stringify(veri) 
-        });
+        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
         alert("İşlem Başarıyla Kaydedildi!");
         location.reload();
     } catch (e) { 
-        alert("Bağlantı Hatası: Veri gönderilemedi!"); 
+        alert("Hata: Veri gönderilemedi!"); 
         document.getElementById('loading-overlay').style.display = 'none';
     }
 }
@@ -471,6 +464,6 @@ async function kaydet(islem, adet) {
         }
         document.getElementById('loading-overlay').style.display = 'none';
     };
-</ipt>
+</script>
 </body>
 </html>
