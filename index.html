@@ -285,10 +285,11 @@ function aramaYap() {
     
     const filtered = urunler.filter(u => {
         const v = Object.values(u);
-        // SAP'yi kesinlikle metne çevir ve tarih kısmını (boşluktan sonrasını) at
-        const sapNo = v[0] ? String(v[0]).split(' ')[0] : ""; 
+        // SAP bilgisini al ve eğer tarih/saat eklenmişse (boşluk varsa) sadece ilk kısmı al
+        let sapNo = v[0] ? String(v[0]).trim() : "";
+        if (sapNo.includes(" ")) sapNo = sapNo.split(" ")[0];
+
         const urunAdi = v[1] ? String(v[1]) : "";
-        
         if (!sapNo || !urunAdi || sapNo.toLowerCase() === "sap") return false;
 
         const rowValues = trNormalize(v.join(" "));
@@ -297,7 +298,9 @@ function aramaYap() {
     
     resultsContainer.innerHTML = filtered.slice(0, 30).map(u => {
         const v = Object.values(u);
-        const sap = String(v[0]).split(' ')[0]; // SAP'yi temizle
+        let sap = String(v[0]).trim();
+        if (sap.includes(" ")) sap = sap.split(" ")[0]; // Görünümde tarihi temizle
+
         const ad = v[1].toString();
         const adres = v[2] ? v[2].toString() : "-";
         const stok = parseInt(v[3]) || 0;
