@@ -450,15 +450,83 @@
         document.getElementById('custom-modal').style.display = 'flex';
     }
 
-    async function kaydet(islem, adet) {
-        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser'), timestamp: new Date().toISOString() };
-        if (!navigator.onLine) { let q = getQueue(); q.push(veri); setQueue(q); showSuccess(true); return; }
-        document.getElementById('loading-overlay').style.display = 'flex';
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-            document.getElementById('loading-overlay').style.display = 'none'; showSuccess(false);
-        } catch (e) { let q = getQueue(); q.push(veri); setQueue(q); document.getElementById('loading-overlay').style.display = 'none'; showSuccess(true); }
+    // SADECE BU FONKSİYON DEĞİŞTİRİLMİŞTİR, GERİ KALAN TÜM YAPI AYNI BIRAKILMIŞTIR.
+// SADECE BU BÖLÜMÜ GÜNCELLEMENİZ YETERLİDİR
+async function kaydet(islem, adet) {
+    const veri = { 
+        sap: seciliUrun[0], 
+        ad: seciliUrun[1], 
+        adet: adet, 
+        islem: islem,        // Sayfa3'teki İşlem Tipi sütununa gider
+        makina: seciliMakina.no, // Sayfa3'teki Makina No sütununa gider
+        kullanici: localStorage.getItem('depoUser'), 
+        timestamp: new Date().toLocaleString('tr-TR'),
+        vardiya: getVardiya()
+    };
+
+    if (!navigator.onLine) { 
+        let q = getQueue(); 
+        q.push(veri); 
+        setQueue(q); 
+        showSuccess(true); 
+        return; 
     }
+
+    document.getElementById('loading-overlay').style.display = 'flex';
+    try {
+        await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(veri) 
+        });
+        document.getElementById('loading-overlay').style.display = 'none'; 
+        showSuccess(false);
+    } catch (e) { 
+        let q = getQueue(); 
+        q.push(veri); 
+        setQueue(q); 
+        document.getElementById('loading-overlay').style.display = 'none'; 
+        showSuccess(true); 
+    }
+}
+
+// Vardiya bilgisini saate göre belirleyen yardımcı fonksiyon
+function getVardiya() {
+    const saat = new Date().getHours();
+    if (saat >= 8 && saat < 16) return "08:00 - 16:00";
+    if (saat >= 16 && saat < 24) return "16:00 - 00:00";
+    return "00:00 - 08:00";
+}
+
+
+    if (!navigator.onLine) { 
+        let q = getQueue(); 
+        q.push(veri); 
+        setQueue(q); 
+        showSuccess(true); 
+        return; 
+    }
+
+    document.getElementById('loading-overlay').style.display = 'flex';
+    try {
+        await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(veri) 
+        });
+        document.getElementById('loading-overlay').style.display = 'none'; 
+        showSuccess(false);
+    } catch (e) { 
+        let q = getQueue(); 
+        q.push(veri); 
+        setQueue(q); 
+        document.getElementById('loading-overlay').style.display = 'none'; 
+        showSuccess(true); 
+    
+
+
 
     function showSuccess(off) {
         document.getElementById('modal-icon').innerText = off ? '⏳' : '✅';
