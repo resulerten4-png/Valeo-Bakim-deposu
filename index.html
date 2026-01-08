@@ -459,7 +459,9 @@ function trNormalize(text) {
             return `
                 <tr>
                     <td>${temizTarih}</td> <td>${row[6] || row[5] || '-'}</td>
+                    <td>${row[2] || '-'}</td>
                     <td>${row[3] || '-'}</td>
+                    
                     <td>${row[0] || '-'}</td>
                     <td style="font-size:9px;">${row[1] ? row[1].substring(0,20) : '-'}</td>
                     <td>${row[2] || '-'}</td>
