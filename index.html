@@ -390,18 +390,18 @@ function trNormalize(text) {
         document.getElementById('custom-modal').style.display = 'flex';
     }
 
-    async function kaydet(islem, adet) {
+   async function kaydet(islem, adet) {
     if (!seciliMakina) { 
         alert("Lütfen önce bir makine seçin!"); 
         return; 
     }
 
     const veri = { 
-        sap: String(seciliUrun[0]).split(" ")[0], // SAP numarasını temizler
+        sap: String(seciliUrun[0]).split(" ")[0], 
         ad: seciliUrun[1], 
         adet: adet, 
         islem: islem, 
-        makina: seciliMakina.no, // <--- MAKİNA NO BURADA EKLENİYOR
+        makina: seciliMakina.no, // Seçilen makinenin numarasını gönderir
         kullanici: localStorage.getItem('depoUser'), 
         timestamp: new Date().toLocaleString('tr-TR') 
     };
@@ -416,7 +416,7 @@ function trNormalize(text) {
         alert("İşlem Başarıyla Kaydedildi!");
         location.reload();
     } catch (e) { 
-        alert("Bağlantı Hatası: Veri gönderilemedi."); 
+        alert("Hata: Veri iletilemedi!"); 
         document.getElementById('loading-overlay').style.display = 'none';
     }
 
