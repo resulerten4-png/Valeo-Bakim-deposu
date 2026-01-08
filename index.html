@@ -446,22 +446,24 @@ async function kaydet(islem, adet) {
     function closeMenuOutside() { document.getElementById('dropdown').style.display = 'none'; }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
-    window.onload = async () => {
-        urunler = JSON.parse(localStorage.getItem('valeo_cache_urun') || '[]');
-        kullanicilar = JSON.parse(localStorage.getItem('valeo_cache_user') || '[]');
-        makineler = JSON.parse(localStorage.getItem('valeo_cache_makina') || '[]');
-        if (localStorage.getItem('depoUser')) showPage('page-search');
-        if(navigator.onLine) {
-            try {
-                const parse = async (u) => XLSX.utils.sheet_to_json(XLSX.read(await (await fetch(u)).text(), {type:'string'}).Sheets.Sheet1);
-                [kullanicilar, urunler, makineler] = await Promise.all([parse(USER_URL), parse(URUN_URL), parse(MAKINA_URL)]);
-                localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
-                localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler));
-                localStorage.setItem('valeo_cache_makina', JSON.stringify(makineler));
-            } catch (e) {}
-        }
-        document.getElementById('loading-overlay').style.display = 'none';
-    };
+   window.onload = async () => {
+    // ... mevcut önbellek yükleme kodları ...
+    if(navigator.onLine) {
+        try {
+            // Sadece 'Sheet1' isimli sayfayı hedef alır
+            const parse = async (u) => {
+                const data = await (await fetch(u)).text();
+                const workbook = XLSX.read(data, {type:'string'});
+                // Sadece ilk sayfayı (Sheet1) alıyoruz
+                const firstSheetName = workbook.SheetNames[0]; 
+                return XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName]);
+            };
+            [kullanicilar, urunler, makineler] = await Promise.all([parse(USER_URL), parse(URUN_URL), parse(MAKINA_URL)]);
+            // ... önbelleğe kaydetme ...
+        } catch (e) { console.error("Yükleme hatası:", e); }
+    }
+    document.getElementById('loading-overlay').style.display = 'none';
+};
 </script>
 </body>
 </html>
