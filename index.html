@@ -215,18 +215,13 @@
     let urunler = [], makineler = [], kullanicilar = [], rawHistory = [], seciliUrun = null, seciliMakina = null;
 
     function trNormalize(text) {
-    if (!text) return "";
-    return text.toString()
-        .replace(/İ/g, "i")
-        .replace(/I/g, "ı")
-        .toLowerCase()
-        .replace(/ğ/g, "g")
-        .replace(/ü/g, "u")
-        .replace(/ş/g, "s")
-        .replace(/ö/g, "o")
-        .replace(/ç/g, "c")
-        .trim();
-}
+        if (!text) return "";
+        return text.toString().toLowerCase('tr')
+            .replace(/ı/g, 'i').replace(/İ/g, 'i')
+            .replace(/ö/g, 'o').replace(/ü/g, 'u')
+            .replace(/ş/g, 's').replace(/ç/g, 'c')
+            .replace(/ğ/g, 'g').trim();
+    }
 
     function girisYap() {
         const uInput = document.getElementById('user-input').value.trim().toLowerCase();
@@ -246,61 +241,56 @@
 function trNormalize(text) {
     if (!text) return "";
     return text.toString()
-        .replace(/İ/g, "i").replace(/I/g, "ı").toLowerCase()
-        .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
-        .replace(/ö/g, "o").replace(/ç/g, "c").trim();
+        .toLocaleLowerCase('tr-TR') // Türkçe yerel küçük harf
+        .replace(/i̇/g, "i")         // Karmaşık i karakterlerini düzelt
+        .replace(/ı/g, 'i')
+        .replace(/ö/g, 'o')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ç/g, 'c')
+        .replace(/ğ/g, 'g')
+        .trim();
 }
 
     
 
-  function girisYap() {
-    // Veriler yüklenmediyse kullanıcıya bilgi ver
-    if (kullanicilar.length === 0) {
-        alert("Sistem verileri henüz yüklenmedi veya internet bağlantısı yok. Lütfen sayfayı yenileyip 2 saniye bekleyin.");
-        return;
+    function highlightText(text, queries) {
+        if (!queries.length) return text;
+        let highlighted = text;
+        queries.forEach(query => {
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            highlighted = highlighted.replace(regex, '<mark>$1</mark>');
+        });
+        return highlighted;
     }
 
-    const uInput = document.getElementById('user-input').value.trim().toLowerCase();
-    const pInput = document.getElementById('pass-input').value.trim();
-    if (!uInput || !pInput) { alert("Boş alan bırakmayın."); return; }
-
-    const found = kullanicilar.find(row => {
-        const v = Object.values(row);
-        return v[0]?.toString().toLowerCase() === uInput && v[1]?.toString() === pInput;
-    });
-
-    if (found) {
-        localStorage.setItem('depoUser', uInput);
-        showPage('page-search');
-    } else { alert("Hatalı giriş!"); }
-}
-function aramaYap() {
+    function aramaYap() {
     const rawInput = document.getElementById('search-main').value;
     const resultsContainer = document.getElementById('search-results');
     
     if (!rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
 
     const queryNormalized = trNormalize(rawInput);
+    // Arama terimlerini boşluklara göre parçalara ayır (örn: ["rulman", "6204"])
     const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
     
     const filtered = urunler.filter(u => {
         const v = Object.values(u);
-        // SAP bilgisini al ve eğer tarih/saat eklenmişse (boşluk varsa) sadece ilk kısmı al
-        let sapNo = v[0] ? String(v[0]).trim() : "";
-        if (sapNo.includes(" ")) sapNo = sapNo.split(" ")[0];
-
-        const urunAdi = v[1] ? String(v[1]) : "";
+        const sapNo = v[0] ? v[0].toString().trim() : "";
+        const urunAdi = v[1] ? v[1].toString().trim() : "";
+        
         if (!sapNo || !urunAdi || sapNo.toLowerCase() === "sap") return false;
 
-        const rowValues = trNormalize(v.join(" "));
-        return searchTerms.every(term => rowValues.includes(term));
+        // Tüm satır içeriğini tek bir normalize edilmiş string yap
+        const rowContent = trNormalize(v.join(" "));
+        
+        // Her bir arama terimi bu satır içeriğinde var mı diye bak (AND mantığı)
+        return searchTerms.every(term => rowContent.includes(term));
     });
     
     resultsContainer.innerHTML = filtered.slice(0, 30).map(u => {
         const v = Object.values(u);
-        let sap = String(v[0]).trim();
-        if (sap.includes(" ")) sap = sap.split(" ")[0]; // Görünümde tarihi temizle
-
+        const sap = v[0].toString();
         const ad = v[1].toString();
         const adres = v[2] ? v[2].toString() : "-";
         const stok = parseInt(v[3]) || 0;
@@ -312,10 +302,10 @@ function aramaYap() {
         return `
             <div class="product-card" onclick="openDetail('${sap}')" style="border-left: 6px solid ${statusColor};">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div style="font-weight:900; color:${statusColor}; font-size:12px;">SAP: ${sap}</div>
+                    <div style="font-weight:900; color:${statusColor}; font-size:12px;">SAP: ${highlightText(sap, searchTerms)}</div>
                     <div style="background:${statusColor}; color:white; padding:2px 8px; border-radius:8px; font-size:10px; font-weight:800;">${stok} ADET</div>
                 </div>
-                <div style="font-weight:700; font-size:15px; margin:8px 0;">${ad}</div>
+                <div style="font-weight:700; font-size:15px; margin:8px 0;">${highlightText(ad, searchTerms)}</div>
                 <div style="font-size:12px; opacity:0.7;">📍 Konum: <b>${adres}</b></div>
             </div>`;
     }).join('');
@@ -381,7 +371,7 @@ function aramaYap() {
 
     function adetDegistir(d) {
         let v = parseInt(document.getElementById('islem-adet').value) + d;
-        document.getElementById('-adet').value = v < 0 ? 0 : v;
+        document.getElementById('islem-adet').value = v < 0 ? 0 : v;
         updateButtons();
     }
 
@@ -399,26 +389,15 @@ function aramaYap() {
         document.getElementById('modal-confirm-btn').onclick = function() { closeModal(); kaydet(islem, adet); };
         document.getElementById('custom-modal').style.display = 'flex';
     }
-async function kaydet(islem, adet) {
-    // Veriyi hazırlarken makina numarasını (seciliMakina.no) ekliyoruz
-    const veri = { 
-        sap: String(seciliUrun[0]).split(' ')[0], 
-        ad: seciliUrun[1], 
-        adet: adet, 
-        islem: islem, 
-        makina: seciliMakina ? seciliMakina.no : "Bilinmiyor", 
-        kullanici: localStorage.getItem('depoUser'), 
-        timestamp: new Date().toLocaleString('tr-TR') 
-    };
 
-    document.getElementById('loading-overlay').style.display = 'flex';
-    try {
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-        alert("Başarıyla Kaydedildi!");
-        location.reload();
-    } catch (e) { 
-        alert("İnternet Hatası!"); 
-        document.getElementById('loading-overlay').style.display = 'none';
+    async function kaydet(islem, adet) {
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser'), timestamp: new Date().toISOString() };
+        document.getElementById('loading-overlay').style.display = 'flex';
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
+            alert("Başarıyla Kaydedildi!");
+            location.reload();
+        } catch (e) { alert("İnternet Hatası!"); }
     }
 
     async function gecmisGoster() {
@@ -446,24 +425,22 @@ async function kaydet(islem, adet) {
     function closeMenuOutside() { document.getElementById('dropdown').style.display = 'none'; }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
 
-   window.onload = async () => {
-    // ... mevcut önbellek yükleme kodları ...
-    if(navigator.onLine) {
-        try {
-            // Sadece 'Sheet1' isimli sayfayı hedef alır
-            const parse = async (u) => {
-                const data = await (await fetch(u)).text();
-                const workbook = XLSX.read(data, {type:'string'});
-                // Sadece ilk sayfayı (Sheet1) alıyoruz
-                const firstSheetName = workbook.SheetNames[0]; 
-                return XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName]);
-            };
-            [kullanicilar, urunler, makineler] = await Promise.all([parse(USER_URL), parse(URUN_URL), parse(MAKINA_URL)]);
-            // ... önbelleğe kaydetme ...
-        } catch (e) { console.error("Yükleme hatası:", e); }
-    }
-    document.getElementById('loading-overlay').style.display = 'none';
-};
+    window.onload = async () => {
+        urunler = JSON.parse(localStorage.getItem('valeo_cache_urun') || '[]');
+        kullanicilar = JSON.parse(localStorage.getItem('valeo_cache_user') || '[]');
+        makineler = JSON.parse(localStorage.getItem('valeo_cache_makina') || '[]');
+        if (localStorage.getItem('depoUser')) showPage('page-search');
+        if(navigator.onLine) {
+            try {
+                const parse = async (u) => XLSX.utils.sheet_to_json(XLSX.read(await (await fetch(u)).text(), {type:'string'}).Sheets.Sheet1);
+                [kullanicilar, urunler, makineler] = await Promise.all([parse(USER_URL), parse(URUN_URL), parse(MAKINA_URL)]);
+                localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
+                localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler));
+                localStorage.setItem('valeo_cache_makina', JSON.stringify(makineler));
+            } catch (e) {}
+        }
+        document.getElementById('loading-overlay').style.display = 'none';
+    };
 </script>
 </body>
 </html>
