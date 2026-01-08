@@ -372,28 +372,14 @@
         document.getElementById('custom-modal').style.display = 'flex';
     }
 
-   async function kaydet(islem, adet) {
-    const veri = { 
-        sap: seciliUrun[0], 
-        ad: seciliUrun[1], 
-        adet: adet, 
-        islem: islem, 
-        makina: seciliMakina.no,     // Makine Numarası
-        makinaAd: seciliMakina.ad,   // YENİ: Makine Adı
-        kullanici: localStorage.getItem('depoUser'), 
-        timestamp: new Date().toISOString() 
-    };
-    
-    document.getElementById('loading-overlay').style.display = 'flex';
-    try {
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-        document.getElementById('loading-overlay').style.display = 'none'; 
-        showSuccess();
-    } catch (e) { 
-        document.getElementById('loading-overlay').style.display = 'none'; 
-        alert("Hata oluştu, tekrar deneyin."); 
+    async function kaydet(islem, adet) {
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser'), timestamp: new Date().toISOString() };
+        document.getElementById('loading-overlay').style.display = 'flex';
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
+            document.getElementById('loading-overlay').style.display = 'none'; showSuccess();
+        } catch (e) { document.getElementById('loading-overlay').style.display = 'none'; alert("Hata oluştu, tekrar deneyin."); }
     }
-
 
     function showSuccess() {
         document.getElementById('modal-icon').innerText = '✅';
