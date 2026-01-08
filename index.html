@@ -249,50 +249,53 @@
         return highlighted;
     }
 
-    // GELİŞMİŞ VE TEMİZLENMİŞ ARAMA
     function aramaYap() {
-        const rawInput = document.getElementById('search-main').value;
-        const resultsContainer = document.getElementById('search-results');
+    const inputRaw = document.getElementById('search-main').value;
+    const inputNorm = trNormalize(inputRaw);
+    const results = document.getElementById('search-results');
+    
+    if (!inputNorm) { results.innerHTML = ""; return; }
+
+    // Kullanıcının yazdığı metni parçalara ayır (Parçalı arama desteği)
+    const searchTerms = inputNorm.split(/\s+/).filter(t => t.length > 0);
+
+    const filtered = urunler.filter(u => {
+        const v = Object.values(u);
+        const sap = v[0] ? v[0].toString().trim() : "";
+        const ad = v[1] ? v[1].toString().trim() : "";
         
-        if (!rawInput.trim()) { resultsContainer.innerHTML = ""; return; }
+        // --- KRİTİK FİLTRE BURASI ---
+        // 1. SAP veya Adı boş olanları geç
+        if (!sap || !ad) return false;
+        // 2. Başlık satırını ("SAP" yazan satır) geç
+        if (sap.toLowerCase() === "sap") return false;
+        // 3. SAP sütununda sadece "ark" yazan hatalı satırları geç (AMA adı içindeki 'ark'ları bozma)
+        if (sap.toLowerCase() === "ark") return false;
+        // ----------------------------
 
-        const queryNormalized = trNormalize(rawInput);
-        const searchTerms = queryNormalized.split(/\s+/).filter(t => t.length > 0);
-        
-        const filtered = urunler.filter(u => {
-            const v = Object.values(u);
-            const sapNo = v[0] ? v[0].toString().trim() : "";
-            const urunAdi = v[1] ? v[1].toString().trim() : "";
-            
-            // Filtre: SAP veya Adı olmayan hayalet satırları engelle
-            if (!sapNo || !urunAdi || sapNo.toLowerCase() === "sap") return false;
+        const fullText = trNormalize(sap + " " + ad);
+        // Her arama parçasının metinde geçtiğini kontrol et
+        return searchTerms.every(term => fullText.includes(term));
+    });
 
-            const rowValues = Object.values(u).map(val => trNormalize(val)).join(" ");
-            return searchTerms.every(term => rowValues.includes(term));
-        });
-        
-        resultsContainer.innerHTML = filtered.slice(0, 30).map(u => {
-            const v = Object.values(u);
-            const sap = v[0].toString();
-            const ad = v[1].toString();
-            const adres = v[2] ? v[2].toString() : "-";
-            const stok = parseInt(v[3]) || 0;
+    results.innerHTML = filtered.slice(0, 30).map(u => {
+        const v = Object.values(u);
+        const sap = v[0], ad = v[1], adres = v[2] || "-", stok = parseInt(v[3]) || 0;
+        const renk = stok === 0 ? 'var(--danger)' : (stok < 3 ? 'var(--warning)' : 'var(--valeo-green)');
 
-            let statusColor = "var(--valeo-green)";
-            if (stok === 0) statusColor = "var(--danger)";
-            else if (stok <= 2) statusColor = "var(--warning)";
-
-            return `
-                <div class="product-card" onclick="openDetail('${sap}')" style="border-left: 6px solid ${statusColor};">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div style="font-weight:900; color:${statusColor}; font-size:12px;">SAP: ${highlightText(sap, searchTerms)}</div>
-                        <div style="background:${statusColor}; color:white; padding:2px 8px; border-radius:8px; font-size:10px; font-weight:800;">${stok} ADET</div>
-                    </div>
-                    <div style="font-weight:700; font-size:15px; margin:8px 0;">${highlightText(ad, searchTerms)}</div>
-                    <div style="font-size:12px; opacity:0.7;">📍 Konum: <b>${adres}</b></div>
-                </div>`;
-        }).join('');
-    }
+        return `
+            <div class="product-card" style="border-left-color:${renk}" onclick="openDetail('${sap}')">
+                <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:800; color:${renk}">
+                    <span>SAP: ${highlight(sap, searchTerms)}</span>
+                    <span style="background:${renk}; color:white; padding:2px 6px; border-radius:5px;">${stok} ADET</span>
+                </div>
+                <div style="font-weight:700; margin:8px 0; font-size:15px; line-height:1.2;">
+                    ${highlight(ad, searchTerms)}
+                </div>
+                <div style="font-size:11px; opacity:0.6;">📍 Konum: ${adres}</div>
+            </div>`;
+    }).join('');
+}
 
     function openDetail(sap) {
         const found = urunler.find(u => Object.values(u)[0].toString() === sap.toString());
