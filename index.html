@@ -254,13 +254,25 @@ function trNormalize(text) {
 
     
 
-    function highlightText(text, queries) {
-    if (!queries.length) return text;
+   function highlightText(text, queries) {
+    if (!queries || !queries.length) return text;
     let highlighted = text;
+    
     queries.forEach(query => {
-        // Sadece tam kelime başındaki veya sonundaki eşleşmeleri bulur (\b sınırı ile)
-        const regex = new RegExp(`(\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b)`, 'gi');
-        highlighted = highlighted.replace(regex, '<mark>$1</mark>');
+        if (query.length < 2) return; // Çok kısa harfleri vurgulama
+        
+        // Türkçe karakter dostu "kelime başı" kontrolü
+        // Bu regex, kelimenin sadece tam halini veya başlangıcını vurgular
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        
+        highlighted = highlighted.replace(regex, (match, p1, offset, string) => {
+            // Eğer eşleşme bir kelimenin içindeyse (öncesinde harf varsa) vurgulama yapma
+            const charBefore = string[offset - 1];
+            const isSubWord = charBefore && /[a-zA-ZçğıöşüÇĞİÖŞÜ0-9]/.test(charBefore);
+            
+            return isSubWord ? match : `<mark>${match}</mark>`;
+        });
     });
     return highlighted;
 }
