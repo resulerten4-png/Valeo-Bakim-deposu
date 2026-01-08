@@ -432,14 +432,27 @@ function trNormalize(text) {
 
 
     async function gecmisGoster() {
-        showPage('page-history');
+    showPage('page-history');
+    document.getElementById('history-body').innerHTML = '<tr><td colspan="8" style="text-align:center;">Yükleniyor...</td></tr>';
+    
+    try {
         const res = await fetch(GECMIS_URL);
-        const wb = XLSX.read(await res.text(), {type:'string'});
-        rawHistory = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1}).slice(1).reverse();
+        const text = await res.text();
+        const wb = XLSX.read(text, {type:'string'});
+        
+        // Excel'deki ilk sayfayı veya isme göre sayfayı alır
+        const sheetName = wb.SheetNames[0]; 
+        // Verileri dizi formatında al (header: 1) ve başlık satırını atla (.slice(1))
+        rawHistory = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header: 1}).slice(1).reverse();
+        
         document.getElementById('history-body').innerHTML = rawHistory.slice(0, 50).map(row => `
-            <tr><td>${row[0]}</td><td>${row[5]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[6]}</td></tr>
+            <tr>
+                <td>${row[7] || row[6] || '-'}</td> <td>${row[6] || row[5] || '-'}</td> <td>${row[3] || '-'}</td>           <td>${row[0] || '-'}</td>           <td style="font-size:9px;">${row[1] ? row[1].substring(0,20) : '-'}</td> <td>${row[2] || '-'}</td>           <td>${row[4] || '-'}</td>           <td>${row[5] || '-'}</td>           </tr>
         `).join('');
+    } catch (e) {
+        document.getElementById('history-body').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Veri çekilemedi!</td></tr>';
     }
+}
 
     function showPage(pId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
