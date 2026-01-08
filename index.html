@@ -429,7 +429,25 @@ function trNormalize(text) {
         document.getElementById('loading-overlay').style.display = 'none';
     }
 }
-
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Gecmis"); // Sayfa adınız
+  var data = JSON.parse(e.postData.contents);
+  
+  sheet.appendRow([
+    data.timestamp, // A: Tarih
+    data.kullanici, // B: Personel
+    data.islem,     // C: Hareket (Sipariş/Düşüm)
+    data.sap,       // D: SAP Kodu
+    data.ad,        // E: Malzeme Adı
+    data.adet,      // F: Miktar
+    data.makinaNo,  // G: Makine No
+    data.makinaAd,  // H: Makine Adı
+    data.lokasyon   // I: Raf Adresi
+  ]);
+  
+  return ContentService.createTextOutput("Success");
+}
 
     async function gecmisGoster() {
         showPage('page-history');
