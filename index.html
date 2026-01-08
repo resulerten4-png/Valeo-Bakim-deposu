@@ -241,21 +241,64 @@
         document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1] + " valeo spare parts")}`;
         showPage('page-detail');
     }
-    // Kelimeleri renkli vurgulayan yardımcı fonksiyon
-function highlight(text, query) {
-    if (!query || !text) return text;
-    const queryNormalized = trNormalize(query);
-    const textStr = text.toString();
-    const textNormalized = trNormalize(textStr);
+    // Kelimeleri tek tek renkli vurgulayan fonksiyon
+function highlight(text, terms) {
+    if (!terms || terms.length === 0 || !text) return text;
+    let textStr = text.toString();
     
-    // Normalizasyon üzerinden eşleşme bulup orijinal metni parçalıyoruz
-    const index = textNormalized.indexOf(queryNormalized);
-    if (index >= 0) {
-        const originalPart = textStr.substring(index, index + query.length);
-        const regex = new RegExp(`(${originalPart})`, "gi");
-        return textStr.replace(regex, '<mark>$1</mark>');
-    }
+    // Her bir arama terimi için metni tara ve mark içine al
+    terms.forEach(term => {
+        if (term.length < 2) return; // Çok kısa karakterleri vurgulama (isteğe bağlı)
+        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
+        textStr = textStr.replace(regex, '<mark>$1</mark>');
+    });
     return textStr;
+}
+
+// PARÇALI VE RENKLİ ARAMA FONKSİYONU
+function aramaYap() {
+    const inputRaw = document.getElementById('search-main').value;
+    const inputNorm = trNormalize(inputRaw);
+    const results = document.getElementById('search-results');
+    
+    if (!inputNorm) { results.innerHTML = ""; return; }
+
+    // Kullanıcının yazdığı kelimeleri boşluklara göre parçalara ayır
+    const searchTerms = inputNorm.split(" ").filter(t => t.length > 0);
+
+    const filtered = urunler.filter(u => {
+        const v = Object.values(u);
+        const sap = v[0] ? v[0].toString().trim() : "";
+        const ad = v[1] ? v[1].toString().trim() : "";
+        
+        // Temel Filtreler: Boşları ve hatalı "ark" satırlarını engelle
+        if (!sap || !ad || sap.toLowerCase() === "sap") return false;
+        if (sap.toLowerCase() === "ark") return false;
+
+        const fullText = trNormalize(sap + " " + ad);
+        
+        // PARÇALI ARAMA MANTIĞI: Yazılan her parça metnin içinde var mı?
+        // Örneğin "154 25 adn" yazıldığında; "154", "25" ve "adn" kelimelerinin hepsi satırda geçmeli.
+        return searchTerms.every(term => fullText.includes(term));
+    });
+
+    results.innerHTML = filtered.slice(0, 25).map(u => {
+        const v = Object.values(u);
+        const sap = v[0], ad = v[1], adres = v[2] || "-", stok = parseInt(v[3]) || 0;
+        const renk = stok === 0 ? 'var(--danger)' : (stok < 3 ? 'var(--warning)' : 'var(--valeo-green)');
+
+        return `
+            <div class="product-card" style="border-left-color:${renk}" onclick="openDetail('${sap}')">
+                <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:800; color:${renk}">
+                    <span>SAP: ${highlight(sap, searchTerms)}</span>
+                    <span style="background:${renk}; color:white; padding:2px 6px; border-radius:5px;">${stok} ADET</span>
+                </div>
+                <div style="font-weight:700; margin:8px 0; font-size:15px; line-height:1.2;">
+                    ${highlight(ad, searchTerms)}
+                </div>
+                <div style="font-size:11px; opacity:0.6;">📍 Konum: ${adres}</div>
+            </div>`;
+    }).join('');
 }
 
 // Gelişmiş Arama Fonksiyonu
