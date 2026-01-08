@@ -83,6 +83,8 @@
         .active-page { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
+        mark { background: #99cc00; color: #000; padding: 0 1px; border-radius: 2px; font-weight: bold; }
+
         #detail-image-panel { width: 100%; height: 200px; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 1px solid var(--border); display: none; }
         #detail-frame { width: 100%; height: 100%; border: none; }
         
@@ -92,32 +94,14 @@
         
         .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
         .dropdown-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); }
-        
-        .history-table { width: 100%; border-collapse: collapse; font-size: 10px; }
-        .history-table th { background: var(--valeo-dark); color: white; padding: 12px 5px; text-align: left; position: sticky; top: 0; }
-        .history-table td { padding: 12px 5px; border-bottom: 1px solid var(--border); color: var(--text-main); font-weight: 500; }
     </style>
 </head>
 <body onclick="closeMenuOutside(event)">
 
 <div class="container">
-    <div id="offline-status"></div>
-
-    <div id="custom-modal" class="modal-overlay">
-        <div class="modal-card">
-            <div id="modal-icon" class="modal-icon">⚠️</div>
-            <div id="modal-title" class="modal-title">Emin misiniz?</div>
-            <div id="modal-text" class="modal-text">Bu işlemi onaylıyor musunuz?</div>
-            <div class="modal-buttons">
-                <button id="modal-cancel-btn" class="modal-btn btn-cancel" onclick="closeModal()">İPTAL</button>
-                <button id="modal-confirm-btn" class="modal-btn btn-confirm">ONAYLA</button>
-            </div>
-        </div>
-    </div>
-
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <div style="font-weight: 800; color: var(--valeo-green);">YÜKLENİYOR...</div>
+        <div style="font-weight: 800; color: var(--valeo-green);">VERİLER GÜNCELLENİYOR...</div>
     </div>
 
     <div id="page-login" class="page active-page">
@@ -126,8 +110,8 @@
                 <h1 style="color:var(--valeo-green); font-size:50px; margin:0; font-weight:800;">Valeo</h1>
                 <p style="letter-spacing:4px; font-size:10px; opacity:0.6; font-weight:800; margin-top:-5px;">V2 PRO PORTAL</p>
             </div>
-            <input type="text" id="user-input" placeholder="Kullanıcı Adı" style="margin-bottom:15px;">
-            <input type="password" id="pass-input" placeholder="Şifre" style="margin-bottom:25px;">
+            <input type="text" id="user-input" placeholder="Kullanıcı Adı">
+            <input type="password" id="pass-input" placeholder="Şifre">
             <button onclick="girisYap()" style="height:65px; font-size:16px;">SİSTEME GİRİŞ YAP</button>
         </div>
     </div>
@@ -148,7 +132,10 @@
     <div id="page-search" class="page">
         <div class="content">
             <h3 style="margin-top:0; font-weight: 800;">Stok Arama</h3>
-            <input type="text" id="search-main" placeholder="Malzeme adı veya SAP no..." oninput="aramaYap()">
+            <div style="position:relative;">
+                <input type="text" id="search-main" placeholder="SAP no veya Malzeme..." oninput="aramaYap()" style="padding-left:45px;">
+                <span style="position:absolute; left:15px; top:25px; opacity:0.5;">🔍</span>
+            </div>
             <div id="search-results"></div>
         </div>
     </div>
@@ -156,23 +143,21 @@
     <div id="page-detail" class="page">
         <div class="content">
             <div id="detail-image-panel"><iframe id="detail-frame" src=""></iframe></div>
-            <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px; height: auto; width: auto;">🖼️ GÖRSEL</button>
+            <button onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:11px; width:auto;">🖼️ GÖRSELİ GÖSTER/GİZLE</button>
             <h2 id="detay-ad" style="margin:5px 0;"></h2>
             <div id="detay-sap" style="font-weight:900; color:var(--valeo-green); font-size:18px; margin-bottom:15px;"></div>
-            <div style="background:var(--bg-gray); padding:15px; border-radius:12px;">
+            <div style="background:var(--bg-gray); padding:15px; border-radius:12px; border:1px solid var(--border);">
                 <div>📍 Adres: <span id="detay-adres" style="font-weight:700;"></span></div>
-                <div style="margin-top:5px;">📦 Stok: <span id="detay-stok" style="font-weight:700;"></span> ADET</div>
+                <div style="margin-top:5px;">📦 Mevcut Stok: <span id="detay-stok" style="font-weight:700;"></span> ADET</div>
             </div>
-            <button onclick="goToAction()" style="margin-top:25px; background:var(--valeo-blue);">BU ÜRÜNLE İŞLEM YAP</button>
+            <button onclick="goToAction()" style="margin-top:25px; background:var(--valeo-blue);">İŞLEM YAP (DÜŞÜM/TALEP)</button>
         </div>
     </div>
 
     <div id="page-action" class="page">
         <div class="content">
-            <input type="text" id="action-machine-search" placeholder="Makine ara..." oninput="makineAramaYap()">
-            <div id="selected-machine-box" style="display:none; background:var(--valeo-blue); color:white; padding:15px; border-radius:12px; margin:10px 0;">
-                <div id="selected-machine-text" style="font-weight:800;"></div>
-            </div>
+            <input type="text" id="action-machine-search" placeholder="Makine ara (Örn: M01...)" oninput="makineAramaYap()">
+            <div id="selected-machine-box" style="display:none; background:var(--valeo-blue); color:white; padding:15px; border-radius:12px; margin:10px 0; font-weight:800;"></div>
             <div id="machine-results"></div>
             <div class="stepper">
                 <button onclick="adetDegistir(-1)">-</button>
@@ -185,85 +170,82 @@
             </div>
         </div>
     </div>
-
-    <div id="page-history" class="page">
-        <div class="content">
-            <h3>İşlem Geçmişi</h3>
-            <div style="overflow-x: auto;">
-                <table class="history-table">
-                    <thead><tr><th>SAP</th><th>PERSONEL</th><th>ADET</th><th>TİP</th><th>TARİH</th></tr></thead>
-                    <tbody id="history-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
-    const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGCCJo34saMWKeLiFKUaWZzZh3k4sIoAiRYZ_oV7rNPWtf60UaXJUKWIn0g27RRMsIRg/exec';
 
-    let urunler = [], makineler = [], kullanicilar = [], rawHistory = [], seciliUrun = null, seciliMakina = null;
+    let urunler = [], makineler = [], kullanicilar = [], seciliUrun = null, seciliMakina = null;
 
     function trNormalize(text) {
         if (!text) return "";
-        return text.toString().toLowerCase('tr').replace(/ı/g, 'i').replace(/İ/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g').trim();
+        return text.toString().toLowerCase('tr').replace(/ı/g,'i').replace(/İ/g,'i').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ç/g,'c').replace(/ğ/g,'g').trim();
     }
 
     function girisYap() {
-        const uInput = document.getElementById('user-input').value.trim().toLowerCase();
-        const pInput = document.getElementById('pass-input').value.trim();
-        
-        if (!uInput || !pInput) { alert("Lütfen boş alan bırakmayın."); return; }
-
+        const u = document.getElementById('user-input').value.trim().toLowerCase();
+        const p = document.getElementById('pass-input').value.trim();
         const found = kullanicilar.find(row => {
-            const vals = Object.values(row);
-            return vals[0]?.toString().toLowerCase() === uInput && vals[1]?.toString() === pInput;
+            const v = Object.values(row);
+            return v[0]?.toString().toLowerCase() === u && v[1]?.toString() === p;
         });
-
-        if (found) {
-            localStorage.setItem('depoUser', uInput);
-            showPage('page-search');
-        } else {
-            alert("Kullanıcı adı veya şifre hatalı!");
-        }
+        if (found) { localStorage.setItem('depoUser', u); showPage('page-search'); } 
+        else { alert("Kullanıcı adı veya şifre hatalı!"); }
     }
 
+    // KRİTİK FİLTRELEME: "ark" ve boş satırları engeller
     function aramaYap() {
-        const query = trNormalize(document.getElementById('search-main').value);
+        const input = trNormalize(document.getElementById('search-main').value);
         const results = document.getElementById('search-results');
-        if (!query) { results.innerHTML = ""; return; }
-        const filtered = urunler.filter(u => trNormalize(Object.values(u).join(" ")).includes(query));
-        results.innerHTML = filtered.slice(0, 20).map(u => {
+        if (!input) { results.innerHTML = ""; return; }
+
+        const filtered = urunler.filter(u => {
             const v = Object.values(u);
-            return `<div class="product-card" onclick="openDetail('${v[0]}')">
-                <div style="font-weight:900; color:var(--valeo-green); font-size:12px;">SAP: ${v[0]}</div>
-                <div style="font-weight:700; font-size:15px; margin:4px 0;">${v[1]}</div>
-                <div style="font-size:11px; opacity:0.6;">📍 ${v[2]} | 📦 STOK: ${v[3]}</div>
+            const sap = v[0] ? v[0].toString().trim() : "";
+            const ad = v[1] ? v[1].toString().trim() : "";
+            
+            // 1. SAP veya Adı boş olanları ele
+            if (!sap || !ad) return false;
+            // 2. Başlık satırlarını ele
+            if (sap.toLowerCase() === "sap" || sap.toLowerCase() === "sap no") return false;
+            // 3. SAP no sadece rakam veya rakamla başlayan mantıklı bir kod olmalı (Burada 'ark' gibi verileri engelliyoruz)
+            if (sap.toLowerCase().includes("ark") || ad.toLowerCase().includes("ark")) return false;
+
+            const content = trNormalize(sap + " " + ad);
+            return content.includes(input);
+        });
+
+        results.innerHTML = filtered.slice(0, 25).map(u => {
+            const v = Object.values(u);
+            const stok = parseInt(v[3]) || 0;
+            const renk = stok === 0 ? 'var(--danger)' : (stok < 3 ? 'var(--warning)' : 'var(--valeo-green)');
+            return `<div class="product-card" style="border-left-color:${renk}" onclick="openDetail('${v[0]}')">
+                <div style="font-size:11px; font-weight:800; color:${renk}">SAP: ${v[0]}</div>
+                <div style="font-weight:700; margin:4px 0;">${v[1]}</div>
+                <div style="font-size:11px; opacity:0.6;">📍 ${v[2]} | 📦 ${stok} Adet</div>
             </div>`;
         }).join('');
     }
 
     function openDetail(sap) {
-        const found = urunler.find(u => Object.values(u)[0].toString() === sap.toString());
-        seciliUrun = Object.values(found);
+        const item = urunler.find(u => Object.values(u)[0].toString() === sap);
+        seciliUrun = Object.values(item);
         document.getElementById('detay-ad').innerText = seciliUrun[1];
         document.getElementById('detay-sap').innerText = "SAP: " + seciliUrun[0];
         document.getElementById('detay-adres').innerText = seciliUrun[2];
         document.getElementById('detay-stok').innerText = seciliUrun[3];
-        document.getElementById('detail-image-panel').style.display = "none";
-        document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1])}`;
+        document.getElementById('detail-frame').src = `https://www.bing.com/images/search?q=${encodeURIComponent(seciliUrun[1] + " valeo spare parts")}`;
         showPage('page-detail');
     }
 
     function makineAramaYap() {
-        const query = trNormalize(document.getElementById('action-machine-search').value);
+        const input = trNormalize(document.getElementById('action-machine-search').value);
         const results = document.getElementById('machine-results');
-        if(!query) { results.innerHTML = ""; return; }
-        const filtered = makineler.filter(m => trNormalize(Object.values(m).join(" ")).includes(query));
+        if (!input) { results.innerHTML = ""; return; }
+        const filtered = makineler.filter(m => trNormalize(Object.values(m).join(" ")).includes(input));
         results.innerHTML = filtered.slice(0, 5).map(m => {
             const v = Object.values(m);
             return `<div class="product-card" onclick="selectMachine('${v[0]}','${v[1]}')">${v[0]} - ${v[1]}</div>`;
@@ -272,18 +254,11 @@
 
     function selectMachine(no, ad) {
         seciliMakina = { no, ad };
-        document.getElementById('selected-machine-text').innerText = no + " - " + ad;
-        document.getElementById('selected-machine-box').style.display = 'block';
+        const box = document.getElementById('selected-machine-box');
+        box.innerText = "SEÇİLEN MAKİNE: " + no + " - " + ad;
+        box.style.display = 'block';
         document.getElementById('machine-results').innerHTML = "";
         updateButtons();
-    }
-
-    function goToAction() {
-        seciliMakina = null;
-        document.getElementById('islem-adet').value = 0;
-        document.getElementById('selected-machine-box').style.display = 'none';
-        updateButtons();
-        showPage('page-action');
     }
 
     function adetDegistir(d) {
@@ -293,83 +268,55 @@
     }
 
     function updateButtons() {
-        const hasAdet = parseInt(document.getElementById('islem-adet').value) > 0;
-        document.getElementById('btn-dusum').disabled = !(seciliMakina && hasAdet);
-        document.getElementById('btn-talep').disabled = !(seciliMakina && hasAdet);
+        const adet = parseInt(document.getElementById('islem-adet').value) > 0;
+        document.getElementById('btn-dusum').disabled = !(seciliMakina && adet);
+        document.getElementById('btn-talep').disabled = !(seciliMakina && adet);
     }
 
-    function finalOnay(islem) {
+    async function finalOnay(islem) {
         const adet = document.getElementById('islem-adet').value;
-        document.getElementById('modal-icon').innerText = islem === 'STOKTAN DÜŞÜM' ? '📉' : '🛒';
-        document.getElementById('modal-title').innerText = islem;
-        document.getElementById('modal-text').innerHTML = `<b>${seciliUrun[1]}</b> için <b>${adet} adet</b> işlem onaylıyor musunuz?`;
-        document.getElementById('modal-confirm-btn').onclick = function() { closeModal(); kaydet(islem, adet); };
-        document.getElementById('custom-modal').style.display = 'flex';
-    }
-
-    async function kaydet(islem, adet) {
-        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet: adet, islem: islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser'), timestamp: new Date().toISOString() };
+        if(!confirm(`${seciliUrun[1]}\n\n${adet} ADET ${islem} onaylıyor musunuz?`)) return;
+        
         document.getElementById('loading-overlay').style.display = 'flex';
+        const veri = { sap: seciliUrun[0], ad: seciliUrun[1], adet, islem, makina: seciliMakina.no, kullanici: localStorage.getItem('depoUser'), timestamp: new Date().toLocaleString('tr-TR') };
+        
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(veri) });
-            document.getElementById('loading-overlay').style.display = 'none';
-            alert("İşlem Başarıyla Kaydedildi!");
+            alert("İŞLEM BAŞARILI!");
             location.reload();
         } catch (e) { 
+            alert("Hata oluştu!"); 
             document.getElementById('loading-overlay').style.display = 'none';
-            alert("Hata oluştu, lütfen internetinizi kontrol edin."); 
         }
     }
 
-    async function gecmisGoster() {
-        showPage('page-history');
-        const res = await fetch(GECMIS_URL);
-        const text = await res.text();
-        const wb = XLSX.read(text, {type:'string'});
-        rawHistory = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1}).slice(1).reverse();
-        document.getElementById('history-body').innerHTML = rawHistory.slice(0, 50).map(row => `
-            <tr><td>${row[0]}</td><td>${row[5]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[6]}</td></tr>
-        `).join('');
-    }
-
-    function showPage(pId) {
+    function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(pId).classList.add('active-page');
-        document.getElementById('main-top-bar').style.display = (pId === 'page-login') ? 'none' : 'flex';
-        document.getElementById('btn-back').style.display = (pId === 'page-search' || pId === 'page-login') ? 'none' : 'block';
+        document.getElementById(id).classList.add('active-page');
+        document.getElementById('main-top-bar').style.display = id === 'page-login' ? 'none' : 'flex';
+        document.getElementById('btn-back').style.display = id === 'page-search' ? 'none' : 'block';
     }
 
     function goBack() { showPage('page-search'); }
-    function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
-    function toggleImage() { const p = document.getElementById('detail-image-panel'); p.style.display = p.style.display === "none" ? "block" : "none"; }
+    function toggleImage() { const p = document.getElementById('detail-image-panel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
     function toggleMenu(e) { e.stopPropagation(); const d = document.getElementById('dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
     function closeMenuOutside() { document.getElementById('dropdown').style.display = 'none'; }
     function guvenliCikis() { localStorage.removeItem('depoUser'); location.reload(); }
+    function goToAction() { showPage('page-action'); document.getElementById('islem-adet').value = 0; updateButtons(); }
 
     window.onload = async () => {
-        // Cache (Önbellek) yükleme
-        urunler = JSON.parse(localStorage.getItem('valeo_cache_urun') || '[]');
-        kullanicilar = JSON.parse(localStorage.getItem('valeo_cache_user') || '[]');
-        makineler = JSON.parse(localStorage.getItem('valeo_cache_makina') || '[]');
-        
         if (localStorage.getItem('depoUser')) showPage('page-search');
-
-        if(navigator.onLine) {
-            try {
-                const parse = async (url) => {
-                    const res = await fetch(url);
-                    const text = await res.text();
-                    const wb = XLSX.read(text, {type:'string'});
-                    return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                };
-                [kullanicilar, urunler, makineler] = await Promise.all([parse(USER_URL), parse(URUN_URL), parse(MAKINA_URL)]);
-                
-                localStorage.setItem('valeo_cache_user', JSON.stringify(kullanicilar));
-                localStorage.setItem('valeo_cache_urun', JSON.stringify(urunler));
-                localStorage.setItem('valeo_cache_makina', JSON.stringify(makineler));
-            } catch (e) { console.error("Veri çekme hatası, cache kullanılıyor."); }
-        }
+        
+        try {
+            const parse = async (url) => {
+                const res = await fetch(url);
+                const wb = XLSX.read(await res.text(), {type:'string'});
+                return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            };
+            [kullanicilar, urunler, makineler] = await Promise.all([parse(USER_URL), parse(URUN_URL), parse(MAKINA_URL)]);
+        } catch (e) { console.error("Veri yüklenemedi"); }
+        
         document.getElementById('loading-overlay').style.display = 'none';
     };
 </script>
