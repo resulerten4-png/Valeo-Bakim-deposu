@@ -57,7 +57,7 @@
         .modal-icon { font-size: 45px; margin-bottom: 15px; }
         .modal-title { font-weight: 800; font-size: 20px; margin-bottom: 10px; color: var(--text-main); }
         .modal-text { font-size: 14px; color: var(--text-sub); margin-bottom: 25px; line-height: 1.5; }
-        .modal-s { display: flex; gap: 10px; }
+        .modal-buttons { display: flex; gap: 10px; }
         .modal-btn { flex: 1; padding: 15px; border-radius: 14px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; font-size: 13px; }
         .btn-confirm { background: var(--valeo-green); color: white; }
         .btn-cancel { background: var(--bg-gray); color: var(--text-main); }
@@ -73,13 +73,8 @@
         input { width: 100%; padding: 16px; margin: 10px 0; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 15px; box-sizing: border-box; transition: 0.2s; }
         input:focus { border-color: var(--valeo-green); outline: none; }
         
-         { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
-        :disabled { background: #cbd5e0 !important; opacity: 0.6; cursor: not-allowed; }
-
-       < onclick="sifreGuncelle('${v[0]}')" 
-        style="padding:8px 12px; font-size:11px; width:auto; background:var(--warning); color:black; border-radius:8px; font-weight:700; border:none; cursor:pointer;">
-     🔑 Şifre Değiştir
-       </>
+        button { background: var(--valeo-green); color: white; border: none; padding: 18px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
+        button:disabled { background: #cbd5e0 !important; opacity: 0.6; cursor: not-allowed; }
         
         .product-card { background: var(--card-bg); border: 1px solid var(--border); margin-bottom: 12px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--valeo-green); cursor: pointer; transition: 0.2s; }
         .product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
@@ -95,7 +90,7 @@
         #detail-frame { width: 100%; height: 100%; border: none; }
         
         .stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; background: var(--bg-gray); padding: 10px; border-radius: 15px; }
-        .stepper  { width: 50px; height: 50px; border-radius: 50%; background: var(--valeo-dark); font-size: 20px; padding: 0; color: white; }
+        .stepper button { width: 50px; height: 50px; border-radius: 50%; background: var(--valeo-dark); font-size: 20px; padding: 0; color: white; }
         #islem-adet { width: 70px; text-align: center; font-size: 24px; font-weight: 800; border: none; background: transparent; color: var(--text-main); }
         
         .dropdown-menu { display: none; position: absolute; right: 15px; top: 60px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 50; min-width: 170px; overflow: hidden; border: 1px solid var(--border); }
@@ -116,9 +111,9 @@
             <div id="modal-icon" class="modal-icon">⚠️</div>
             <div id="modal-title" class="modal-title">Emin misiniz?</div>
             <div id="modal-text" class="modal-text">Bu işlemi onaylıyor musunuz?</div>
-            <div class="modal-s">
-                < id="modal-cancel-btn" class="modal-btn btn-cancel" onclick="closeModal()">İPTAL</>
-                < id="modal-confirm-btn" class="modal-btn btn-confirm">ONAYLA</>
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn" class="modal-btn btn-cancel" onclick="closeModal()">İPTAL</button>
+                <button id="modal-confirm-btn" class="modal-btn btn-confirm">ONAYLA</button>
             </div>
         </div>
     </div>
@@ -136,7 +131,7 @@
             </div>
             <input type="text" id="user-input" placeholder="Kullanıcı Adı" style="margin-bottom:15px;">
             <input type="password" id="pass-input" placeholder="Şifre" style="margin-bottom:25px;">
-            < onclick="girisYap()" style="height:65px; font-size:16px;">SİSTEME GİRİŞ YAP</>
+            <button onclick="girisYap()" style="height:65px; font-size:16px;">SİSTEME GİRİŞ YAP</button>
         </div>
     </div>
 
@@ -169,17 +164,17 @@
     <div id="page-detail" class="page">
         <div class="content">
             <div id="detail-image-panel"><iframe id="detail-frame" src=""></iframe></div>
-            < id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px; height: auto; width: auto;">🖼️ GÖRSEL</>
+            <button id="btn-toggle-img" onclick="toggleImage()" style="background:var(--valeo-dark); margin-bottom:15px; padding:10px; font-size:12px; height: auto; width: auto;">🖼️ GÖRSEL</button>
             <h2 id="detay-ad" style="margin:5px 0;"></h2>
             <div id="detay-sap" style="font-weight:900; color:var(--valeo-green); font-size:18px; margin-bottom:15px;"></div>
             <div style="background:var(--bg-gray); padding:15px; border-radius:12px;">
                 <div>📍 Adres: <span id="detay-adres" style="font-weight:700;"></span></div>
                 <div style="margin-top:5px;">📦 Stok: <span id="detay-stok" style="font-weight:700;"></span> ADET</div>
             </div>
-            < onclick="goToAction()" style="margin-top:25px; background:var(--valeo-blue);">BU ÜRÜNLE İŞLEM YAP</>
+            <button onclick="goToAction()" style="margin-top:25px; background:var(--valeo-blue);">BU ÜRÜNLE İŞLEM YAP</button>
         </div>
     </div>
-</div>
+
     <div id="page-action" class="page">
         <div class="content">
             <input type="text" id="action-machine-search" placeholder="Makine ara..." oninput="makineAramaYap()">
@@ -188,13 +183,13 @@
             </div>
             <div id="machine-results"></div>
             <div class="stepper">
-                < onclick="adetDegistir(-1)">-</>
+                <button onclick="adetDegistir(-1)">-</button>
                 <input type="number" id="islem-adet" value="0" readonly>
-                < onclick="adetDegistir(1)">+</>
+                <button onclick="adetDegistir(1)">+</button>
             </div>
             <div style="display: flex; gap: 10px;">
-                < id="btn-dusum" style="background:var(--danger); flex: 1;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 DÜŞÜM</>
-                < id="btn-talep" style="background:var(--valeo-dark); flex: 1;" onclick="finalOnay('SİPARİŞ TALEBİ')" disabled>🛒 TALEP</>
+                <button id="btn-dusum" style="background:var(--danger); flex: 1;" onclick="finalOnay('STOKTAN DÜŞÜM')" disabled>📉 DÜŞÜM</button>
+                <button id="btn-talep" style="background:var(--valeo-dark); flex: 1;" onclick="finalOnay('SİPARİŞ TALEBİ')" disabled>🛒 TALEP</button>
             </div>
         </div>
     </div>
@@ -223,7 +218,7 @@
                 <option value="Kullanıcı">Kullanıcı</option>
                 <option value="Yönetici">Yönetici</option>
             </select>
-            < onclick="kullaniciEkle()" style="background:var(--valeo-blue); margin-top:10px;">LİSTEYE EKLE</>
+            <button onclick="kullaniciEkle()" style="background:var(--valeo-blue); margin-top:10px;">LİSTEYE EKLE</button>
         </div>
 
         <h4>👥 Mevcut Liste</h4>
@@ -231,115 +226,13 @@
     </div>
 </div>
 
+
 <script>
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEMclQbsZBxryEXHNO5dlwkAy_6HiGViLME0rB99H8gJjAo-2iAzY92RQr2o1KAgDEyw/exec';
-
-// YÖNETİCİ PANELİ GÖRÜNÜMÜ
-function adminPaneliHazirla() {
-    const listDiv = document.getElementById('admin-user-list');
-    if (!listDiv) return;
-
-    listDiv.innerHTML = kullanicilar.map(u => {
-        const v = Object.values(u);
-        // v[0]: İsim, v[1]: Şifre, v[2]: Rol
-        return `
-            <div style="background:var(--card-bg); padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <div>
-                    <strong style="color:var(--valeo-blue); font-size:15px; display:block; margin-bottom:4px;">👤 ${v[0]}</strong>
-                    <div style="font-size:11px; color:var(--text-sub);">
-                        <span>🔑 Şifre: <b>${v[1]}</b></span> | 
-                        <span>🛡️ Rol: <b>${v[2]}</b></span>
-                    </div>
-                </div>
-                <button onclick="sifreGuncelle('${v[0]}')" 
-                        style="padding:10px 15px; font-size:12px; width:auto; background:var(--warning); color:black; border-radius:10px; font-weight:800; border:none; cursor:pointer; box-shadow: 0 4px 0 #d4ac0d; active: transform translateY(2px);">
-                    ŞİFREYİ SIFIRLA
-                </button>
-            </div>`;
-    }).join('');
-}
-
-// YENİ KULLANICI EKLEME
-async function kullaniciEkle() {
-    const ad = document.getElementById('new-user-name').value.trim();
-    const sifre = document.getElementById('new-user-pass').value.trim();
-    const rol = document.getElementById('new-user-role').value;
-
-    if (!ad || !sifre) { alert("Lütfen tüm alanları doldurun!"); return; }
-
-    const veri = {
-        islem: "KULLANICI_EKLE",
-        ad: ad,
-        sifre: sifre,
-        rol: rol,
-        timestamp: new Date().toLocaleString('tr-TR')
-    };
-
-    await islemGonder(veri, "Kullanıcı Excel'e başarıyla kaydedildi!");
-}
-
-    async function sifreGuncelle(kullaniciAdi) {
-    const yeniSifre = prompt(kullaniciAdi + " için YENİ ŞİFREYİ girin:");
-    
-    // İptal edilirse veya boş bırakılırsa işlem yapma
-    if (yeniSifre === null || yeniSifre.trim() === "") return;
-
-    const veri = {
-        islem: "SIFRE_GUNCELLE",
-        ad: kullaniciAdi,
-        yeniSifre: yeniSifre.trim()
-    };
-
-    document.getElementById('loading-overlay').style.display = 'flex';
-
-    try {
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(veri)
-        });
-        alert("Şifre başarıyla güncellendi! Liste kısa süre içinde yenilenecektir.");
-        location.reload(); // Değişikliği görmek için sayfayı yeniler
-    } catch (e) {
-        alert("Bağlantı hatası! Şifre güncellenemedi.");
-        document.getElementById('loading-overlay').style.display = 'none';
-    }
-}
-
-// ŞİFRE GÜNCELLEME
-async function sifreGuncelle(kullaniciAdi) {
-    const yeniSifre = prompt(kullaniciAdi + " için yeni şifreyi girin:");
-    if (!yeniSifre || yeniSifre.trim() === "") return;
-
-    const veri = {
-        islem: "SIFRE_GUNCELLE",
-        ad: kullaniciAdi,
-        yeniSifre: yeniSifre.trim()
-    };
-
-    await islemGonder(veri, "Şifre Excel'de başarıyla güncellendi!");
-}
-
-// ORTAK GÖNDERİM FONKSİYONU
-async function islemGonder(veri, mesaj) {
-    document.getElementById('loading-overlay').style.display = 'flex';
-    try {
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(veri)
-        });
-        alert(mesaj);
-        location.reload();
-    } catch (e) {
-        alert("Bağlantı hatası!");
-        document.getElementById('loading-overlay').style.display = 'none';
-    }
-}
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9qV37Xa4ESuHQGtOa3UW21Y4WAyLMAwAgGnnY1oFnUkpIpKsvi1vSFmFyRAjkwcIjhQ/exec';
 
     let urunler = [], kullanicilar = [], makineler = [], seciliUrun = null;
     let seciliMakina = null; // BU SATIR EKSİK OLDUĞU İÇİN ÇALIŞMIYORDU
@@ -374,78 +267,6 @@ async function islemGonder(veri, mesaj) {
         alert("Giriş bilgileri hatalı!");
     }
 }
-
-    // 1. Yönetici Paneli Görünümü (Hem Bilgi Gösterir Hem Şifre Değiştirme Butonu Ekler)
-function adminPaneliHazirla() {
-    const listDiv = document.getElementById('admin-user-list');
-    if (!listDiv) return;
-
-    listDiv.innerHTML = kullanicilar.map(u => {
-        const v = Object.values(u);
-        // v[0]: İsim, v[1]: Şifre, v[2]: Rol
-        return `
-            <div style="background:var(--card-bg); padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong style="color:var(--valeo-blue); font-size:15px;">${v[0]}</strong><br>
-                    <small style="color:var(--text-sub);">Şifre: ${v[1]} | Yetki: ${v[2]}</small>
-                </div>
-                < onclick="sifreGuncelle('${v[0]}')" 
-                        style="padding:8px 12px; font-size:11px; width:auto; background:var(--warning); color:black; border-radius:8px; font-weight:700; border:none; cursor:pointer;">
-                    🔑 Şifre Değiştir
-                </>
-            </div>`;
-    }).join('');
-}
-
-// 2. Yeni Kullanıcı Ekleme Fonksiyonu
-async function kullaniciEkle() {
-    const ad = document.getElementById('new-user-name').value.trim();
-    const sifre = document.getElementById('new-user-pass').value.trim();
-    const rol = document.getElementById('new-user-role').value;
-
-    if (!ad || !sifre) { alert("Lütfen isim ve şifre girin!"); return; }
-
-    const veri = {
-        islem: "KULLANICI_EKLE",
-        ad: ad,
-        sifre: sifre,
-        rol: rol,
-        timestamp: new Date().toLocaleString('tr-TR')
-    };
-
-    await backendGonder(veri, "Yeni kullanıcı başarıyla eklendi!");
-}
-
-// 3. Şifre Güncelleme Fonksiyonu
-async function sifreGuncelle(kullaniciAdi) {
-    const yeniSifre = prompt(kullaniciAdi + " için yeni şifreyi girin:");
-    if (!yeniSifre || yeniSifre.trim() === "") return;
-
-    const veri = {
-        islem: "SIFRE_GUNCELLE",
-        ad: kullaniciAdi,
-        yeniSifre: yeniSifre.trim()
-    };
-
-    await backendGonder(veri, "Şifre başarıyla güncellendi!");
-}
-
-// 4. Ortak Veri Gönderim Motoru
-async function backendGonder(veri, basariMesaji) {
-    document.getElementById('loading-overlay').style.display = 'flex';
-    try {
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(veri)
-        });
-        alert(basariMesaji + " (Değişikliklerin görünmesi 1-2 dakikayı bulabilir)");
-        location.reload();
-    } catch (e) {
-        alert("Bağlantı hatası!");
-        document.getElementById('loading-overlay').style.display = 'none';
-    }
-}
 function adminPaneliHazirla() {
     const listDiv = document.getElementById('admin-user-list');
     listDiv.innerHTML = kullanicilar.map((u, i) => {
@@ -455,7 +276,7 @@ function adminPaneliHazirla() {
                 <strong>${v[0]}</strong> <br>
                 <small>Şifre: ${v[1]} | Rol: ${v[2]}</small>
                 <div style="margin-top:5px;">
-                    < onclick="alert('Excelden değiştirin')" style="padding:5px 10px; font-size:10px; width:auto; background:var(--valeo-blue);">Düzenle</>
+                    <button onclick="alert('Excelden değiştirin')" style="padding:5px 10px; font-size:10px; width:auto; background:var(--valeo-blue);">Düzenle</button>
                 </div>
             </div>`;
     }).join('');
@@ -632,31 +453,31 @@ function trNormalize(text) {
         document.getElementById('selected-machine-text').innerText = no + " - " + ad;
         document.getElementById('selected-machine-box').style.display = 'block';
         document.getElementById('machine-results').innerHTML = "";
-        updates();
+        updateButtons();
     }
     function selectMachine(no, ad) {
     seciliMakina = { no: no.toString(), ad: ad.toString() }; // Hafızaya kaydet
     document.getElementById('selected-machine-text').innerText = no + " - " + ad;
     document.getElementById('selected-machine-box').style.display = 'block';
     document.getElementById('machine-results').innerHTML = "";
-    updates();
+    updateButtons();
 }
 
     function goToAction() {
         seciliMakina = null;
         document.getElementById('islem-adet').value = 0;
         document.getElementById('selected-machine-box').style.display = 'none';
-        updates();
+        updateButtons();
         showPage('page-action');
     }
 
     function adetDegistir(d) {
         let v = parseInt(document.getElementById('islem-adet').value) + d;
         document.getElementById('islem-adet').value = v < 0 ? 0 : v;
-        updates();
+        updateButtons();
     }
 
-    function updates() {
+    function updateButtons() {
         const hasAdet = parseInt(document.getElementById('islem-adet').value) > 0;
         document.getElementById('btn-dusum').disabled = !(seciliMakina && hasAdet);
         document.getElementById('btn-talep').disabled = !(seciliMakina && hasAdet);
