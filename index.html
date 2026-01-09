@@ -232,7 +232,78 @@
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9qV37Xa4ESuHQGtOa3UW21Y4WAyLMAwAgGnnY1oFnUkpIpKsvi1vSFmFyRAjkwcIjhQ/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2w5T6gYAjFmAB4vcNYNPbJ8hNZY8oqpLMSuhWm8aL0BXwcVALz_azIyzbFKno7h_gNg/exec';
+
+// YÖNETİCİ PANELİ GÖRÜNÜMÜ
+function adminPaneliHazirla() {
+    const listDiv = document.getElementById('admin-user-list');
+    if (!listDiv) return;
+
+    listDiv.innerHTML = kullanicilar.map(u => {
+        const v = Object.values(u);
+        return `
+            <div style="background:var(--card-bg); padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong style="color:var(--valeo-blue); font-size:15px;">${v[0]}</strong><br>
+                    <small style="color:var(--text-sub);">Şifre: ${v[1]} | Yetki: ${v[2]}</small>
+                </div>
+                <button onclick="sifreGuncelle('${v[0]}')" 
+                        style="padding:8px 12px; font-size:11px; width:auto; background:var(--warning); color:black; border-radius:8px; font-weight:700; border:none; cursor:pointer;">
+                    🔑 Şifre Değiştir
+                </button>
+            </div>`;
+    }).join('');
+}
+
+// YENİ KULLANICI EKLEME
+async function kullaniciEkle() {
+    const ad = document.getElementById('new-user-name').value.trim();
+    const sifre = document.getElementById('new-user-pass').value.trim();
+    const rol = document.getElementById('new-user-role').value;
+
+    if (!ad || !sifre) { alert("Lütfen tüm alanları doldurun!"); return; }
+
+    const veri = {
+        islem: "KULLANICI_EKLE",
+        ad: ad,
+        sifre: sifre,
+        rol: rol,
+        timestamp: new Date().toLocaleString('tr-TR')
+    };
+
+    await islemGonder(veri, "Kullanıcı Excel'e başarıyla kaydedildi!");
+}
+
+// ŞİFRE GÜNCELLEME
+async function sifreGuncelle(kullaniciAdi) {
+    const yeniSifre = prompt(kullaniciAdi + " için yeni şifreyi girin:");
+    if (!yeniSifre || yeniSifre.trim() === "") return;
+
+    const veri = {
+        islem: "SIFRE_GUNCELLE",
+        ad: kullaniciAdi,
+        yeniSifre: yeniSifre.trim()
+    };
+
+    await islemGonder(veri, "Şifre Excel'de başarıyla güncellendi!");
+}
+
+// ORTAK GÖNDERİM FONKSİYONU
+async function islemGonder(veri, mesaj) {
+    document.getElementById('loading-overlay').style.display = 'flex';
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(veri)
+        });
+        alert(mesaj);
+        location.reload();
+    } catch (e) {
+        alert("Bağlantı hatası!");
+        document.getElementById('loading-overlay').style.display = 'none';
+    }
+}
 
     let urunler = [], kullanicilar = [], makineler = [], seciliUrun = null;
     let seciliMakina = null; // BU SATIR EKSİK OLDUĞU İÇİN ÇALIŞMIYORDU
@@ -245,32 +316,6 @@
             .replace(/ş/g, 's').replace(/ç/g, 'c')
             .replace(/ğ/g, 'g').trim();
     }
-
-    async function sifreGuncelle(kullaniciAdi) {
-    const yeniSifre = prompt(kullaniciAdi + " için yeni şifreyi girin:");
-    if (!yeniSifre) return;
-
-    const veri = {
-        islem: "SIFRE_GUNCELLE",
-        ad: kullaniciAdi,
-        yeniSifre: yeniSifre
-    };
-
-    document.getElementById('loading-overlay').style.display = 'flex';
-
-    try {
-        await fetch(SCRIPT_URL, { 
-            method: 'POST', 
-            mode: 'no-cors', 
-            body: JSON.stringify(veri) 
-        });
-        alert("Şifre başarıyla güncellendi! Listenin yenilenmesi zaman alabilir.");
-        location.reload();
-    } catch (e) {
-        alert("Hata oluştu!");
-        document.getElementById('loading-overlay').style.display = 'none';
-    }
-}
 
    async function girisYap() {
     const uInput = document.getElementById('user-input').value.trim().toLowerCase();
@@ -293,48 +338,88 @@
         alert("Giriş bilgileri hatalı!");
     }
 }
+
+    // 1. Yönetici Paneli Görünümü (Hem Bilgi Gösterir Hem Şifre Değiştirme Butonu Ekler)
 function adminPaneliHazirla() {
     const listDiv = document.getElementById('admin-user-list');
-    
-    // Güvenlik: Liste var mı kontrolü
     if (!listDiv) return;
 
-    // Eğer kullanıcı listesi boşsa veya tanımlı değilse
-    if (!kullanicilar || kullanicilar.length === 0) {
-        listDiv.innerHTML = `
-            <div style="text-align:center; padding:20px; color:var(--text-sub);">
-                <i class="fas fa-users-slash" style="font-size:24px; margin-bottom:10px; display:block;"></i>
-                <p style="font-size:12px;">Henüz kayıtlı kullanıcı bulunamadı.</p>
-            </div>`;
-        return;
-    }
-
-    // Listeyi oluştur
-    listDiv.innerHTML = kullanicilar.map(user => {
-        // Obje anahtarlarını doğrudan isimle çağırmak (destructuring) daha güvenlidir
-        // Varsayalım ki yapı: { ad: "...", sifre: "...", yetki: "..." }
-        const { ad, sifre, yetki } = user; 
-
+    listDiv.innerHTML = kullanicilar.map(u => {
+        const v = Object.values(u);
+        // v[0]: İsim, v[1]: Şifre, v[2]: Rol
         return `
-            <div style="background:var(--card-bg); padding:15px; border-radius:15px; margin-bottom:12px; border:1px solid var(--border); transition: transform 0.2s ease;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="flex-grow: 1;">
-                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                            <strong style="color:var(--valeo-blue); font-size:15px;">${ad}</strong>
-                            <span style="font-size:10px; padding:2px 8px; border-radius:10px; background:rgba(0,112,185,0.1); color:var(--valeo-blue); font-weight:600;">
-                                ${yetki}
-                            </span>
-                        </div>
-                        <div style="color:var(--text-sub); font-size:12px;">
-                            <i class="fas fa-lock" style="font-size:10px; margin-right:4px;"></i>
-                            <b>Şifre:</b> <span style="font-family: monospace;">${sifre}</span>
-                        </div>
-                    </div>
-                    <button onclick="sifreGuncelle('${ad}')" 
-                            class="admin-btn-warning"
-                            style="padding:10px 15px; font-size:11px; background:var(--warning); color:black; border-radius:10px; font-weight:700; border:none; cursor:pointer; display:flex; align-items:center; gap:5px;">
-                        <span>🔑</span> Değiştir
-                    </button>
+            <div style="background:var(--card-bg); padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong style="color:var(--valeo-blue); font-size:15px;">${v[0]}</strong><br>
+                    <small style="color:var(--text-sub);">Şifre: ${v[1]} | Yetki: ${v[2]}</small>
+                </div>
+                <button onclick="sifreGuncelle('${v[0]}')" 
+                        style="padding:8px 12px; font-size:11px; width:auto; background:var(--warning); color:black; border-radius:8px; font-weight:700; border:none; cursor:pointer;">
+                    🔑 Şifre Değiştir
+                </button>
+            </div>`;
+    }).join('');
+}
+
+// 2. Yeni Kullanıcı Ekleme Fonksiyonu
+async function kullaniciEkle() {
+    const ad = document.getElementById('new-user-name').value.trim();
+    const sifre = document.getElementById('new-user-pass').value.trim();
+    const rol = document.getElementById('new-user-role').value;
+
+    if (!ad || !sifre) { alert("Lütfen isim ve şifre girin!"); return; }
+
+    const veri = {
+        islem: "KULLANICI_EKLE",
+        ad: ad,
+        sifre: sifre,
+        rol: rol,
+        timestamp: new Date().toLocaleString('tr-TR')
+    };
+
+    await backendGonder(veri, "Yeni kullanıcı başarıyla eklendi!");
+}
+
+// 3. Şifre Güncelleme Fonksiyonu
+async function sifreGuncelle(kullaniciAdi) {
+    const yeniSifre = prompt(kullaniciAdi + " için yeni şifreyi girin:");
+    if (!yeniSifre || yeniSifre.trim() === "") return;
+
+    const veri = {
+        islem: "SIFRE_GUNCELLE",
+        ad: kullaniciAdi,
+        yeniSifre: yeniSifre.trim()
+    };
+
+    await backendGonder(veri, "Şifre başarıyla güncellendi!");
+}
+
+// 4. Ortak Veri Gönderim Motoru
+async function backendGonder(veri, basariMesaji) {
+    document.getElementById('loading-overlay').style.display = 'flex';
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(veri)
+        });
+        alert(basariMesaji + " (Değişikliklerin görünmesi 1-2 dakikayı bulabilir)");
+        location.reload();
+    } catch (e) {
+        alert("Bağlantı hatası!");
+        document.getElementById('loading-overlay').style.display = 'none';
+    }
+}
+function adminPaneliHazirla() {
+    const listDiv = document.getElementById('admin-user-list');
+    listDiv.innerHTML = kullanicilar.map((u, i) => {
+        const v = Object.values(u);
+        return `
+            <div style="background:white; padding:10px; border-radius:10px; margin-bottom:8px; border:1px solid #eee;">
+                <strong>${v[0]}</strong> <br>
+                <small>Şifre: ${v[1]} | Rol: ${v[2]}</small>
+                <div style="margin-top:5px;">
+                    <button onclick="alert('Excelden değiştirin')" style="padding:5px 10px; font-size:10px; width:auto; background:var(--valeo-blue);">Düzenle</button>
                 </div>
             </div>`;
     }).join('');
@@ -379,23 +464,6 @@ async function kullaniciEkle() {
         document.getElementById('loading-overlay').style.display = 'none';
     }
 }
-
-    function doPost(e) {
-  var data = JSON.parse(e.postData.contents);
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetUser = ss.getSheetByName("Sayfa2");
-
-  // ŞİFRE GÜNCELLEME İŞLEMİ
-  if (data.islem === "SIFRE_GUNCELLE") {
-    var dataRange = sheetUser.getDataRange().getValues();
-    for (var i = 0; i < dataRange.length; i++) {
-      // Kullanıcı adını bul (A sütunu)
-      if (dataRange[i][0].toString().toLowerCase() === data.ad.toLowerCase()) {
-        sheetUser.getRange(i + 1, 2).setValue(data.yeniSifre); // B sütununa (2) yeni şifreyi yaz
-        return ContentService.createTextOutput("Şifre Güncellendi");
-      }
-    }
-  }
 
 function uygulaYetki() {
     const role = localStorage.getItem('userRole');
@@ -522,7 +590,42 @@ function trNormalize(text) {
             return `<div class="product-card" onclick="selectMachine('${v[0]}','${v[1]}')">${v[0]} - ${v[1]}</div>`;
         }).join('');
     }
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var userSheet = ss.getSheetByName("Sayfa2"); // Kullanıcı listesinin olduğu sayfa adı
 
+    // --- DURUM 1: ŞİFRE GÜNCELLEME ---
+    if (data.islem === "SIFRE_GUNCELLE") {
+      var values = userSheet.getDataRange().getValues();
+      for (var i = 0; i < values.length; i++) {
+        // Kullanıcı adını ilk sütunda (A) arar
+        if (values[i][0].toString().toLowerCase() === data.ad.toLowerCase()) {
+          // Eşleşen satırın B sütununa (indis 2) yeni şifreyi yazar
+          userSheet.getRange(i + 1, 2).setValue(data.yeniSifre);
+          return ContentService.createTextOutput("Şifre Başarıyla Güncellendi");
+        }
+      }
+      return ContentService.createTextOutput("Hata: Kullanıcı Bulunamadı");
+    }
+
+    // --- DURUM 2: YENİ KULLANICI EKLEME ---
+    else if (data.islem === "KULLANICI_EKLE") {
+      userSheet.appendRow([data.ad, data.sifre, data.rol, data.timestamp]);
+      return ContentService.createTextOutput("Yeni Kullanıcı Kaydedildi");
+    }
+
+    // --- DURUM 3: DİĞER İŞLEMLER (Stok Düşüm vb.) ---
+    else {
+      var sheetGecmis = ss.getSheetByName("Gecmis");
+      sheetGecmis.appendRow([data.sap, data.ad, data.adet, data.islem, data.makinaNo, data.makinaAd, data.kullanici, data.timestamp]);
+      return ContentService.createTextOutput("İşlem Başarılı");
+    }
+  } catch (err) {
+    return ContentService.createTextOutput("Hata: " + err.toString());
+  }
+}
     function selectMachine(no, ad) {
         seciliMakina = { no, ad };
         document.getElementById('selected-machine-text').innerText = no + " - " + ad;
