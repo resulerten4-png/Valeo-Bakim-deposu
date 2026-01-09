@@ -232,7 +232,7 @@
     const URUN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1489941403&single=true&output=csv';
     const MAKINA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1658888580&single=true&output=csv';
     const GECMIS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=185766952&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2w5T6gYAjFmAB4vcNYNPbJ8hNZY8oqpLMSuhWm8aL0BXwcVALz_azIyzbFKno7h_gNg/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEMclQbsZBxryEXHNO5dlwkAy_6HiGViLME0rB99H8gJjAo-2iAzY92RQr2o1KAgDEyw/exec';
 
 // YÖNETİCİ PANELİ GÖRÜNÜMÜ
 function adminPaneliHazirla() {
@@ -590,42 +590,7 @@ function trNormalize(text) {
             return `<div class="product-card" onclick="selectMachine('${v[0]}','${v[1]}')">${v[0]} - ${v[1]}</div>`;
         }).join('');
     }
-function doPost(e) {
-  try {
-    var data = JSON.parse(e.postData.contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var userSheet = ss.getSheetByName("Sayfa2"); // Kullanıcı listesinin olduğu sayfa adı
 
-    // --- DURUM 1: ŞİFRE GÜNCELLEME ---
-    if (data.islem === "SIFRE_GUNCELLE") {
-      var values = userSheet.getDataRange().getValues();
-      for (var i = 0; i < values.length; i++) {
-        // Kullanıcı adını ilk sütunda (A) arar
-        if (values[i][0].toString().toLowerCase() === data.ad.toLowerCase()) {
-          // Eşleşen satırın B sütununa (indis 2) yeni şifreyi yazar
-          userSheet.getRange(i + 1, 2).setValue(data.yeniSifre);
-          return ContentService.createTextOutput("Şifre Başarıyla Güncellendi");
-        }
-      }
-      return ContentService.createTextOutput("Hata: Kullanıcı Bulunamadı");
-    }
-
-    // --- DURUM 2: YENİ KULLANICI EKLEME ---
-    else if (data.islem === "KULLANICI_EKLE") {
-      userSheet.appendRow([data.ad, data.sifre, data.rol, data.timestamp]);
-      return ContentService.createTextOutput("Yeni Kullanıcı Kaydedildi");
-    }
-
-    // --- DURUM 3: DİĞER İŞLEMLER (Stok Düşüm vb.) ---
-    else {
-      var sheetGecmis = ss.getSheetByName("Gecmis");
-      sheetGecmis.appendRow([data.sap, data.ad, data.adet, data.islem, data.makinaNo, data.makinaAd, data.kullanici, data.timestamp]);
-      return ContentService.createTextOutput("İşlem Başarılı");
-    }
-  } catch (err) {
-    return ContentService.createTextOutput("Hata: " + err.toString());
-  }
-}
     function selectMachine(no, ad) {
         seciliMakina = { no, ad };
         document.getElementById('selected-machine-text').innerText = no + " - " + ad;
