@@ -296,28 +296,44 @@
 function adminPaneliHazirla() {
     const listDiv = document.getElementById('admin-user-list');
     
-    // Eğer liste boşsa uyarı ver
+    // Güvenlik: Liste var mı kontrolü
+    if (!listDiv) return;
+
+    // Eğer kullanıcı listesi boşsa veya tanımlı değilse
     if (!kullanicilar || kullanicilar.length === 0) {
-        listDiv.innerHTML = '<p style="text-align:center; font-size:12px; color:var(--text-sub);">Kullanıcı listesi yüklenemedi.</p>';
+        listDiv.innerHTML = `
+            <div style="text-align:center; padding:20px; color:var(--text-sub);">
+                <i class="fas fa-users-slash" style="font-size:24px; margin-bottom:10px; display:block;"></i>
+                <p style="font-size:12px;">Henüz kayıtlı kullanıcı bulunamadı.</p>
+            </div>`;
         return;
     }
 
-    listDiv.innerHTML = kullanicilar.map(u => {
-        const v = Object.values(u);
-        // v[0]: İsim, v[1]: Şifre, v[2]: Rol
+    // Listeyi oluştur
+    listDiv.innerHTML = kullanicilar.map(user => {
+        // Obje anahtarlarını doğrudan isimle çağırmak (destructuring) daha güvenlidir
+        // Varsayalım ki yapı: { ad: "...", sifre: "...", yetki: "..." }
+        const { ad, sifre, yetki } = user; 
+
         return `
-            <div style="background:var(--card-bg); padding:12px; border-radius:15px; margin-bottom:10px; border:1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div>
-                        <strong style="color:var(--valeo-blue); font-size:15px;">${v[0]}</strong><br>
-                        <small style="color:var(--text-sub);">
-                            <b>Güncel Şifre:</b> ${v[1]} <br>
-                            <b>Yetki:</b> ${v[2]}
-                        </small>
+            <div style="background:var(--card-bg); padding:15px; border-radius:15px; margin-bottom:12px; border:1px solid var(--border); transition: transform 0.2s ease;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex-grow: 1;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                            <strong style="color:var(--valeo-blue); font-size:15px;">${ad}</strong>
+                            <span style="font-size:10px; padding:2px 8px; border-radius:10px; background:rgba(0,112,185,0.1); color:var(--valeo-blue); font-weight:600;">
+                                ${yetki}
+                            </span>
+                        </div>
+                        <div style="color:var(--text-sub); font-size:12px;">
+                            <i class="fas fa-lock" style="font-size:10px; margin-right:4px;"></i>
+                            <b>Şifre:</b> <span style="font-family: monospace;">${sifre}</span>
+                        </div>
                     </div>
-                    <button onclick="sifreGuncelle('${v[0]}')" 
-                            style="padding:8px 12px; font-size:11px; width:auto; background:var(--warning); color:black; border-radius:8px; font-weight:700; border:none; cursor:pointer;">
-                        🔑 Şifre Değiştir
+                    <button onclick="sifreGuncelle('${ad}')" 
+                            class="admin-btn-warning"
+                            style="padding:10px 15px; font-size:11px; background:var(--warning); color:black; border-radius:10px; font-weight:700; border:none; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                        <span>🔑</span> Değiştir
                     </button>
                 </div>
             </div>`;
