@@ -230,10 +230,6 @@
         <div id="admin-user-list"></div>
     </div>
 </div>
-< onclick="sifreGuncelle('${v[0]}')" 
-        style="padding:8px 12px; font-size:11px; width:auto; background:var(--warning); color:black; border-radius:8px; font-weight:700; border:none; cursor:pointer;">
-    🔑 Şifre Değiştir
-</>
 
 <script>
     const USER_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXdjBr4A8_FYBOe7FyxChJthgtaV1S57HxARC8MBsuxdGHywNAv7fLpxZrmK3yheolwBk26U-PSBzW/pub?gid=1584268931&single=true&output=csv';
@@ -249,16 +245,20 @@ function adminPaneliHazirla() {
 
     listDiv.innerHTML = kullanicilar.map(u => {
         const v = Object.values(u);
+        // v[0]: İsim, v[1]: Şifre, v[2]: Rol
         return `
-            <div style="background:var(--card-bg); padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <div style="background:var(--card-bg); padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                 <div>
-                    <strong style="color:var(--valeo-blue); font-size:15px;">${v[0]}</strong><br>
-                    <small style="color:var(--text-sub);">Şifre: ${v[1]} | Yetki: ${v[2]}</small>
+                    <strong style="color:var(--valeo-blue); font-size:15px; display:block; margin-bottom:4px;">👤 ${v[0]}</strong>
+                    <div style="font-size:11px; color:var(--text-sub);">
+                        <span>🔑 Şifre: <b>${v[1]}</b></span> | 
+                        <span>🛡️ Rol: <b>${v[2]}</b></span>
+                    </div>
                 </div>
-                < onclick="sifreGuncelle('${v[0]}')" 
-                        style="padding:8px 12px; font-size:11px; width:auto; background:var(--warning); color:black; border-radius:8px; font-weight:700; border:none; cursor:pointer;">
-                    🔑 Şifre Değiştir
-                </>
+                <button onclick="sifreGuncelle('${v[0]}')" 
+                        style="padding:10px 15px; font-size:12px; width:auto; background:var(--warning); color:black; border-radius:10px; font-weight:800; border:none; cursor:pointer; box-shadow: 0 4px 0 #d4ac0d; active: transform translateY(2px);">
+                    ŞİFREYİ SIFIRLA
+                </button>
             </div>`;
     }).join('');
 }
@@ -280,6 +280,34 @@ async function kullaniciEkle() {
     };
 
     await islemGonder(veri, "Kullanıcı Excel'e başarıyla kaydedildi!");
+}
+
+    async function sifreGuncelle(kullaniciAdi) {
+    const yeniSifre = prompt(kullaniciAdi + " için YENİ ŞİFREYİ girin:");
+    
+    // İptal edilirse veya boş bırakılırsa işlem yapma
+    if (yeniSifre === null || yeniSifre.trim() === "") return;
+
+    const veri = {
+        islem: "SIFRE_GUNCELLE",
+        ad: kullaniciAdi,
+        yeniSifre: yeniSifre.trim()
+    };
+
+    document.getElementById('loading-overlay').style.display = 'flex';
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(veri)
+        });
+        alert("Şifre başarıyla güncellendi! Liste kısa süre içinde yenilenecektir.");
+        location.reload(); // Değişikliği görmek için sayfayı yeniler
+    } catch (e) {
+        alert("Bağlantı hatası! Şifre güncellenemedi.");
+        document.getElementById('loading-overlay').style.display = 'none';
+    }
 }
 
 // ŞİFRE GÜNCELLEME
